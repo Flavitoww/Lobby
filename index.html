@@ -28,6 +28,14 @@
   <button class="game" data-game="val" type="button">VALORANT</button><button class="game" data-game="rl" type="button">Rocket League</button>
   <button class="game" data-game="r6" type="button">Rainbow Six</button><button class="game" data-game="dota" type="button">Dota 2</button>
   <button class="game" data-game="mlbb" type="button">Mobile Legends</button><button class="game" data-game="hok" type="button">Honor of Kings</button>
+  <button class="game" data-game="cod" type="button">Call of Duty</button>
+  <button class="game" data-game="ow" type="button">Overwatch</button>
+  <button class="game" data-game="apex" type="button">Apex Legends</button>
+  <button class="game" data-game="fn" type="button">Fortnite</button>
+  <button class="game" data-game="pubg" type="button">PUBG</button>
+  <button class="game" data-game="tft" type="button">TFT</button>
+  <button class="game" data-game="fc" type="button">EA FC</button>
+  <button class="game" data-game="sc" type="button">StarCraft II</button>
 </div>
 <main id="main" class="shell">
   <section class="lead-grid" aria-label="Atlas et matchs en direct">
@@ -53,17 +61,17 @@
 
   <div class="section-kicker">DÉCOUVRIR LA PLATEFORME</div>
   <div class="destinations" aria-label="Explorer Lobby">
-    <button class="destination" type="button" data-atlas><span class="dest-icon">◎</span><span><strong>Atlas</strong><small>Le monde esport</small></span><b>↗</b></button>
-    <button class="destination" type="button" data-explore="teams"><span class="dest-icon">♧</span><span><strong>Équipes</strong><small>Orgs & rosters</small></span><b>↗</b></button>
-    <button class="destination" type="button" data-explore="players"><span class="dest-icon">♙</span><span><strong>Joueurs</strong><small>Profils & parcours</small></span><b>↗</b></button>
-    <button class="destination" type="button" data-explore="leagues"><span class="dest-icon">◇</span><span><strong>Compétitions</strong><small>Ligues & tournois</small></span><b>↗</b></button>
-    <button class="destination" type="button" data-explore="transfers"><span class="dest-icon">⇄</span><span><strong>Transferts</strong><small>Annonces & mercato</small></span><b>↗</b></button>
-    <button class="destination" type="button" data-explore="sponsors"><span class="dest-icon">◈</span><span><strong>Sponsors</strong><small>Écosystème business</small></span><b>↗</b></button>
+    <button class="destination" type="button" data-atlas><span class="dest-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c-4 5-4 13 0 18M12 3c4 5 4 13 0 18"/></svg></span><span><strong>Atlas</strong><small>Le monde esport</small></span><b>↗</b></button>
+    <button class="destination" type="button" data-explore="teams"><span class="dest-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2.5 20v-2a6.5 6.5 0 0 1 13 0v2M17 14a5 5 0 0 1 4.5 5v1"/></svg></span><span><strong>Équipes</strong><small>Orgs & rosters</small></span><b>↗</b></button>
+    <button class="destination" type="button" data-explore="players"><span class="dest-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4"/><path d="M5 21v-3a7 7 0 0 1 14 0v3"/></svg></span><span><strong>Joueurs</strong><small>Profils & parcours</small></span><b>↗</b></button>
+    <button class="destination" type="button" data-explore="leagues"><span class="dest-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v9a4 4 0 0 1-8 0V4ZM8 6H4v3a5 5 0 0 0 4 5M16 6h4v3a5 5 0 0 1-4 5M12 17v4m-4 0h8"/></svg></span><span><strong>Compétitions</strong><small>Ligues & tournois</small></span><b>↗</b></button>
+    <button class="destination" type="button" data-explore="transfers"><span class="dest-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h15l-4-4m4 4-4 4M20 17H5l4-4m-4 4 4 4"/></svg></span><span><strong>Transferts</strong><small>Annonces & mercato</small></span><b>↗</b></button>
+    <button class="destination" type="button" data-explore="sponsors"><span class="dest-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4v10l-8 4-8-4V7l8-4ZM4 7l8 5 8-5M12 12v9"/></svg></span><span><strong>Sponsors</strong><small>Écosystème business</small></span><b>↗</b></button>
   </div>
 
   <section class="content-grid">
     <div class="surface schedule" id="schedule">
-      <div class="section-head"><div class="section-title"><h2>Les matchs</h2></div><div class="segmented" role="tablist" aria-label="Période des matchs"><button class="selected" data-view="upcoming" role="tab" aria-selected="true">À venir</button><button data-view="past" role="tab" aria-selected="false">Résultats</button></div></div>
+      <div class="section-head"><div class="section-title"><h2>Les matchs</h2></div><div class="match-controls"><div class="segmented" role="group" aria-label="Niveau compétitif"><button class="selected" type="button" data-scope="major" aria-pressed="true">À la une</button><button type="button" data-scope="all" aria-pressed="false">Tous</button></div><div class="segmented" role="tablist" aria-label="Période des matchs"><button class="selected" data-view="upcoming" role="tab" aria-selected="true">À venir</button><button data-view="past" role="tab" aria-selected="false">Résultats</button></div></div></div>
       <div id="scheduleList" class="match-list" aria-live="polite"><p class="empty">Chargement du calendrier…</p></div>
       <div class="panel-footer"><span class="small-muted">Horaires affichés dans ton fuseau local</span></div>
     </div>
