@@ -46,7 +46,7 @@
         <div class="eyebrow"><span class="eyebrow-line"></span> L'ATLAS MONDIAL DE L'ESPORT</div>
         <h1>La scène esport.<br><span>Sans frontières.</span></h1>
         <p>Explore les équipes, joueurs et compétitions sur un globe interactif. Un seul endroit pour suivre l'esport mondial.</p>
-        <button type="button" class="primary-btn" data-atlas>Explorer l'Atlas <span aria-hidden="true">↗</span></button>
+        <button type="button" class="primary-btn" data-atlas>Explorer l'Atlas <span aria-hidden="true">↗</span></button><div class="hero-quickstats"><span><strong id="heroMatchCount">—</strong><small>Matchs suivis</small></span><span><strong id="heroGameCount">—</strong><small>Jeux actifs</small></span><span><strong id="heroOrgCount">—</strong><small>Orgs indexées</small></span></div>
       </div>
       <div class="atlas-caption"><span class="pulse-dot"></span> GLOBE INTERACTIF <span>·</span> Glisse pour explorer</div>
       <button type="button" class="atlas-expand" data-atlas aria-label="Agrandir le globe">Plein écran <span aria-hidden="true">↗</span></button>
@@ -69,6 +69,21 @@
     <button class="destination" type="button" data-explore="sponsors"><span class="dest-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4v10l-8 4-8-4V7l8-4ZM4 7l8 5 8-5M12 12v9"/></svg></span><span><strong>Sponsors</strong><small>Écosystème business</small></span><b>↗</b></button>
   </div>
 
+  <section class="pulse-section" aria-label="La scène esport aujourd'hui">
+    <div class="pulse-heading"><div><span class="pulse-eyebrow">LOBBY / NOW</span><h2>La scène en un regard</h2></div><span class="pulse-source">Données disponibles via PandaScore</span></div>
+    <div class="pulse-grid">
+      <a href="#matches" class="pulse-stat"><span class="stat-label"><span class="status-point red"></span> LIVE MAINTENANT</span><strong id="pulseLive">—</strong><span class="stat-foot">Matchs en cours <span aria-hidden="true">↗</span></span></a>
+      <a href="#schedule" class="pulse-stat"><span class="stat-label"><span class="status-point blue"></span> PROCHAINS MATCHS</span><strong id="pulseUpcoming">—</strong><span class="stat-foot">Dans le calendrier récupéré <span aria-hidden="true">↗</span></span></a>
+      <button type="button" data-explore="leagues" class="pulse-stat"><span class="stat-label"><span class="status-point violet"></span> LIGUES & COMPÉTITIONS</span><strong id="pulseLeagues">—</strong><span class="stat-foot">Compétitions représentées <span aria-hidden="true">↗</span></span></button>
+      <button type="button" data-atlas class="pulse-stat"><span class="stat-label"><span class="status-point mint"></span> ATLAS MONDIAL</span><strong id="pulseCountries">—</strong><span class="stat-foot">Pays d'organisations indexées <span aria-hidden="true">↗</span></span></button>
+    </div>
+  </section>
+  <section class="spotlight-grid" aria-label="Compétitions et équipes">
+    <div class="surface competition-strip"><div class="section-head"><div class="section-title"><h2>Compétitions du moment</h2></div><button class="text-link" type="button" data-explore="leagues">Explorer toutes les ligues ↗</button></div>
+      <div class="competition-items" id="competitionHighlights"><p class="empty">Chargement des compétitions…</p></div></div>
+    <div class="surface org-strip"><div class="section-head"><div class="section-title"><h2>Organisations à découvrir</h2></div><button type="button" class="text-link" data-atlas>Sur la carte ↗</button></div>
+      <div class="org-items" id="orgHighlights"><p class="empty">Chargement des organisations…</p></div></div>
+  </section>
   <section class="content-grid">
     <div class="surface schedule" id="schedule">
       <div class="section-head"><div class="section-title"><h2>Les matchs</h2></div><div class="match-controls"><div class="segmented" role="group" aria-label="Niveau compétitif"><button class="selected" type="button" data-scope="major" aria-pressed="true">À la une</button><button type="button" data-scope="all" aria-pressed="false">Tous</button></div><div class="segmented" role="tablist" aria-label="Période des matchs"><button class="selected" data-view="upcoming" role="tab" aria-selected="true">À venir</button><button data-view="past" role="tab" aria-selected="false">Résultats</button></div></div></div>
