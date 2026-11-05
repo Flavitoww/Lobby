@@ -38,6 +38,7 @@ $("#zoomIn").addEventListener("click",()=>{if(state.globe){const v=state.globe.p
 $("#zoomOut").addEventListener("click",()=>{if(state.globe){const v=state.globe.pointOfView();fly(v.lat,v.lng,Math.min(3,v.altitude*1.35))}});
 window.addEventListener("message",e=>{if(e.origin!==location.origin||!e.data)return;
  if(e.data.type==="lobby:theme")theme(e.data.theme);
+ if(e.data.type==="lobby:visibility"&&state.globe){if(e.data.visible)state.globe.resumeAnimation?.();else state.globe.pauseAnimation?.()}
  if(e.data.type==="lobby:atlas-mode"){setExpanded(!!e.data.expanded);if(e.data.search)searchFocus(e.data.search)}
 });
 function resize(){const el=$("#globe3d");if(!state.globe||!el.clientWidth||!el.clientHeight)return;state.globe.width(el.clientWidth).height(el.clientHeight);state.globe.globeOffset(embedded?[Math.min(110,el.clientWidth*.15),0]:[Math.min(85,el.clientWidth*.08),0])}
@@ -60,6 +61,7 @@ function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Globe stati
   .pointColor(()=>"#64b2ff").pointsTransitionDuration(150)
   .onPointClick(p=>selectCountry(p.cc));
  state.globe=globe;
+ try{globe.renderer().setPixelRatio(Math.min(window.devicePixelRatio||1,1.5))}catch(e){}
  const controls=globe.controls();controls.autoRotate=true;controls.autoRotateSpeed=.3;controls.enablePan=false;controls.minDistance=113;controls.maxDistance=500;
  controls.addEventListener("start",()=>{controls.autoRotate=false});
  globe.pointOfView({lat:28,lng:15,altitude:embedded?1.6:1.9},0);
@@ -83,7 +85,8 @@ async function init(){
  }catch(e){fail("Aperçu de la planète disponible · 3D non chargée")}
 }
 async function loadOrganizations(){
- try{const r=await fetch("/api/orgs",{signal:AbortSignal.timeout(45000)});if(!r.ok)throw Error("data");const json=await r.json();if(!Array.isArray(json.orgs))throw Error("invalid");state.orgs=json.orgs;updatePoints();renderPanel();$("#dataSource").textContent="Équipes : PandaScore · "+json.orgs.length+" organisations indexées";if(queuedSearch){const q=queuedSearch;queuedSearch="";searchFocus(q)}}
+ try{const saved=JSON.parse(localStorage.getItem("lobby.orgs")||"null");if(saved&&Array.isArray(saved.orgs)&&Date.now()-saved.updated<86400000){state.orgs=saved.orgs;updatePoints();renderPanel()}}catch(e){}
+ try{const r=await fetch("/api/orgs",{signal:AbortSignal.timeout(45000)});if(!r.ok)throw Error("data");const json=await r.json();if(!Array.isArray(json.orgs))throw Error("invalid");state.orgs=json.orgs;try{localStorage.setItem("lobby.orgs",JSON.stringify({updated:Date.now(),orgs:json.orgs}))}catch(e){};updatePoints();renderPanel();$("#dataSource").textContent="Équipes : PandaScore · "+json.orgs.length+" organisations indexées";if(queuedSearch){const q=queuedSearch;queuedSearch="";searchFocus(q)}}
  catch(e){$("#dataSource").textContent="Équipes temporairement indisponibles · PandaScore";renderPanel()}
 }
 renderPanel();init();loadOrganizations();
