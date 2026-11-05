@@ -154,3 +154,10 @@ body{font-size:15.5px;line-height:1.58}
   .atlas-shortcut strong{font-size:14px}
   .atlas-shortcut small{font-size:11px}
 }
+
+.search-categories button{display:flex;align-items:center;gap:12px}
+.search-categories svg{width:18px;height:18px;flex:none;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.search-hit.keyboard-active{background:var(--accent-soft);border-color:var(--accent)}
+.profile-actions{flex-wrap:wrap}
+.profile-actions button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+@media(max-width:650px){.search-categories button{gap:7px}.search-categories svg{height:15px;width:15px}}
