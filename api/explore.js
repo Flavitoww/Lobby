@@ -5,6 +5,19 @@ const TYPES = {teams:"teams",players:"players",leagues:"leagues",tournaments:"to
 const GAME = {"lol":"lol","cs2":"csgo","val":"valorant","rl":"rl","r6":"r6siege","dota":"dota2","ow":"ow","cod":"codmw","fc":"fifa","mlbb":"mlbb","hok":"kog","sc":"starcraft-2","apex":"apex","fn":"fortnite","pubg":"pubg","tft":"tft"};
 const memory = new Map();
 const TTL = 5 * 60 * 1000;
+const FEATURED_PLAYER_SLUGS=["faker","zywoo","s1mple","caps","chovy","tenz","aspas","ruler","donk","niko","jankos","rekkles","showmaker","canyon","knight"];
+async function verifiedFeatured(q,token){
+  const needle=q.toLowerCase().replace(/[^a-z0-9]/g,"");
+  if(needle.length<3)return [];
+  const slug=FEATURED_PLAYER_SLUGS.find(s=>s.startsWith(needle));
+  if(!slug)return [];
+  try{
+    const r=await fetch(BASE+"/players/"+encodeURIComponent(slug),{headers:{Authorization:"Bearer "+token,Accept:"application/json"},signal:AbortSignal.timeout(5000)});
+    if(!r.ok)return [];
+    const raw=await r.json();
+    return (Array.isArray(raw)?raw:[raw]).filter(Boolean).map(p=>normalize("players",p)).filter(p=>p.id&&p.name);
+  }catch(e){return []}
+}
 
 function string(v, n) { return String(Array.isArray(v) ? v[0] : (v || "")).trim().slice(0,n); }
 function normalize(type, item) {
@@ -85,6 +98,8 @@ module.exports = async (req, res) => {
         items:[], unavailable, source:"PandaScore"
       });
     }
+    if(type==="all"||type==="players"){items.push(...await verifiedFeatured(q,token));}
+    const unique = new Map();items.forEach(item=>unique.set(item.type+":"+item.id,item));items.length=0;items.push(...unique.values());
     const norm = s => String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
     const needle=norm(q);
     const score = item => {
