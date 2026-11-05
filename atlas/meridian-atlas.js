@@ -101,6 +101,9 @@ $("#zoomIn").addEventListener("click",()=>{if(state.globe){const v=state.globe.p
 $("#zoomOut").addEventListener("click",()=>{if(state.globe){const v=state.globe.pointOfView();fly(v.lat,v.lng,Math.min(3,v.altitude*1.35))}});
 window.addEventListener("message",e=>{if(e.origin!==location.origin||!e.data)return;
  if(e.data.type==="lobby:theme")theme(e.data.theme);
+ if(e.data.type==="lobby:match-data"&&Array.isArray(e.data.matches)){
+  state.liveMatches=e.data.matches.filter(m=>m&&m.status==="running"&&typeof m.id==="number").slice(0,100);associateMatches();
+ }
  if(e.data.type==="lobby:visibility"&&state.globe){if(e.data.visible)state.globe.resumeAnimation?.();else state.globe.pauseAnimation?.()}
  if(e.data.type==="lobby:atlas-mode"){setExpanded(!!e.data.expanded);if(e.data.search)searchFocus(e.data.search)}
 });
@@ -131,6 +134,11 @@ function updatePoints(){
 function updateSummary(){
  $("#worldTeams").textContent=state.orgs.length||"—";
  $("#worldCountries").textContent=new Set(state.orgs.map(o=>o.cc)).size||"—";
+ if(window.parent!==window){
+  const sorted=[...state.orgs].sort((a,b)=>Object.keys(b.g||{}).length-Object.keys(a.g||{}).length).slice(0,8);
+  window.parent.postMessage({type:"lobby:org-summary",total:state.orgs.length,countries:new Set(state.orgs.map(o=>o.cc)).size,
+    orgs:sorted.map(o=>({n:o.n,cc:o.cc,logo:o.lg||o.ld||""}))},location.origin);
+ }
 }
 function fail(message){$("#globeStatus").textContent=message;/* Keep always-visible fallback globe */}
 function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Globe statique affiché · 3D indisponible");return}
