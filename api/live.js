@@ -13,7 +13,7 @@ const TW = { s: 100, a: 60, b: 20, c: 10, d: 5 };
 
 function pick(m) {
   const o = (m.opponents || []).map((x) => x.opponent).filter(Boolean);
-  if (o.length < 2) return null;
+  // Conserver les affiches dont les adversaires ne sont pas encore annoncés.
   const game = GAME[m.videogame && m.videogame.slug];
   if (!game) return null;
   const score = (id) => { const r = (m.results || []).find((x) => x.team_id === id); return r ? r.score : 0; };
@@ -23,7 +23,7 @@ function pick(m) {
   const serie = (m.serie && (m.serie.full_name || m.serie.name)) || '';
   const fr = FRL.test(league + ' ' + serie);
   const imp = (GW[game] || 0) + (TW[tier] || 5) + (fr ? 40 : 0);
-  const a = o[0], b = o[1];
+  const a = o[0] || {id:-1,name:'À définir',acronym:'TBD'}; const b = o[1] || {id:-2,name:'À définir',acronym:'TBD'};
   const short = (t) => (t.acronym || t.name || '?').toString();
   const ts = Date.parse(m.begin_at || m.scheduled_at || m.modified_at || 0) || 0;
   return {
@@ -61,9 +61,9 @@ module.exports = async (req, res) => {
 
   try {
     const [running, upcoming, past] = await Promise.all([
-      fetchList('/matches/running?per_page=50', token),
-      fetchList('/matches/upcoming?sort=begin_at&per_page=80', token),
-      fetchList('/matches/past?sort=-begin_at&per_page=40', token)
+      fetchList('/matches/running?per_page=100', token),
+      fetchList('/matches/upcoming?sort=begin_at&per_page=100', token),
+      fetchList('/matches/past?sort=-begin_at&per_page=100', token)
     ]);
 
     const seen = new Set();
@@ -77,15 +77,15 @@ module.exports = async (req, res) => {
     next.sort((a, b) => a.ts - b.ts);
     recent.sort((a, b) => b.ts - a.ts);
 
-    const matches = live.concat(next).slice(0, 60);
-    recent = recent.slice(0, 14);
+    const matches = live.concat(next);
+    // Les résultats complets de la première page de l'API sont conservés.
 
-    const body = { updated: now, matches, recent };
+    const body = { updated: now, matches, recent, source: 'PandaScore', meta: {running:live.length,upcoming:next.length,recent:recent.length,perPage:100,moreAvailable:true} };
     CACHE = { at: now, body };
     res.setHeader('Cache-Control', 'public, max-age=60');
     res.status(200).json(body);
   } catch (e) {
-    if (CACHE.body) { res.status(200).json(CACHE.body); return; }
+    if (CACHE.body) { res.setHeader('X-Lobby-Stale','1');res.status(200).json({...CACHE.body,stale:true}); return; }
     res.status(502).json({ error: 'fetch_failed', detail: String(e.message || e), matches: [], recent: [] });
   }
 };
