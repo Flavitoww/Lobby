@@ -229,6 +229,7 @@ $("#themeToggle").addEventListener("click",()=>setTheme(document.body.dataset.th
 window.addEventListener("message",e=>{if(e.origin!==location.origin)return;if(e.data?.type==="lobby:atlas-close")hideAtlas();if(e.data?.type==="lobby:open-search")openSearch()});
 if(location.hash==="#atlas")showAtlas();
 renderMatches();loadMatches();loadNews();
+if(new URLSearchParams(location.search).has("search"))openSearch();
 document.addEventListener("visibilitychange",()=>{if(!document.hidden && (!S.updated||Date.now()-S.updated>180000))loadMatches()});
 setInterval(()=>{if(!document.hidden)loadMatches()},180000);
 })();
