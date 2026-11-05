@@ -2,9 +2,9 @@
 "use strict";
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
-const gameNames={lol:"League of Legends",cs2:"Counter-Strike 2",val:"VALORANT",rl:"Rocket League",r6:"Rainbow Six",dota:"Dota 2",mlbb:"Mobile Legends",hok:"Honor of Kings"};
+const gameNames={lol:"League of Legends",cs2:"Counter-Strike 2",val:"VALORANT",rl:"Rocket League",r6:"Rainbow Six",dota:"Dota 2",mlbb:"Mobile Legends",hok:"Honor of Kings",ow:"Overwatch",cod:"Call of Duty",fc:"EA Sports FC",sc:"StarCraft II",apex:"Apex Legends",fn:"Fortnite",pubg:"PUBG",tft:"Teamfight Tactics",aoe:"Age of Empires",sc2:"StarCraft II"};
 const countries=(()=>{const names=new Intl.DisplayNames(["fr"],{type:"region"}),out=[];for(let a=65;a<=90;a++)for(let b=65;b<=90;b++){const code=String.fromCharCode(a,b),name=names.of(code);if(name&&name!==code&&!/région inconnue/i.test(name))out.push([code,name])}return out})()
-const S={game:"all",matches:[],recent:[],updated:null,fetchError:false,view:"upcoming",category:"all",items:[],currentQuery:""};
+const S={game:"all",scope:"major",matches:[],recent:[],updated:null,fetchError:false,view:"upcoming",category:"all",items:[],currentQuery:""};
 const html=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const validURL=u=>{try{const x=new URL(u);return x.protocol==="https:" ? x.href : ""}catch{return ""}};
 const date=t=>{const d=new Date(t);return Number.isNaN(+d)?"—":d.toLocaleString("fr-FR",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})};
@@ -13,19 +13,36 @@ const logo=(u,n)=>{const url=validURL(u);return url?'<img class="team-logo" alt=
 const side=(m,which)=>{const right=which==="b";const n=right?(m.bs||m.bn):(m.as||m.an);const label=html(n||"À définir");return '<span class="team-side'+(right?" right":"")+'">'+(right?'<span class="team-name" title="'+label+'">'+label+'</span>'+logo(m.bl,n):logo(m.al,n)+'<span class="team-name" title="'+label+'">'+label+'</span>')+'</span>'};
 function liveMatch(m){const info=html([gameNames[m.game]||m.game,m.comp,m.serie].filter(Boolean).join(" · "));const score=m.sa+" — "+m.sb;const url=validURL(m.watch);return '<div class="live-match"><div class="match-meta"><span title="'+info+'">'+info+'</span><span class="badge-live">LIVE</span></div><div class="match-teams">'+side(m,"a")+'<span class="match-score">'+score+'</span>'+side(m,"b")+'</div>'+(url?'<a href="'+html(url)+'" target="_blank" rel="noopener noreferrer" class="small-muted">Regarder le direct ↗</a>':'')+'</div>'}
 function scheduleMatch(m,past){const label=html([m.comp,m.serie].filter(Boolean).join(" · "));const score=past?'<span class="versus">'+html(m.sa)+" : "+html(m.sb)+'</span>':'<span class="versus">vs</span>';return '<div class="schedule-row"><div class="schedule-date">'+html(date(m.ts))+'</div><div class="schedule-body"><div class="schedule-comp" title="'+label+'">'+html(gameNames[m.game]||m.game)+" · "+label+'</div><div class="schedule-teams">'+side(m,"a")+score+side(m,"b")+'</div></div></div>'}
+const bigLeagues=/\b(LEC|LCK|LPL|LCS|CBLOL|MSI|Worlds?|World Championship|First Stand|VCT|Champions Tour|Masters|Champions 20|IEM|Intel Extreme Masters|BLAST|ESL Pro League|PGL|RLCS|Six Invitational|Six Major|EWC|Esports World Cup|The International|DreamLeague|CDL|Call of Duty League|OWCS|Overwatch Champions|PUBG Global)\b/i;
+const lowTier=/\b(academy|amateur|community|collegiate|open cup|open qualifier|challengers?|contenders?|division 2|division 3|tier ?[23]|grassroots|betboom rise|predator league|spike series)\b/i;
+const featuredTeams=/\b(G2|G2 Esports|T1|Gen\.?G|Fnatic|Team Vitality|Vitality|Karmine Corp|KC|Team Liquid|NAVI|Natus Vincere|FaZe Clan|FaZe|Cloud9|Sentinels|Gentle Mates|BDS|MOUZ|FURIA|100 Thieves|DRX|EDward Gaming|Paper Rex|Team Spirit|Falcons)\b/i;
+const isMajor=m=>{
+ const comp=[m.comp,m.serie,m.tournament].filter(Boolean).join(" ");
+ if(m.tier==="s"||m.tier==="a")return !lowTier.test(comp);
+ return bigLeagues.test(comp)&&!lowTier.test(comp);
+};
+const priority=m=>{
+ const comp=[m.comp,m.serie,m.tournament].filter(Boolean).join(" ");
+ return (m.tier==="s"?1600:m.tier==="a"?900:0)+(bigLeagues.test(comp)?450:0)+
+ (featuredTeams.test([m.an,m.bn].join(" "))*210)+
+ (m.status==="running"?80:0)+(m.imp||0);
+};
 function renderMatches(){
- const filtered=(arr)=>S.game==="all"?arr:arr.filter(m=>m.game===S.game);
- const live=filtered(S.matches.filter(m=>m.status==="running"));
- const upcoming=filtered(S.matches.filter(m=>m.status!=="running")).sort((a,b)=>a.ts-b.ts);
- const past=filtered(S.recent).sort((a,b)=>b.ts-a.ts);
+ const byGame=(arr)=>S.game==="all"?arr:arr.filter(m=>m.game===S.game);
+ const apply=(arr)=>S.scope==="major"?arr.filter(isMajor):arr;
+ const live=apply(byGame(S.matches.filter(m=>m.status==="running"))).sort((a,b)=>priority(b)-priority(a));
+ const upcoming=apply(byGame(S.matches.filter(m=>m.status!=="running"))).sort((a,b)=>priority(b)-priority(a)||a.ts-b.ts);
+ const past=apply(byGame(S.recent)).sort((a,b)=>priority(b)-priority(a)||b.ts-a.ts);
  $("#liveCount").textContent=live.length;
- $("#liveList").innerHTML=live.length?live.slice(0,6).map(liveMatch).join(""):'<p class="empty">'+(S.fetchError?"Source momentanément indisponible. Aucun score fictif affiché.":"Aucun match en direct dans ce filtre.")+'</p>';
+ $("#liveList").innerHTML=live.length?live.slice(0,6).map(liveMatch).join(""):'<p class="empty">'+(S.fetchError?"Source momentanément indisponible. Aucun faux score affiché.":S.scope==="major"?"Aucun match majeur en direct pour ce filtre. <button type=\"button\" class=\"inline-link\" data-all-matches>Voir toutes les divisions →</button>":"Aucun match en direct actuellement.")+'</p>';
  const chosen=S.view==="past"?past:upcoming;
- $("#scheduleList").innerHTML=chosen.length?chosen.slice(0,8).map(m=>scheduleMatch(m,S.view==="past")).join(""):'<p class="empty">'+(S.fetchError?"Données temporairement indisponibles.":"Aucun match disponible dans cette sélection.")+'</p>';
- const sourceText=S.fetchError?"Connexion aux matchs indisponible":("PandaScore · actualisé "+(S.updated?time(S.updated):"—"));
- $("#sourceStatus").textContent=sourceText;
- $("#liveUpdated").textContent=S.fetchError?"Indisponible":"PandaScore";
+ $("#scheduleList").innerHTML=chosen.length?chosen.slice(0,8).map(m=>scheduleMatch(m,S.view==="past")).join(""):'<p class="empty">'+(S.fetchError?"Données temporairement indisponibles.":S.scope==="major"?"Aucune affiche majeure disponible dans la fenêtre chargée. <button type=\"button\" class=\"inline-link\" data-all-matches>Voir toutes les divisions →</button>":"Aucun match disponible.")+'</p>';
+ document.querySelectorAll("[data-all-matches]").forEach(b=>b.addEventListener("click",()=>setScope("all")));
+ $("#sourceStatus").textContent=S.fetchError?"Connexion aux matchs indisponible":("PandaScore · actualisé "+(S.updated?time(S.updated):"—")+" · niveau S/A prioritaire");
+ $("#liveUpdated").textContent=S.fetchError?"Indisponible":S.scope==="major"?"Compétitions majeures":"Toutes divisions";
 }
+function setScope(scope){S.scope=scope;$$("[data-scope]").forEach(b=>{b.classList.toggle("selected",b.dataset.scope===scope);b.setAttribute("aria-pressed",String(b.dataset.scope===scope))});renderMatches();}
+$$("[data-scope]").forEach(b=>b.addEventListener("click",()=>setScope(b.dataset.scope)));
 async function loadMatches(){
  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),11000);
  try{
@@ -68,7 +85,7 @@ function hideAtlas(){viewChange(()=>atlasMode(false,""))}
 $$("[data-atlas]").forEach(b=>b.addEventListener("click",()=>showAtlas()));
 $("#atlasClose").addEventListener("click",hideAtlas);
 host.addEventListener("click",e=>{if(window.matchMedia("(max-width:650px)").matches&&!open&&!e.target.closest("button"))showAtlas()});
-frame.addEventListener("load",()=>{frameLoaded=true;frame.classList.add("frame-ready");if(open)frame.contentWindow?.postMessage({type:"lobby:atlas-mode",expanded:true},location.origin)});
+frame.addEventListener("load",()=>{frameLoaded=true;frame.classList.add("frame-ready");frame.contentWindow?.postMessage({type:"lobby:theme",theme:document.body.dataset.theme},location.origin);frame.contentWindow?.postMessage({type:"lobby:atlas-mode",expanded:open},location.origin)});
 function openSearch(category){
  focusBefore=document.activeElement;
  if(open)hideAtlas();
@@ -102,12 +119,12 @@ function countryResults(terms){
 function hitMarkup(item){
  const label=({teams:"ÉQUIPE",players:"JOUEUR",leagues:"LIGUE",tournaments:"TOURNOI",series:"SAISON",countries:"PAYS"})[item.type]||"DONNÉE";
  const sub=[item.game,item.country,item.team].filter(Boolean).join(" · ")||"PandaScore";
- const pic=validURL(item.image)?'<img src="'+html(validURL(item.image))+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'<span class="hit-initial">'+html(item.name.slice(0,2).toUpperCase())+'</span>';
+ const pic=validURL(item.image)?'<img src="'+html(validURL(item.image))+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'<span class="hit-initial">'+({players:"♙",teams:"♧",leagues:"◇",tournaments:"♜",countries:"◎"})[item.type]+'</span>';
  return '<button class="search-hit" type="button" data-hit="'+html(item.type+":"+item.id)+'">'+pic+'<span class="hit-text"><strong>'+html(item.name)+'</strong><small>'+html(sub)+'</small></span><span class="hit-type">'+label+'</span></button>';
 }
 function renderSearch(items,unavailable=[]){
  S.items=items;
- $("#searchHint").textContent="RÉSULTATS"+(items.length?" · "+items.length:"");
+ $("#searchHint").textContent="RÉSULTATS TRIÉS PAR PERTINENCE"+(items.length?" · "+items.length:"");
  if(!items.length){
   results.innerHTML='<p class="empty">Aucun résultat pour cette recherche'+(unavailable.length?". Certaines sources sont indisponibles.":".")+'</p>';return;
  }
@@ -155,7 +172,11 @@ async function searchNow(){
   const r=await fetch(url,{signal:queryAbort.signal});
   const data=await r.json();if(serial!==requestSerial)return;
   if(!r.ok)throw Error(data.error||"unavailable");
-  const items=local.concat((data.items||[]).filter(i=>i.name));renderSearch(items,data.unavailable||[]);
+  const items=local.concat((data.items||[]).filter(i=>i.name));
+  const key=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+  const rank=item=>{const n=key(item.name),t=key(term);return (n===t?10000:n.startsWith(t)?7000:n.includes(t)?3000:0)+
+  (item.type==="players"?500:0)+(item.team?200:0)+(item.image?80:0)-(Math.max(0,n.length-t.length)*18)};
+  items.sort((a,b)=>rank(b)-rank(a));renderSearch(items,data.unavailable||[]);
  }catch(e){if(serial!==requestSerial)return;renderSearch(local,["PandaScore"]);}
 }
 q.addEventListener("input",()=>{clearTimeout(queryTimer);queryTimer=setTimeout(searchNow,260)});
@@ -182,7 +203,7 @@ const storedTheme=(()=>{try{return localStorage.getItem("lobby-theme")}catch{ret
 function setTheme(value){document.body.dataset.theme=value;document.documentElement.style.colorScheme=value;$("#themeToggle").setAttribute("aria-label",value==="dark"?"Activer le thème clair":"Activer le thème sombre");try{localStorage.setItem("lobby-theme",value)}catch(e){};frame.contentWindow?.postMessage({type:"lobby:theme",theme:value},location.origin)}
 setTheme(storedTheme==="light"?"light":"dark");
 $("#themeToggle").addEventListener("click",()=>setTheme(document.body.dataset.theme==="dark"?"light":"dark"));
-window.addEventListener("message",e=>{if(e.origin!==location.origin)return;if(e.data?.type==="lobby:atlas-close")hideAtlas()});
+window.addEventListener("message",e=>{if(e.origin!==location.origin)return;if(e.data?.type==="lobby:atlas-close")hideAtlas();if(e.data?.type==="lobby:open-search")openSearch()});
 if(location.hash==="#atlas")showAtlas();
 renderMatches();loadMatches();loadNews();
 document.addEventListener("visibilitychange",()=>{if(!document.hidden && (!S.updated||Date.now()-S.updated>180000))loadMatches()});
