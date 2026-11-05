@@ -79,7 +79,7 @@ function viewChange(fn){if(document.startViewTransition&&!reduced()){document.st
 function atlasMode(isOpen,searchTerm){
  open=isOpen;document.body.classList.toggle("atlas-open",isOpen);$("#atlasToolbar").hidden=!isOpen;
  frame.contentWindow?.postMessage({type:"lobby:atlas-mode",expanded:isOpen,search:searchTerm||""},location.origin);
- if(isOpen){history.replaceState(null,"","#atlas");setTimeout(()=>$("#atlasClose").focus(),200)}
+ if(isOpen){history.replaceState(null,"","#atlas");frame.contentWindow?.postMessage({type:"lobby:visibility",visible:true},location.origin);setTimeout(()=>$("#atlasClose").focus(),200)}
  else {if(location.hash==="#atlas")history.replaceState(null,"",location.pathname);$("#searchTrigger").focus({preventScroll:true})}
 }
 function showAtlas(searchTerm){
@@ -91,6 +91,10 @@ $$("[data-atlas]").forEach(b=>b.addEventListener("click",()=>showAtlas()));
 $("#atlasClose").addEventListener("click",hideAtlas);
 host.addEventListener("click",e=>{if(window.matchMedia("(max-width:650px)").matches&&!open&&!e.target.closest("button"))showAtlas()});
 frame.addEventListener("load",()=>{frameLoaded=true;frame.classList.add("frame-ready");frame.contentWindow?.postMessage({type:"lobby:theme",theme:document.body.dataset.theme},location.origin);frame.contentWindow?.postMessage({type:"lobby:atlas-mode",expanded:open},location.origin)});
+if("IntersectionObserver" in window){
+ const visibility=new IntersectionObserver(entries=>{const visible=entries.some(x=>x.isIntersecting)||open;frame.contentWindow?.postMessage({type:"lobby:visibility",visible},location.origin)},{threshold:[0,.12,.5]});
+ visibility.observe(host);
+}
 function openSearch(category){
  focusBefore=document.activeElement;
  if(open)hideAtlas();
