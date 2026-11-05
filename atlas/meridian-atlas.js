@@ -27,7 +27,13 @@ function renderPanel(){
 function selectCountry(cc,animate=true){if(!coords[cc])return;state.country=cc;state.org=null;renderPanel();if(animate)fly(coords[cc][0],coords[cc][1],.57)}
 function selectOrg(id){const o=state.orgs.find(x=>x.id===id);if(!o)return;state.org=o;state.country=o.cc;renderPanel();if(coords[o.cc])fly(coords[o.cc][0],coords[o.cc][1],.49)}
 function searchFocus(query){const q=norm(query);if(!q)return;const org=state.orgs.find(o=>norm(o.n)===q)||state.orgs.find(o=>norm(o.n).includes(q));if(org){selectOrg(org.id);return}const cc=Object.keys(coords).find(x=>norm(countryName(x))===q||norm(x)===q);if(cc){selectCountry(cc);return}queuedSearch=query;$("#globeStatus").textContent="Aucune localisation confirmée pour « "+query+" »."}
-function setExpanded(v){state.expanded=v;document.documentElement.classList.toggle("embedded",!v);if(v&&state.globe)fly(state.country?coords[state.country][0]:28,state.country?coords[state.country][1]:15,state.country?.67:1.7);setTimeout(resize,80);setTimeout(resize,450)}
+function setExpanded(v){state.expanded=v;document.documentElement.classList.toggle("embedded",!v);
+ if(state.globe){
+  if(v)fly(state.country?coords[state.country][0]:28,state.country?coords[state.country][1]:15,state.country?.57:1.2);
+  else fly(28,15,2.25);
+ }
+ setTimeout(resize,80);setTimeout(resize,450);setTimeout(resize,1250)
+}
 function searchRequest(){if(window.parent!==window){window.parent.postMessage({type:"lobby:open-search"},location.origin)}else {location.href="/?search=1"}}
 $("#searchOpen").addEventListener("click",searchRequest);
 $("#atlasTheme").addEventListener("click",()=>theme(document.documentElement.dataset.theme==="dark"?"light":"dark"));
@@ -64,7 +70,7 @@ function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Globe stati
  try{globe.renderer().setPixelRatio(Math.min(window.devicePixelRatio||1,1.5))}catch(e){}
  const controls=globe.controls();controls.autoRotate=true;controls.autoRotateSpeed=.3;controls.enablePan=false;controls.minDistance=113;controls.maxDistance=500;
  controls.addEventListener("start",()=>{controls.autoRotate=false});
- globe.pointOfView({lat:28,lng:15,altitude:embedded?1.6:1.9},0);
+ globe.pointOfView({lat:28,lng:15,altitude:embedded?2.25:1.9},0);
  updatePoints();resize();
  requestAnimationFrame(()=>{$("#globeStage").classList.add("ready");$("#globeStatus").textContent="Globe 3D · clique sur un pays";state.ready=true});
  const observer=new ResizeObserver(resize);observer.observe(el);
