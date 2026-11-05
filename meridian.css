@@ -12,3 +12,19 @@ body.atlas-open{overflow:hidden}body.atlas-open .atlas-card{position:fixed;inset
 @media(max-width:920px){.header{height:64px}.topnav{display:none}.search-trigger{max-width:none}.lead-grid{grid-template-columns:minmax(0,1fr);gap:13px}.atlas-card{min-height:355px}.atlas-content{width:min(450px,75%)}.live-panel{min-height:240px}.live-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px}.live-match+.live-match{border-top-color:transparent;border-radius:9px}.live-match{border-color:var(--border-soft)}.content-grid{grid-template-columns:1fr 1fr}.explore-panel{grid-column:1/-1}}
 @media(max-width:650px){.header{height:62px;padding:0 16px;gap:12px}.brand{font-size:22px}.search-trigger{justify-content:center;margin-left:auto;max-width:42px;height:40px;padding:0}.search-trigger span,.search-trigger kbd{display:none}.header-actions{gap:4px}.gamebar{padding:9px 12px}.shell{padding:13px 12px 30px}.atlas-card{min-height:338px;border-radius:13px}.atlas-content{width:75%;padding:31px 23px}.atlas-content h1{font-size:32px;margin:20px 0 12px}.atlas-content p{font-size:11px;margin-bottom:17px;line-height:1.55}.atlas-scrim{background:linear-gradient(90deg,#091a31 0%,rgba(9,26,49,.95) 28%,rgba(9,26,49,.55) 62%,transparent 100%)}.atlas-caption{left:20px;bottom:15px;font-size:8px}.atlas-expand{bottom:12px;right:10px;font-size:10px;padding:7px}.primary-btn{padding:9px 11px;font-size:11px}.lead-grid{gap:12px}.destinations{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.destination{padding:12px 9px}.dest-icon{width:30px;height:30px;font-size:17px}.destination small{font-size:9px}.content-grid{grid-template-columns:1fr;gap:12px;margin-top:12px}.explore-panel{grid-column:auto}.live-list{grid-template-columns:1fr}.search-body{grid-template-columns:1fr;max-height:65vh}.search-categories{display:flex;overflow:auto;gap:5px;padding:8px 12px;border-right:0;border-bottom:1px solid var(--border-soft)}.search-categories button{width:auto;flex:none;font-size:10px;white-space:nowrap}.search-results{min-height:280px}.search-modal{padding:16px 8px}.search-window{border-radius:12px}.search-inputbar{height:56px;padding:0 12px}.search-inputbar input{font-size:12px}.search-foot span:first-child{display:none}.footer{padding:18px 14px}.atlas-toolbar button span{display:none}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;scroll-behavior:auto!important}::view-transition-old(root),::view-transition-new(root){animation-duration:.01ms!important}}
+
+/* Fiches découvertes depuis la recherche universelle. */
+.profile-card{padding:5px 6px 22px}
+.profile-back{background:transparent;border:0;color:var(--accent);font-size:11px;font-weight:700;padding:8px 0 16px}
+.profile-top{display:flex;gap:16px;align-items:center;border:1px solid var(--border-soft);background:var(--surface-2);border-radius:12px;padding:18px}
+.profile-top img{width:67px;height:67px;object-fit:contain;flex:none}
+.profile-top h3{margin:0 0 6px;font:700 22px var(--title);letter-spacing:-.03em}
+.profile-top p,.profile-source,.profile-loading{margin:0;color:var(--muted);font-size:11px}
+.profile-source,.profile-loading{padding:16px 0 8px}
+.profile-roster{margin:12px 0;border-top:1px solid var(--border-soft)}
+.profile-roster h4{margin:14px 0 8px;font:700 12px var(--title)}
+.profile-roster h4 small{font-weight:400;color:var(--muted)}
+.profile-player{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border-soft);padding:9px 0;font-size:12px}
+.profile-player small{color:var(--muted)}
+.profile-actions{display:flex;gap:8px;margin-top:16px}
+.profile-actions .outline-btn{margin-top:0}
