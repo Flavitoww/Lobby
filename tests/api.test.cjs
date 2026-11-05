@@ -16,7 +16,7 @@ test('explore: categorizes teams and players without inventing results',async()=
  process.env.PANDASCORE_TOKEN='unit-test';const original=global.fetch;
  global.fetch=async(url)=>({ok:true,json:async()=>String(url).includes('/teams')?[{id:7,name:'Test Team',players:[{id:8,name:'Test Player',active:true}]}]:String(url).includes('/players')?[{id:8,name:'Test Player'}]:[]});
  try{const res=mockResponse();await explore({query:{q:'Test',type:'all'}},res);assert.equal(res.statusCode,200);
- assert.deepEqual(res.body.items.map(x=>x.type),['teams','players']);assert.equal(res.body.items[0].players.length,1)}
+ assert.deepEqual(res.body.items.map(x=>x.type),['players','teams']);assert.equal(res.body.items.find(x=>x.type==='teams').players.length,1)}
  finally{global.fetch=original}
 });
 test('explore: invalid types blocked',async()=>{
@@ -28,5 +28,15 @@ test('live: keeps fixtures with to-be-announced opponents (no fake team names)',
  global.fetch=async(url)=>({ok:true,json:async()=>String(url).includes('/matches/upcoming')?[sampleMatch(983,'not_started')]:[]});
  try{const res=mockResponse();await live({query:{}},res);assert.equal(res.statusCode,200);const match=res.body.matches.find(x=>x.id===983);
  assert.equal(match.an,'À définir');assert.equal(match.bn,'À définir');assert.equal(res.body.source,'PandaScore')}
+ finally{global.fetch=original}
+});
+
+test('explore: relevant player Faker is ahead of names containing fake',async()=>{
+ process.env.PANDASCORE_TOKEN='unit-test';const original=global.fetch;
+ global.fetch=async url=>({ok:true,json:async()=>String(url).includes('/players')?
+ [{id:40,name:'Faker',slug:'faker',current_team:{name:'T1'}},{id:41,name:'fake player'}]:
+ String(url).includes('/teams')?[{id:12,name:'fakeTEAM'},{id:13,name:'Faketeam123'}]:[]});
+ try{const res=mockResponse();await explore({query:{q:'fake',type:'all'}},res);
+ assert.equal(res.statusCode,200);assert.equal(res.body.items[0].name,'Faker')}
  finally{global.fetch=original}
 });
