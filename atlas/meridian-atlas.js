@@ -19,22 +19,66 @@ function geoCenter(feature){
  return [Math.max(-83,Math.min(83,lat)),lng>180?lng-360:lng];
 }
 const coords={FR:[46.6,2.3],DE:[51.2,10.4],GB:[54,-2],US:[38,-98],CA:[57,-104],BR:[-11,-52],KR:[36.5,127.8],CN:[35,104],JP:[36,138],ES:[40,-4],SE:[62,15],DK:[56,10],PL:[52,19],UA:[49,32],SA:[24,45],AE:[24,54],AU:[-25,134],IN:[21,79],ID:[-3,118],TR:[39,35],NL:[52,5],BE:[51,4],IT:[42,12],PT:[39,-8],NO:[62,10],FI:[64,26],CH:[47,8],AT:[48,14],CZ:[50,15],RO:[46,25],RS:[44,21],HR:[45,16],GR:[39,22],SG:[1.3,104],MY:[4,102],PH:[13,122],TH:[15,101],VN:[16,108],TW:[24,121],HK:[22,114],MX:[24,-102],AR:[-36,-64],CL:[-33,-71],PE:[-10,-76],CO:[4,-74],ZA:[-29,25],EG:[26,30],MA:[32,-6],TN:[34,10],IL:[31,35],KZ:[48,68],RU:[61,105],NZ:[-41,174]};
-const state={globe:null,orgs:[],country:null,org:null,layer:"teams",tab:"overview",expanded:!embedded,ready:false};
+const state={globe:null,orgs:[],country:null,org:null,layer:"teams",tab:"overview",expanded:!embedded,ready:false,liveMatches:[],liveByCountry:new Map()};
 let lastFocus=null,queuedSearch="";
 const flag=cc=>{if(!/^[A-Z]{2}$/.test(cc||""))return"◎";return String.fromCodePoint(...[...cc].map(c=>127397+c.charCodeAt(0)))};
 const countryName=cc=>names.of(cc)||cc;
 const ctrl=()=>state.globe?.controls?.();
 const duration=()=>matchMedia("(prefers-reduced-motion: reduce)").matches?0:1150;
 function fly(lat,lng,alt=.7){state.globe?.pointOfView({lat,lng,altitude:alt},duration())}
-function home(){state.country=null;state.org=null;renderPanel();fly(28,15,2.15)}
+function home(){state.country=null;state.org=null;state.tab="overview";renderPanel();fly(28,15,2.15)}
+const safeUrl=s=>{try{const u=new URL(s);return u.protocol==="https:"?u.href:""}catch{return""}};
+function associateMatches(){
+ const byName=new Map();
+ state.orgs.forEach(o=>{
+  const base=norm(o.n);
+  if(base.length>2)byName.set(base,o.cc);
+  if(o.s&&norm(o.s).length>3)byName.set(norm(o.s),o.cc);
+ });
+ const byCountry=new Map();
+ for(const m of state.liveMatches){
+  const cc=new Set([m.an,m.bn].map(n=>byName.get(norm(n))).filter(Boolean));
+  for(const code of cc){if(!byCountry.has(code))byCountry.set(code,[]);byCountry.get(code).push(m)}
+ }
+ state.liveByCountry=byCountry;
+ const count=[...byCountry.values()].reduce((n,v)=>n+v.length,0);
+ $("#worldLive").textContent=new Set([...byCountry.values()].flat().map(m=>m.id)).size;
+ $("#mapLiveCount").textContent=[...new Set([...byCountry.values()].flat().map(m=>m.id))].length;
+ $("#countryLiveCount").textContent=state.country?(byCountry.get(state.country)||[]).length:state.liveMatches.length;
+ updatePoints();
+ renderPanel();
+}
+function matchCard(m){
+ const game=({lol:"League of Legends",val:"VALORANT",cs2:"Counter-Strike 2",rl:"Rocket League",dota:"Dota 2",ow:"Overwatch",r6:"Rainbow Six",cod:"Call of Duty",hok:"Honor of Kings",mlbb:"Mobile Legends"})[m.game]||m.game||"Esport";
+ const url=safeUrl(m.watch);
+ return '<article class="match-mini"><div class="match-mini-meta"><span class="match-mini-live">● LIVE</span> · '+esc(game)+' · '+esc(m.comp||"Compétition")+'</div><div class="match-mini-line"><span>'+esc(m.as||m.an||"À définir")+'</span><strong>'+esc(m.sa)+' — '+esc(m.sb)+'</strong><span>'+esc(m.bs||m.bn||"À définir")+'</span></div><p class="match-note">Position : pays d’une équipe identifiée, pas lieu de l’événement.</p>'+(url?'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">Regarder le match ↗</a>':"")+'</article>';
+}
+function countryLiveHtml(cc){
+ const matches=cc?(state.liveByCountry.get(cc)||[]):state.liveMatches;
+ return matches.length?matches.slice(0,9).map(matchCard).join(""):'<p class="note">Aucun match en direct relié à ce pays actuellement. Couverture limitée à PandaScore.</p>';
+}
+function renderWorld(){
+ const body=$("#panelContent"),list=Object.entries(Object.groupBy?Object.groupBy(state.orgs,o=>o.cc):state.orgs.reduce((a,o)=>{(a[o.cc]||=[]).push(o);return a},{}))
+  .map(([cc,orgs])=>({cc,orgs})).filter(x=>x.cc).sort((a,b)=>b.orgs.length-a.orgs.length).slice(0,8);
+ $("#panelTitle").textContent="Le monde esport";$("#panelSubtitle").textContent="Une scène mondiale, des données identifiées";
+ $("#countryLiveCount").textContent=state.liveMatches.length;
+ body.innerHTML='<div class="data-label">EN CE MOMENT</div><div class="globe-key"><span class="key-dot live"></span><span>Matchs en direct associés au pays d’une équipe</span></div>'+
+ (state.liveMatches.length?state.liveMatches.slice(0,4).map(matchCard).join(""):'<p class="note">Aucun live confirmé dans la fenêtre PandaScore actuelle.</p>')+
+ '<div class="data-label">PAYS LES PLUS REPRÉSENTÉS</div>'+list.map(x=>'<button class="org-item" type="button" data-country="'+esc(x.cc)+'"><span class="org-fallback">'+flag(x.cc)+'</span><span><strong>'+esc(countryName(x.cc))+'</strong><small>'+x.orgs.length+' organisations indexées</small></span><span class="arrow">↗</span></button>').join("")+
+ '<p class="note">Pays d’origine des organisations, non géolocalisation de leurs bureaux ou des rencontres. Source : PandaScore.</p>';
+ body.querySelectorAll("[data-country]").forEach(b=>b.addEventListener("click",()=>selectCountry(b.dataset.country)));
+}
 function theme(t){document.documentElement.dataset.theme=t==="light"?"light":"dark";try{localStorage.setItem("lobby-theme",document.documentElement.dataset.theme)}catch{};if(state.globe)state.globe.atmosphereColor(t==="light"?"#b6d9f7":"#68b5ff")}
 function renderPanel(){
  const title=$("#panelTitle"),sub=$("#panelSubtitle"),body=$("#panelContent");
- if(!state.country&&!state.org){title.textContent="Le monde esport";sub.textContent="Une planète, des scènes compétitives";body.innerHTML='<div class="empty-panel"><span class="empty-icon">◎</span><h3>Sélectionne un pays</h3><p>Clique sur le globe pour découvrir ses organisations, ses équipes et leurs jeux.</p></div>';return;}
+ if(!state.country&&!state.org){renderWorld();return;}
  if(state.org){const o=state.org;title.textContent=o.n;sub.textContent=(o.cc?countryName(o.cc):"")+(o.s?" · "+o.s:"");const logo=safeImage(o.lg||o.ld);const sets=Object.entries(o.g||{});body.innerHTML='<button type="button" class="detail-back" id="countryBack">← '+esc(countryName(o.cc))+'</button><div class="detail-head">'+(logo?'<img src="'+esc(logo)+'" alt="" loading="lazy">':'<span class="org-fallback">'+esc(o.n.slice(0,2))+'</span>')+'<div><h3>'+esc(o.n)+'</h3><p>'+esc(countryName(o.cc))+'</p></div></div><div class="country-stat"><div class="number">'+sets.length+'</div><p>Jeu'+(sets.length===1?"":"x")+' représenté'+(sets.length===1?"":"s")+'</p></div><div class="data-label">EFFECTIFS PAR JEU</div>'+sets.map(([game,v])=>'<div><p><strong>'+esc(game.toUpperCase())+'</strong></p>'+((v.pl||[]).length?(v.pl||[]).slice(0,12).map(p=>'<div class="roster-row"><strong>'+esc(p.n)+'</strong><small>'+esc([p.r,p.cc].filter(Boolean).join(" · "))+'</small></div>').join(""):'<p class="note">Effectif non renseigné par la source.</p>')+'</div>').join("")+'<p class="note">Source : PandaScore. Les rosters peuvent évoluer et ne couvrent pas toutes les compétitions.</p>';$("#countryBack").addEventListener("click",()=>selectCountry(o.cc,false));return;}
- const cc=state.country,orgs=state.orgs.filter(o=>o.cc===cc),shown=orgs.slice(0,70);title.textContent=flag(cc)+" "+countryName(cc);sub.textContent="Scène esport · "+cc;
+ const cc=state.country,orgs=state.orgs.filter(o=>o.cc===cc),shown=orgs.slice(0,70);title.textContent=flag(cc)+" "+countryName(cc);sub.textContent="Scène esport · "+cc;$("#countryLiveCount").textContent=(state.liveByCountry.get(cc)||[]).length;
  const logos=shown.map(o=>{const u=safeImage(o.lg||o.ld);return'<button class="org-item" type="button" data-org="'+esc(o.id)+'">'+(u?'<img class="org-logo" src="'+esc(u)+'" alt="" loading="lazy">':'<span class="org-fallback">'+esc(o.n.slice(0,2))+'</span>')+'<span><strong>'+esc(o.n)+'</strong><small>'+esc(Object.keys(o.g||{}).map(k=>k.toUpperCase()).join(" · "))+'</small></span><span class="arrow">↗</span></button>'}).join("");
- body.innerHTML='<div class="country-stat"><div class="number">'+(state.orgs.length?orgs.length:"—")+'</div><p>Organisations indexées par Lobby</p></div><div class="data-label">ÉQUIPES DANS CETTE RÉGION</div>'+(state.orgs.length?(logos||'<p class="note">Aucune équipe indexée dans ce pays pour le moment.</p>'):'<p class="note">Chargement des équipes…</p>')+'<p class="note">L’absence d’une équipe signifie seulement que cette source ne la référence pas encore. Source : PandaScore.</p>';
+ body.innerHTML='<div class="country-stat"><div class="number">'+(state.orgs.length?orgs.length:"—")+'</div><p>Organisations indexées par Lobby</p></div>'+
+ (state.tab==="live"?'<div class="data-label">MATCHS EN DIRECT · ASSOCIÉS À CE PAYS</div>'+countryLiveHtml(cc):
+ '<div class="data-label">ÉQUIPES DANS CETTE RÉGION</div>'+(state.orgs.length?(logos||'<p class="note">Aucune équipe indexée dans ce pays pour le moment.</p>'):'<p class="note">Chargement des équipes…</p>'))+
+ '<p class="note">Pays des organisations, pas lieux de rencontre. La couverture dépend des données PandaScore.</p>';
  body.querySelectorAll("[data-org]").forEach(el=>el.addEventListener("click",()=>selectOrg(el.dataset.org)));
 }
 function selectCountry(cc,animate=true){if(!coords[cc])return;state.country=cc;state.org=null;renderPanel();if(animate)fly(coords[cc][0],coords[cc][1],.57)}
