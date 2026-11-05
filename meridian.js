@@ -32,6 +32,34 @@ const priority=m=>{
  (featuredTeams.test([m.an,m.bn].join(" "))*210)+(favouriteMatch(m)?4000:0)+
  (m.status==="running"?80:0)+(m.imp||0);
 };
+
+function renderHighlights(){
+ const all=[...S.matches,...S.recent];
+ const leagues=new Map();
+ for(const m of all){
+  const key=(m.comp||"").trim();if(!key)continue;
+  const prev=leagues.get(key);
+  const importance=(m.imp||0)+(m.tier==="s"?150:m.tier==="a"?65:0);
+  if(!prev||importance>prev.importance)leagues.set(key,{name:key,image:m.ll,importance});
+ }
+ const selected=[...leagues.values()].sort((a,b)=>b.importance-a.importance).slice(0,4);
+ $("#competitionHighlights").innerHTML=selected.length?selected.map(x=>'<button type="button" class="competition-tile" data-competition="'+html(x.name)+'">'+(validURL(x.image)?'<img src="'+html(validURL(x.image))+'" loading="lazy" alt="">':'<span class="logo-placeholder">'+html(x.name.slice(0,2).toUpperCase())+'</span>')+'<span title="'+html(x.name)+'">'+html(x.name)+'</span></button>').join(""):'<p class="empty">Compétitions indisponibles pour le moment.</p>';
+ $("#competitionHighlights [data-competition]").forEach(b=>b.addEventListener("click",()=>{openSearch("leagues");q.value=b.dataset.competition;searchNow()}));
+ $("#pulseLive").textContent=S.fetchError?"—":S.matches.filter(m=>m.status==="running").length;
+ $("#pulseUpcoming").textContent=S.fetchError?"—":S.matches.filter(m=>m.status!=="running").length;
+ $("#pulseLeagues").textContent=S.fetchError?"—":leagues.size;
+ $("#heroMatchCount").textContent=S.fetchError?"—":all.length;
+ $("#heroGameCount").textContent=S.fetchError?"—":new Set(all.map(m=>m.game).filter(Boolean)).size;
+}
+function renderOrgs(data){
+ const orgs=Array.isArray(data.orgs)?data.orgs:[];
+ $("#pulseCountries").textContent=Number.isInteger(data.countries)?data.countries:"—";
+ $("#heroOrgCount").textContent=Number.isInteger(data.total)?data.total:"—";
+ const target=$("#orgHighlights");
+ if(!orgs.length){target.innerHTML='<p class="empty">Index des organisations indisponible pour le moment.</p>';return}
+ target.innerHTML=orgs.slice(0,4).map(o=>'<button class="org-tile" type="button" data-team="'+html(o.n)+'">'+(validURL(o.logo)?'<img src="'+html(validURL(o.logo))+'" loading="lazy" alt="">':'<span class="logo-placeholder">'+html(o.n.slice(0,2).toUpperCase())+'</span>')+'<span title="'+html(o.n)+'">'+html(o.n)+'</span><small>'+html(o.cc)+'</small></button>').join("");
+ $("#orgHighlights [data-team]").forEach(b=>b.addEventListener("click",()=>{openSearch("teams");q.value=b.dataset.team;searchNow()}));
+}
 function renderMatches(){
  const byGame=(arr)=>S.game==="all"?arr:arr.filter(m=>m.game===S.game);
  const apply=(arr)=>S.scope==="major"?arr.filter(isMajor):arr;
@@ -55,9 +83,10 @@ async function loadMatches(){
   if(!r.ok)throw new Error("unavailable");
   const d=await r.json();
   if(!Array.isArray(d.matches)||!Array.isArray(d.recent))throw Error("invalid");
-  S.matches=d.matches;S.recent=d.recent;S.updated=d.updated;S.fetchError=false;
+  S.matches=d.matches;S.recent=d.recent;S.updated=d.updated;S.fetchError=false;renderHighlights();
+  const iframe=$("#atlasFrame");iframe?.contentWindow?.postMessage({type:"lobby:match-data",matches:d.matches.filter(m=>m.status==="running").slice(0,100)},location.origin);
  }catch(e){S.fetchError=true;}
- finally{clearTimeout(timer);renderMatches();}
+ finally{clearTimeout(timer);renderMatches();if(S.fetchError)renderHighlights();}
 }
 async function loadNews(){
  const el=$("#newsList"),ctrl=new AbortController(),t=setTimeout(()=>ctrl.abort(),11000);
@@ -90,7 +119,7 @@ function hideAtlas(){viewChange(()=>atlasMode(false,""))}
 $$("[data-atlas]").forEach(b=>b.addEventListener("click",()=>showAtlas()));
 $("#atlasClose").addEventListener("click",hideAtlas);
 host.addEventListener("click",e=>{if(window.matchMedia("(max-width:650px)").matches&&!open&&!e.target.closest("button"))showAtlas()});
-frame.addEventListener("load",()=>{frameLoaded=true;frame.classList.add("frame-ready");frame.contentWindow?.postMessage({type:"lobby:theme",theme:document.body.dataset.theme},location.origin);frame.contentWindow?.postMessage({type:"lobby:atlas-mode",expanded:open},location.origin)});
+frame.addEventListener("load",()=>{frameLoaded=true;frame.classList.add("frame-ready");frame.contentWindow?.postMessage({type:"lobby:theme",theme:document.body.dataset.theme},location.origin);frame.contentWindow?.postMessage({type:"lobby:atlas-mode",expanded:open},location.origin);if(S.matches?.length)frame.contentWindow?.postMessage({type:"lobby:match-data",matches:S.matches.filter(m=>m.status==="running").slice(0,100)},location.origin)});
 if("IntersectionObserver" in window){
  const visibility=new IntersectionObserver(entries=>{const visible=entries.some(x=>x.isIntersecting)||open;frame.contentWindow?.postMessage({type:"lobby:visibility",visible},location.origin)},{threshold:[0,.12,.5]});
  visibility.observe(host);
@@ -226,7 +255,7 @@ const storedTheme=(()=>{try{return localStorage.getItem("lobby-theme")}catch{ret
 function setTheme(value){document.body.dataset.theme=value;document.documentElement.style.colorScheme=value;$("#themeToggle").setAttribute("aria-label",value==="dark"?"Activer le thème clair":"Activer le thème sombre");try{localStorage.setItem("lobby-theme",value)}catch(e){};frame.contentWindow?.postMessage({type:"lobby:theme",theme:value},location.origin)}
 setTheme(storedTheme==="light"?"light":"dark");
 $("#themeToggle").addEventListener("click",()=>setTheme(document.body.dataset.theme==="dark"?"light":"dark"));
-window.addEventListener("message",e=>{if(e.origin!==location.origin)return;if(e.data?.type==="lobby:atlas-close")hideAtlas();if(e.data?.type==="lobby:open-search")openSearch()});
+window.addEventListener("message",e=>{if(e.origin!==location.origin)return;if(e.data?.type==="lobby:atlas-close")hideAtlas();if(e.data?.type==="lobby:open-search")openSearch();if(e.data?.type==="lobby:org-summary")renderOrgs(e.data)});
 if(location.hash==="#atlas")showAtlas();
 renderMatches();loadMatches();loadNews();
 if(new URLSearchParams(location.search).has("search"))openSearch();
