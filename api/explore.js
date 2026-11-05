@@ -2,7 +2,7 @@
 // Aucune clé exposée au navigateur. Pas d'invention pour les catégories non couvertes.
 const BASE = "https://api.pandascore.co";
 const TYPES = {teams:"teams",players:"players",leagues:"leagues",tournaments:"tournaments",series:"series"};
-const GAME = {"lol":"lol","cs2":"csgo","val":"valorant","rl":"rl","r6":"r6siege","dota":"dota2","ow":"ow","mlbb":"mlbb","hok":"kog"};
+const GAME = {"lol":"lol","cs2":"csgo","val":"valorant","rl":"rl","r6":"r6siege","dota":"dota2","ow":"ow","cod":"codmw","fc":"fifa","mlbb":"mlbb","hok":"kog","sc":"starcraft-2","apex":"apex","fn":"fortnite","pubg":"pubg","tft":"tft"};
 const memory = new Map();
 const TTL = 5 * 60 * 1000;
 
@@ -35,7 +35,7 @@ async function remote(type, q, game, id, token) {
   const path = id ? "/" + type + "/" + id : root + "/" + type;
   const params = new URLSearchParams();
   if (!id) {
-    params.set("page[size]", "16");
+    params.set("page[size]", type === "players" ? "100" : type === "teams" ? "60" : "25");
     if (q) params.set("search[name]", q);
   }
   const r = await fetch(BASE + path + (params.toString() ? "?" + params.toString() : ""), {
@@ -85,7 +85,21 @@ module.exports = async (req, res) => {
         items:[], unavailable, source:"PandaScore"
       });
     }
-    const data = {items:items.slice(0,64), unavailable, source:"PandaScore", updated:Date.now()};
+    const norm = s => String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
+    const needle=norm(q);
+    const score = item => {
+      const n=norm(item.name), slug=norm(item.slug), word=item.name.toLowerCase().split(/[\s_-]+/);
+      let base = n === needle || slug === needle ? 10000 : n.startsWith(needle) ? 7500 : slug.startsWith(needle) ? 6800 : word.some(w=>w.startsWith(q.toLowerCase())) ? 4500 : n.includes(needle) ? 2600 : 0;
+      base -= Math.min(500,Math.max(0,n.length-needle.length)*22);
+      // Les joueurs avec pseudo pertinent sont prioritaires, mais jamais devant un nom exact d'un autre type.
+      if(item.type==="players")base+=500;
+      if(item.type==="players"&&item.team)base+=240;
+      if(item.image)base+=100;
+      if(item.type==="teams"&&item.players?.length)base+=65;
+      return base;
+    };
+    items.sort((a,b)=>score(b)-score(a)||a.name.localeCompare(b.name));
+    const data = {items:items.slice(0,72), unavailable, source:"PandaScore", updated:Date.now()};
     // Garde-fou mémoire (fonctions serverless chaudes seulement).
     if (memory.size > 150) memory.clear();
     memory.set(key,{ts:Date.now(),data});
