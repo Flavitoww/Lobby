@@ -10,6 +10,8 @@ const BASE = 'https://api.pandascore.co';
 const FRL = /\b(LFL|LDLC|Ligue Fran|French|France|Gamers Origin|Elite Series)\b/i;
 const GW = { lol: 20, cs2: 20, val: 20, dota: 10, rl: 10, r6: 10 };
 const TW = { s: 100, a: 60, b: 20, c: 10, d: 5 };
+// Les niveaux de compétition remontent tels quels : la sélection T1 se fait dans le Desk.
+
 
 function pick(m) {
   const o = (m.opponents || []).map((x) => x.opponent).filter(Boolean);
@@ -18,7 +20,8 @@ function pick(m) {
   if (!game) return null;
   const score = (id) => { const r = (m.results || []).find((x) => x.team_id === id); return r ? r.score : 0; };
   const stream = (m.streams_list || []).find((s) => s.main && s.raw_url) || (m.streams_list || []).find((s) => s.official && s.raw_url) || (m.streams_list || [])[0];
-  const tier = (m.tournament && m.tournament.tier) || 'b';
+  const tier = (m.tournament && m.tournament.tier) || (m.serie && m.serie.tier) || null;
+  const tournament = (m.tournament && m.tournament.name) || '';
   const league = (m.league && m.league.name) || '';
   const serie = (m.serie && (m.serie.full_name || m.serie.name)) || '';
   const fr = FRL.test(league + ' ' + serie);
@@ -28,7 +31,7 @@ function pick(m) {
   const ts = Date.parse(m.begin_at || m.scheduled_at || m.modified_at || 0) || 0;
   return {
     imp, tier, id: m.id, status: m.status, ts, game,
-    comp: league, serie,
+    comp: league, serie, tournament,
     ll: (m.league && m.league.image_url) || null,
     an: a.name, as: short(a), al: a.image_url || null, sa: score(a.id),
     bn: b.name, bs: short(b), bl: b.image_url || null, sb: score(b.id),
@@ -71,7 +74,7 @@ module.exports = async (req, res) => {
 
     let live = take(running).filter((m) => m.status === 'running');
     let next = take(upcoming).filter((m) => m.status === 'not_started');
-    let recent = take(past).filter((m) => m.status === 'finished' && (m.sa || m.sb));
+    let recent = take(past).filter((m) => m.status === 'finished');
 
     live.sort((a, b) => b.imp - a.imp);
     next.sort((a, b) => a.ts - b.ts);
