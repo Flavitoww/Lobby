@@ -94,7 +94,7 @@ function setExpanded(v){state.expanded=v;document.documentElement.classList.togg
 function searchRequest(){if(window.parent!==window){window.parent.postMessage({type:"lobby:open-search"},location.origin)}else {location.href="/?search=1"}}
 $("#searchOpen").addEventListener("click",searchRequest);
 $("#atlasTheme").addEventListener("click",()=>theme(document.documentElement.dataset.theme==="dark"?"light":"dark"));
-$$("[data-layer]").forEach(b=>b.addEventListener("click",()=>{state.layer=b.dataset.layer;$$("[data-layer]").forEach(x=>x.classList.toggle("selected",x===b));if(state.layer==="competitions"){$("#panelTitle").textContent="Compétitions par pays";$("#panelSubtitle").textContent="Exploration géographique";$("#panelContent").innerHTML='<p class="note">Les compétitions ne sont pas toutes associées à un pays par PandaScore. Choisis un pays, puis une équipe pour retrouver ses jeux et rosters. Les localisations non confirmées ne sont pas inventées.</p>'}else{renderPanel()}updatePoints()}));
+$("[data-layer]").forEach(b=>b.addEventListener("click",()=>{state.layer=b.dataset.layer;$("[data-layer]").forEach(x=>x.classList.toggle("selected",x===b));state.tab=state.layer==="live"?"live":"overview";$("[data-tab]").forEach(x=>x.classList.toggle("selected",x.dataset.tab===state.tab));renderPanel();updatePoints()}));
 $$("[data-tab]").forEach(b=>b.addEventListener("click",()=>{state.tab=b.dataset.tab;$$("[data-tab]").forEach(x=>x.classList.toggle("selected",x===b));renderPanel()}));
 $("#home").addEventListener("click",home);$("#recenter").addEventListener("click",home);
 $("#zoomIn").addEventListener("click",()=>{if(state.globe){const v=state.globe.pointOfView();fly(v.lat,v.lng,Math.max(.25,v.altitude*.72))}});
@@ -106,29 +106,52 @@ window.addEventListener("message",e=>{if(e.origin!==location.origin||!e.data)ret
 });
 function resize(){const el=$("#globe3d");if(!state.globe||!el.clientWidth||!el.clientHeight)return;state.globe.width(el.clientWidth).height(el.clientHeight);state.globe.globeOffset(embedded?[Math.min(110,el.clientWidth*.15),0]:[Math.min(85,el.clientWidth*.08),0])}
 const ccpoints=Object.entries(coords).map(([cc,v])=>({cc,lat:v[0],lng:v[1],count:0}));
-function updatePoints(){if(!state.globe)return;const counts={};state.orgs.forEach(o=>{counts[o.cc]=(counts[o.cc]||0)+1});
- ccpoints.forEach(x=>{x.count=counts[x.cc]||0});
- const points=ccpoints;
- state.globe.pointsData(points).pointColor(p=>p.count>0?"#59aeff":"#77a6d6").pointAltitude(p=>p.count>0?.018:.004).pointRadius(p=>p.count>0?.32:.18).pointLabel(p=>countryName(p.cc)+(p.count?" · "+p.count+" équipes":""));
+function updatePoints(){
+ if(!state.globe)return;
+ const counts={};state.orgs.forEach(o=>{counts[o.cc]=(counts[o.cc]||0)+1});
+ ccpoints.forEach(x=>{x.count=counts[x.cc]||0;x.live=(state.liveByCountry.get(x.cc)||[]).length});
+ const p=ccpoints.filter(x=>state.layer==="live"?x.live>0:state.layer==="countries"?true:x.count>0);
+ state.globe.pointsData(p)
+ .pointColor(x=>x.live>0&&state.layer==="live"?"#ff687e":x.count>0?"#62b8ff":"#7da8d1")
+ .pointAltitude(x=>x.live&&state.layer==="live"?.026:.012)
+ .pointRadius(x=>x.live&&state.layer==="live"?.48:x.count>0?.31:.20)
+ .pointLabel(x=>countryName(x.cc)+" · "+x.count+" organisations"+(x.live?" · "+x.live+" live":""));
+ const livePoints=ccpoints.filter(x=>x.live>0).slice(0,12);
+ state.globe.ringsData(state.layer==="live"?livePoints:[])
+  .ringLat("lat").ringLng("lng").ringAltitude(.023)
+  .ringMaxRadius(.8).ringPropagationSpeed(.28).ringRepeatPeriod(1600)
+  .ringColor(()=>["#ff768d","#ff768d00"]);
+ const leader=Object.entries(counts).filter(([cc,n])=>coords[cc]&&n>0).sort((a,b)=>b[1]-a[1]).slice(0,8);
+ if(!embedded&&state.layer!=="live"){
+  state.globe.htmlElementsData(leader.map(([cc,n])=>({cc,n,lat:coords[cc][0],lng:coords[cc][1]})))
+  .htmlLat("lat").htmlLng("lng").htmlAltitude(.045)
+  .htmlElement(d=>{const button=document.createElement("button");button.className="country-marker";button.type="button";button.textContent=countryName(d.cc)+" · "+d.n;button.setAttribute("aria-label",countryName(d.cc)+", "+d.n+" organisations");button.onclick=e=>{e.stopPropagation();selectCountry(d.cc)};return button});
+ }else state.globe.htmlElementsData([]);
+}
+function updateSummary(){
+ $("#worldTeams").textContent=state.orgs.length||"—";
+ $("#worldCountries").textContent=new Set(state.orgs.map(o=>o.cc)).size||"—";
 }
 function fail(message){$("#globeStatus").textContent=message;/* Keep always-visible fallback globe */}
 function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Globe statique affiché · 3D indisponible");return}
  try{
  const globe=Globe({animateIn:false,rendererConfig:{alpha:true,antialias:window.devicePixelRatio<=1.6}})(el)
-  .backgroundColor("rgba(0,0,0,0)").showAtmosphere(true).atmosphereColor("#68b5ff").atmosphereAltitude(.12)
-  .polygonsData(geo.features).polygonCapColor(()=>document.documentElement.dataset.theme==="light"?"#a8c6e7":"#24496e")
-  .polygonSideColor(()=>"#142e4e").polygonStrokeColor(()=>document.documentElement.dataset.theme==="light"?"#ffffff":"#4779af")
-  .polygonAltitude(.003).polygonsTransitionDuration(280)
+  .backgroundColor("rgba(0,0,0,0)")
+  .globeImageUrl("/lib/earth-day.jpg").bumpImageUrl("/lib/earth-topology.png")
+  .showAtmosphere(true).atmosphereColor("#85c9ff").atmosphereAltitude(.11)
+  .polygonsData(geo.features).polygonCapColor(()=>"rgba(0,0,0,0)")
+  .polygonSideColor(()=>"rgba(0,0,0,0)").polygonStrokeColor(()=>"rgba(171,213,255,.26)")
+  .polygonAltitude(.002).polygonsTransitionDuration(280)
   .onPolygonClick(f=>{const code=f.properties?.ISO_A2||f.properties?.iso_a2||f.properties?.ISO2||f.properties?.iso2;const cc=code&&coords[code]?code:resolveCountry(f.properties?.name);if(cc){if(!coords[cc]){const center=geoCenter(f);if(center)coords[cc]=center;}state.country=cc;state.org=null;renderPanel();if(coords[cc])fly(coords[cc][0],coords[cc][1],.57)}})
   .pointsData([]).pointLat("lat").pointLng("lng").pointAltitude(.018).pointRadius(.28)
   .pointColor(()=>"#64b2ff").pointsTransitionDuration(150)
-  .onPointClick(p=>selectCountry(p.cc));
+  .onPointClick(p=>selectCountry(p.cc)).onZoom(pov=>window.LobbyEarth?.update(pov));
  state.globe=globe;
  try{globe.renderer().setPixelRatio(Math.min(window.devicePixelRatio||1,1.5))}catch(e){}
  const controls=globe.controls();controls.autoRotate=true;controls.autoRotateSpeed=.3;controls.enablePan=false;controls.minDistance=113;controls.maxDistance=500;
  controls.addEventListener("start",()=>{controls.autoRotate=false});
  globe.pointOfView({lat:28,lng:15,altitude:embedded?2.25:1.9},0);
- updatePoints();resize();
+ updatePoints();resize();window.LobbyEarth?.init(globe);
  requestAnimationFrame(()=>{$("#globeStage").classList.add("ready");$("#globeStatus").textContent="Globe 3D · clique sur un pays";state.ready=true});
  const observer=new ResizeObserver(resize);observer.observe(el);
  document.addEventListener("visibilitychange",()=>{if(document.hidden)globe.pauseAnimation?.();else globe.resumeAnimation?.()});
@@ -148,9 +171,19 @@ async function init(){
  }catch(e){fail("Aperçu de la planète disponible · 3D non chargée")}
 }
 async function loadOrganizations(){
- try{const saved=JSON.parse(localStorage.getItem("lobby.orgs")||"null");if(saved&&Array.isArray(saved.orgs)&&Date.now()-saved.updated<86400000){state.orgs=saved.orgs;updatePoints();renderPanel()}}catch(e){}
- try{const r=await fetch("/api/orgs",{signal:AbortSignal.timeout(45000)});if(!r.ok)throw Error("data");const json=await r.json();if(!Array.isArray(json.orgs))throw Error("invalid");state.orgs=json.orgs;try{localStorage.setItem("lobby.orgs",JSON.stringify({updated:Date.now(),orgs:json.orgs}))}catch(e){};updatePoints();renderPanel();$("#dataSource").textContent="Équipes : PandaScore · "+json.orgs.length+" organisations indexées";if(queuedSearch){const q=queuedSearch;queuedSearch="";searchFocus(q)}}
+ try{const saved=JSON.parse(localStorage.getItem("lobby.orgs")||"null");if(saved&&Array.isArray(saved.orgs)&&Date.now()-saved.updated<86400000){state.orgs=saved.orgs;updateSummary();associateMatches()}}catch(e){}
+ try{const r=await fetch("/api/orgs",{signal:AbortSignal.timeout(45000)});if(!r.ok)throw Error("data");const json=await r.json();if(!Array.isArray(json.orgs))throw Error("invalid");state.orgs=json.orgs;updateSummary();associateMatches();try{localStorage.setItem("lobby.orgs",JSON.stringify({updated:Date.now(),orgs:json.orgs}))}catch(e){};updatePoints();renderPanel();$("#dataSource").textContent="Équipes : PandaScore · "+json.orgs.length+" organisations indexées";if(queuedSearch){const q=queuedSearch;queuedSearch="";searchFocus(q)}}
  catch(e){$("#dataSource").textContent="Équipes temporairement indisponibles · PandaScore";renderPanel()}
 }
-renderPanel();init();loadOrganizations();
+async function loadLive(){
+ try{
+  const r=await fetch("/api/live",{signal:AbortSignal.timeout(14000)});
+  if(!r.ok)throw Error("source");
+  const data=await r.json();
+  if(!Array.isArray(data.matches))throw Error("format");
+  state.liveMatches=data.matches.filter(m=>m.status==="running").slice(0,100);
+  associateMatches();
+ }catch(e){$("#worldLive").textContent="—";$("#dataSource").textContent="Équipes : PandaScore · Live indisponible"}
+}
+renderPanel();init();loadOrganizations();loadLive();
 })();
