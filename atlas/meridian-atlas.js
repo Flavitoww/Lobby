@@ -7,7 +7,17 @@ const safeImage=s=>{try{const u=new URL(s);return u.protocol==="https:"?u.href:"
 const names=new Intl.DisplayNames(["fr"],{type:"region"});
 const english=new Intl.DisplayNames(["en"],{type:"region"});
 const aliases={unitedstatesofamerica:"US",russianfederation:"RU",russia:"RU",southkorea:"KR",republicofkorea:"KR",northkorea:"KP",czechrepublic:"CZ",czechia:"CZ",unitedkingdom:"GB",turkey:"TR",turkiye:"TR",taiwan:"TW",vietnam:"VN",ivorycoast:"CI",cotedivoire:"CI"};
-const resolveCountry=name=>{const n=norm(name);return aliases[n]||Object.keys(coords).find(c=>norm(english.of(c))===n||norm(names.of(c))===n)||null;};
+const countryIndex=(()=>{const out=new Map();for(let a=65;a<=90;a++)for(let b=65;b<=90;b++){const cc=String.fromCharCode(a,b),en=english.of(cc),fr=names.of(cc);if(en&&en!==cc)out.set(norm(en),cc);if(fr&&fr!==cc)out.set(norm(fr),cc)}return out})();
+const resolveCountry=name=>{const n=norm(name);return aliases[n]||countryIndex.get(n)||null;};
+function geoCenter(feature){
+ const geo=feature?.geometry;if(!geo)return null;
+ const rings=geo.type==="MultiPolygon"?geo.coordinates.map(p=>p[0]):geo.type==="Polygon"?[geo.coordinates[0]]:[];
+ const ring=rings.filter(Array.isArray).sort((a,b)=>b.length-a.length)[0];if(!ring?.length)return null;
+ const lat=ring.reduce((v,p)=>v+p[1],0)/ring.length;
+ const longs=ring.map(p=>p[0]);const crosses=Math.max(...longs)-Math.min(...longs)>180;
+ const shifted=longs.map(x=>crosses&&x<0?x+360:x),lng=shifted.reduce((v,x)=>v+x,0)/shifted.length;
+ return [Math.max(-83,Math.min(83,lat)),lng>180?lng-360:lng];
+}
 const coords={FR:[46.6,2.3],DE:[51.2,10.4],GB:[54,-2],US:[38,-98],CA:[57,-104],BR:[-11,-52],KR:[36.5,127.8],CN:[35,104],JP:[36,138],ES:[40,-4],SE:[62,15],DK:[56,10],PL:[52,19],UA:[49,32],SA:[24,45],AE:[24,54],AU:[-25,134],IN:[21,79],ID:[-3,118],TR:[39,35],NL:[52,5],BE:[51,4],IT:[42,12],PT:[39,-8],NO:[62,10],FI:[64,26],CH:[47,8],AT:[48,14],CZ:[50,15],RO:[46,25],RS:[44,21],HR:[45,16],GR:[39,22],SG:[1.3,104],MY:[4,102],PH:[13,122],TH:[15,101],VN:[16,108],TW:[24,121],HK:[22,114],MX:[24,-102],AR:[-36,-64],CL:[-33,-71],PE:[-10,-76],CO:[4,-74],ZA:[-29,25],EG:[26,30],MA:[32,-6],TN:[34,10],IL:[31,35],KZ:[48,68],RU:[61,105],NZ:[-41,174]};
 const state={globe:null,orgs:[],country:null,org:null,layer:"teams",tab:"overview",expanded:!embedded,ready:false};
 let lastFocus=null,queuedSearch="";
@@ -65,7 +75,7 @@ function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Globe stati
   .polygonsData(geo.features).polygonCapColor(()=>document.documentElement.dataset.theme==="light"?"#a8c6e7":"#24496e")
   .polygonSideColor(()=>"#142e4e").polygonStrokeColor(()=>document.documentElement.dataset.theme==="light"?"#ffffff":"#4779af")
   .polygonAltitude(.003).polygonsTransitionDuration(280)
-  .onPolygonClick(f=>{const code=f.properties?.ISO_A2||f.properties?.iso_a2||f.properties?.ISO2||f.properties?.iso2;const cc=code&&coords[code]?code:resolveCountry(f.properties?.name);if(cc){if(!coords[cc])coords[cc]=[0,0];selectCountry(cc)}})
+  .onPolygonClick(f=>{const code=f.properties?.ISO_A2||f.properties?.iso_a2||f.properties?.ISO2||f.properties?.iso2;const cc=code&&coords[code]?code:resolveCountry(f.properties?.name);if(cc){if(!coords[cc]){const center=geoCenter(f);if(center)coords[cc]=center;}state.country=cc;state.org=null;renderPanel();if(coords[cc])fly(coords[cc][0],coords[cc][1],.57)}})
   .pointsData([]).pointLat("lat").pointLng("lng").pointAltitude(.018).pointRadius(.28)
   .pointColor(()=>"#64b2ff").pointsTransitionDuration(150)
   .onPointClick(p=>selectCountry(p.cc));
