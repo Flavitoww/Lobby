@@ -9,7 +9,7 @@ const html=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;
 const validURL=u=>{try{const x=new URL(u);return x.protocol==="https:" ? x.href : ""}catch{return ""}};
 const date=t=>{const d=new Date(t);return Number.isNaN(+d)?"—":d.toLocaleString("fr-FR",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})};
 const time=t=>{const d=new Date(t);return Number.isNaN(+d)?"—":d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})};
-const logo=(u,n)=>{const url=validURL(u);return url?'<img class="team-logo" alt="" src="'+html(url)+'" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'),{className:\'team-initial\',textContent:'+JSON.stringify((n||"?").slice(0,3))+ '}))">':'<span class="team-initial">'+html((n||"?").slice(0,3))+'</span>'};
+const logo=(u,n)=>{const url=validURL(u);return url?'<img class="team-logo" alt="" src="'+html(url)+'" loading="lazy" referrerpolicy="no-referrer">':'<span class="team-initial">'+html((n||"?").slice(0,3))+'</span>'};
 const side=(m,which)=>{const right=which==="b";const n=right?(m.bs||m.bn):(m.as||m.an);const label=html(n||"À définir");return '<span class="team-side'+(right?" right":"")+'">'+(right?'<span class="team-name" title="'+label+'">'+label+'</span>'+logo(m.bl,n):logo(m.al,n)+'<span class="team-name" title="'+label+'">'+label+'</span>')+'</span>'};
 function liveMatch(m){const info=html([gameNames[m.game]||m.game,m.comp,m.serie].filter(Boolean).join(" · "));const score=m.sa+" — "+m.sb;const url=validURL(m.watch);return '<div class="live-match"><div class="match-meta"><span title="'+info+'">'+info+'</span><span class="badge-live">LIVE</span></div><div class="match-teams">'+side(m,"a")+'<span class="match-score">'+score+'</span>'+side(m,"b")+'</div>'+(url?'<a href="'+html(url)+'" target="_blank" rel="noopener noreferrer" class="small-muted">Regarder le direct ↗</a>':'')+'</div>'}
 function scheduleMatch(m,past){const label=html([m.comp,m.serie].filter(Boolean).join(" · "));const score=past?'<span class="versus">'+html(m.sa)+" : "+html(m.sb)+'</span>':'<span class="versus">vs</span>';return '<div class="schedule-row"><div class="schedule-date">'+html(date(m.ts))+'</div><div class="schedule-body"><div class="schedule-comp" title="'+label+'">'+html(gameNames[m.game]||m.game)+" · "+label+'</div><div class="schedule-teams">'+side(m,"a")+score+side(m,"b")+'</div></div></div>'}
@@ -113,16 +113,24 @@ function renderSearch(items,unavailable=[]){
  results.innerHTML=items.map(hitMarkup).join("")+(unavailable.length?'<p class="empty">Couverture partielle : '+html(unavailable.join(", "))+' indisponible.</p>':"");
  results.querySelectorAll("[data-hit]").forEach(b=>b.addEventListener("click",()=>activateHit(b.dataset.hit)));
 }
-function activateHit(key){
+async function activateHit(key){
  const item=S.items.find(x=>x.type+":"+x.id===key);if(!item)return;
  if(item.type==="countries"){showAtlas(item.name);return;}
- if(item.type==="teams"||item.type==="players"){
-  // Recherche sur le globe (navigue vers l'équipe et sa région si elle est indexée).
-  showAtlas(item.name);return;
- }
- if(item.type==="leagues"||item.type==="tournaments"||item.type==="series"){
-   openSearch(item.type);q.value=item.name;searchNow();return;
- }
+ $("#searchHint").textContent="FICHE · "+item.type.toUpperCase();
+ results.innerHTML='<div class="profile-card"><button type="button" class="profile-back" id="profileBack">← Retour aux résultats</button><div class="profile-top">'+(validURL(item.image)?'<img src="'+html(validURL(item.image))+'" alt="" referrerpolicy="no-referrer">':'<span class="hit-initial">'+html(item.name.slice(0,2))+'</span>')+'<div><h3>'+html(item.name)+'</h3><p>'+html([item.game,item.country,item.team].filter(Boolean).join(" · ")||"PandaScore")+'</p></div></div><p class="profile-loading">Chargement des données de la fiche…</p></div>';
+ $("#profileBack").addEventListener("click",()=>renderSearch(S.items));
+ const ctrl=new AbortController();
+ try{
+  const r=await fetch("/api/explore?type="+encodeURIComponent(item.type)+"&id="+encodeURIComponent(item.id),{signal:ctrl.signal});
+  if(!r.ok)throw Error("unavailable");
+  const d=await r.json();const t=(d.items||[])[0]||item;
+  const card=results.querySelector(".profile-card");if(!card)return;
+  const players=(t.players||[]).filter(p=>p.active!==false);
+  const roster=players.length?'<section class="profile-roster"><h4>Effectif actuel <small>selon PandaScore</small></h4>'+players.map(p=>'<div class="profile-player"><span>'+html(p.name)+'</span><small>'+html([p.role,p.country].filter(Boolean).join(" · "))+'</small></div>').join("")+'</section>':"";
+  card.querySelector(".profile-loading").outerHTML='<p class="profile-source">Source : PandaScore · '+html(t.game||item.game||"Données publiques")+' · ID '+html(item.id)+'</p>'+roster+
+    '<div class="profile-actions"><button type="button" id="profileAtlas" class="outline-btn">Localiser sur l’Atlas ↗</button></div>';
+  const atlasBtn=card.querySelector("#profileAtlas");atlasBtn?.addEventListener("click",()=>showAtlas(t.name));
+ }catch(e){const card=results.querySelector(".profile-card");if(card){card.querySelector(".profile-loading").textContent="Détails indisponibles. La fiche de base reste accessible.";}}
 }
 async function searchNow(){
  const term=q.value.trim().slice(0,80);
