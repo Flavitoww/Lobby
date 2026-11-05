@@ -28,3 +28,9 @@ body.atlas-open{overflow:hidden}body.atlas-open .atlas-card{position:fixed;inset
 .profile-player small{color:var(--muted)}
 .profile-actions{display:flex;gap:8px;margin-top:16px}
 .profile-actions .outline-btn{margin-top:0}
+
+@media(max-width:650px){
+ /* Sur tactile, toucher l'aperçu ouvre le globe au lieu d'emprisonner le défilement du Desk. */
+ body:not(.atlas-open) .atlas-frame{pointer-events:none}
+ body:not(.atlas-open) .atlas-card{cursor:pointer}
+}
