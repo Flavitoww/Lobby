@@ -34,3 +34,123 @@ body.atlas-open{overflow:hidden}body.atlas-open .atlas-card{position:fixed;inset
  body:not(.atlas-open) .atlas-frame{pointer-events:none}
  body:not(.atlas-open) .atlas-card{cursor:pointer}
 }
+
+/* MERIDIAN 2 — lisibilité réelle, densité contrôlée, éléments interactifs explicites. */
+body{font-size:15.5px;line-height:1.58}
+.header{height:76px}
+.topnav a,.topnav button{font-size:13.5px}
+.search-trigger{height:44px;max-width:570px}
+.search-trigger span{font-size:13px}
+.gamebar{gap:7px;scroll-padding:18px}
+.game{font-size:13px;padding:9px 14px;min-height:38px}
+.shell{max-width:1750px}
+.lead-grid{grid-template-columns:minmax(0,1.9fr) minmax(320px,.85fr)}
+.atlas-card{min-height:425px}
+.atlas-content p{font-size:14px}
+.atlas-content h1{font-size:clamp(34px,3.5vw,56px)}
+.atlas-caption{font-size:11px}
+.section-head h2{font-size:18px}
+.section-head{min-height:65px;padding:17px 20px}
+.section-title{gap:11px}
+.small-muted,.count{font-size:12px}
+.live-match{padding:15px 12px}
+.live-match .match-meta{font-size:12px}
+.match-teams{gap:10px}
+.team-side{font-size:13px}
+.team-logo,.team-initial{width:32px;height:32px}
+.team-initial{font-size:10px}
+.match-score{font-size:15px}
+.badge-live{font-size:10px;padding:4px 8px}
+.panel-footer{padding:12px 20px}
+.panel-footer a{font-size:12.5px}
+.section-kicker{font-size:11px;margin-top:27px}
+.destinations{gap:11px}
+.destination{padding:17px 13px;gap:12px}
+.destination strong{font-size:14px}
+.destination small{font-size:11.5px}
+.dest-icon{width:41px;height:41px}
+.dest-icon svg{width:23px;height:23px;stroke-width:1.65}
+.match-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.segmented button{font-size:11.5px;padding:7px 11px}
+.schedule-row{grid-template-columns:76px minmax(0,1fr);padding:15px 5px}
+.schedule-date{font-size:11.5px}
+.schedule-comp{font-size:12px}
+.schedule-teams{font-size:13.5px;gap:8px}
+.schedule-teams .team-logo,.schedule-teams .team-initial{width:25px;height:25px}
+.schedule-teams .versus{font-size:11px}
+.news-item{padding:17px 5px}
+.news-item h3{font-size:14px;line-height:1.5}
+.news-item .news-src{font-size:10px}
+.news-item time{font-size:11px}
+.explore-callout h3{font-size:25px}
+.explore-callout p{font-size:13.5px}
+.data-status p{font-size:11.5px}
+.inline-link{display:inline;border:0;background:none;padding:0;color:var(--accent);text-decoration:underline;text-underline-offset:3px;font-weight:700;font-size:inherit}
+.search-modal{padding-top:clamp(30px,7vh,75px)}
+.search-window{width:min(950px,100%);border-radius:17px}
+.search-inputbar{height:74px}
+.search-inputbar input{font-size:16px}
+.search-body{grid-template-columns:208px minmax(0,1fr);min-height:390px;max-height:min(67vh,640px)}
+.search-categories{padding:15px 11px}
+.search-categories button{font-size:14px;padding:11px 13px}
+.search-results{padding:18px}
+.search-results-label{font-size:11px;margin-bottom:14px}
+.atlas-shortcut{min-height:130px;padding:18px 22px}
+.atlas-shortcut strong{font-size:17px}
+.atlas-shortcut small{font-size:13px}
+.mini-orbit{height:96px;width:96px}
+.shortcut{padding:16px}
+.shortcut strong{font-size:14px}
+.search-hit{padding:13px 13px;gap:15px}
+.search-hit img,.search-hit .hit-initial{width:46px;height:46px}
+.search-hit .hit-initial{font-size:22px;color:var(--accent)}
+.search-hit strong{font-size:15px}
+.search-hit small{font-size:12px}
+.search-hit .hit-type{font-size:10.5px;letter-spacing:.04em}
+.search-foot{font-size:11px}
+.profile-top h3{font-size:25px}
+.profile-top p,.profile-source{font-size:12px}
+.profile-roster h4{font-size:14px}
+.profile-player{font-size:13px}
+.profile-player small{font-size:12px}
+@media(max-width:1240px){
+  .lead-grid{grid-template-columns:minmax(0,1.4fr) minmax(310px,.8fr)}
+  .section-head{flex-wrap:wrap}
+  .destination{padding:14px 12px}
+  .destination strong{font-size:13px}
+}
+@media(max-width:920px){
+  .lead-grid{grid-template-columns:1fr}
+  .atlas-card{min-height:390px}
+  .live-panel{min-height:0}
+}
+@media(max-width:650px){
+  .header{height:64px}
+  .atlas-card{min-height:348px}
+  .atlas-content h1{font-size:33px}
+  .atlas-content p{font-size:12px}
+  .section-head h2{font-size:17px}
+  .section-head{padding:14px}
+  .match-controls{width:100%;justify-content:space-between}
+  .segmented button{font-size:11px;padding:7px 9px}
+  .schedule-row{grid-template-columns:70px minmax(0,1fr)}
+  .schedule-comp{font-size:11px}
+  .schedule-teams{font-size:12px}
+  .destination strong{font-size:13px}
+  .destination small{font-size:10px}
+  .search-modal{padding:9px}
+  .search-body{grid-template-columns:1fr;min-height:0;max-height:72vh}
+  .search-categories{padding:9px}
+  .search-categories button{font-size:12px}
+  .search-inputbar{height:65px}
+  .search-inputbar input{font-size:14px}
+  .search-results{padding:12px}
+  .search-hit{padding:11px 6px}
+  .search-hit strong{font-size:13px}
+  .search-hit small{font-size:11px}
+  .search-hit .hit-type{font-size:9px}
+  .mini-orbit{height:72px;width:72px}
+  .atlas-shortcut{padding:12px}
+  .atlas-shortcut strong{font-size:14px}
+  .atlas-shortcut small{font-size:11px}
+}
