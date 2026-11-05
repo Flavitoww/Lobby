@@ -187,7 +187,7 @@ function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Globe stati
  controls.addEventListener("start",()=>{controls.autoRotate=false});
  globe.pointOfView({lat:28,lng:15,altitude:embedded?2.25:1.9},0);
  updatePoints();resize();window.LobbyEarth?.init(globe);
- requestAnimationFrame(()=>{$("#globeStage").classList.add("ready");$("#globeStatus").textContent="Globe 3D · clique sur un pays";state.ready=true});
+ globe.onGlobeReady(()=>{$("#globeStage").classList.add("ready");$("#globeStatus").textContent="Globe 3D · tourne et sélectionne un pays";state.ready=true});
  const observer=new ResizeObserver(resize);observer.observe(el);
  document.addEventListener("visibilitychange",()=>{if(document.hidden)globe.pauseAnimation?.();else globe.resumeAnimation?.()});
  if(queuedSearch){const q=queuedSearch;queuedSearch="";searchFocus(q)}
