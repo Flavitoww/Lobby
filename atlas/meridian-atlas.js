@@ -29,15 +29,21 @@ function fly(lat,lng,alt=.7){state.globe?.pointOfView({lat,lng,altitude:alt},dur
 function home(){state.country=null;state.org=null;state.tab="overview";renderPanel();fly(28,15,2.15)}
 const safeUrl=s=>{try{const u=new URL(s);return u.protocol==="https:"?u.href:""}catch{return""}};
 function associateMatches(){
- const byName=new Map();
+ const byName=new Map(),ambiguous=new Set();
  state.orgs.forEach(o=>{
-  const base=norm(o.n);
-  if(base.length>2)byName.set(base,o.cc);
-  if(o.s&&norm(o.s).length>3)byName.set(norm(o.s),o.cc);
+  const addKey=(name)=>{
+    const key=norm(name);
+    if(key.length<2)return;
+    if(byName.has(key)&&byName.get(key).cc!==o.cc)ambiguous.add(key);
+    else byName.set(key,{cc:o.cc,games:Object.keys(o.g||{})});
+  };
+  addKey(o.n);if(o.s&&norm(o.s).length>2)addKey(o.s);
  });
+ for(const key of ambiguous)byName.delete(key);
  const byCountry=new Map();
  for(const m of state.liveMatches){
-  const cc=new Set([m.an,m.bn].map(n=>byName.get(norm(n))).filter(Boolean));
+  const cc=new Set([m.an,m.bn].map(name=>byName.get(norm(name)))
+    .filter(o=>o&&(!m.game||o.games.includes(m.game))).map(o=>o.cc));
   for(const code of cc){if(!byCountry.has(code))byCountry.set(code,[]);byCountry.get(code).push(m)}
  }
  state.liveByCountry=byCountry;
