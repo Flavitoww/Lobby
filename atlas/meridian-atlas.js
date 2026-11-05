@@ -9,6 +9,24 @@ const english=new Intl.DisplayNames(["en"],{type:"region"});
 const aliases={unitedstatesofamerica:"US",russianfederation:"RU",russia:"RU",southkorea:"KR",republicofkorea:"KR",northkorea:"KP",czechrepublic:"CZ",czechia:"CZ",unitedkingdom:"GB",turkey:"TR",turkiye:"TR",taiwan:"TW",vietnam:"VN",ivorycoast:"CI",cotedivoire:"CI"};
 const countryIndex=(()=>{const out=new Map();for(let a=65;a<=90;a++)for(let b=65;b<=90;b++){const cc=String.fromCharCode(a,b),en=english.of(cc),fr=names.of(cc);if(en&&en!==cc)out.set(norm(en),cc);if(fr&&fr!==cc)out.set(norm(fr),cc)}return out})();
 const resolveCountry=name=>{const n=norm(name);return aliases[n]||countryIndex.get(n)||null;};
+function ringIncludes(ring,lat,lng){
+ if(!ring||ring.length<3)return false;
+ let inside=false;
+ for(let i=0,j=ring.length-1;i<ring.length;j=i++){
+  let x=ring[i][0],y=ring[i][1],a=ring[j][0],b=ring[j][1];
+  // Adjust longitudes relative to the clicked longitude, handles antimeridian.
+  x=lng+((((x-lng)+540)%360+360)%360)-180;
+  a=lng+((((a-lng)+540)%360+360)%360)-180;
+  if(((y>lat)!==(b>lat))&&(lng<(a-x)*(lat-y)/(b-y)+x))inside=!inside;
+ }
+ return inside;
+}
+function featureIncludes(feature,lat,lng){
+ const g=feature.geometry;
+ if(!g)return false;
+ const polys=g.type==="Polygon"?[g.coordinates]:g.type==="MultiPolygon"?g.coordinates:[];
+ return polys.some(poly=>poly?.length&&ringIncludes(poly[0],lat,lng)&&!poly.slice(1).some(hole=>ringIncludes(hole,lat,lng)));
+}
 function geoCenter(feature){
  const geo=feature?.geometry;if(!geo)return null;
  const rings=geo.type==="MultiPolygon"?geo.coordinates.map(p=>p[0]):geo.type==="Polygon"?[geo.coordinates[0]]:[];
@@ -153,10 +171,13 @@ function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Globe stati
   .backgroundColor("rgba(0,0,0,0)")
   .globeImageUrl("/lib/earth-day.jpg").bumpImageUrl("/lib/earth-topology.png")
   .showAtmosphere(true).atmosphereColor("#85c9ff").atmosphereAltitude(.11)
-  .polygonsData(geo.features).polygonCapColor(()=>"rgba(0,0,0,0)")
-  .polygonSideColor(()=>"rgba(0,0,0,0)").polygonStrokeColor(()=>"rgba(171,213,255,.26)")
-  .polygonAltitude(.002).polygonsTransitionDuration(280)
-  .onPolygonClick(f=>{const code=f.properties?.ISO_A2||f.properties?.iso_a2||f.properties?.ISO2||f.properties?.iso2;const cc=code&&coords[code]?code:resolveCountry(f.properties?.name);if(cc){if(!coords[cc]){const center=geoCenter(f);if(center)coords[cc]=center;}state.country=cc;state.org=null;renderPanel();if(coords[cc])fly(coords[cc][0],coords[cc][1],.57)}})
+  .onGlobeClick(({lat,lng})=>{
+    const f=geo.features.find(feature=>featureIncludes(feature,lat,lng));
+    if(!f)return;
+    const code=f.properties?.ISO_A2||f.properties?.iso_a2||f.properties?.ISO2||f.properties?.iso2;
+    const cc=code&&coords[code]?code:resolveCountry(f.properties?.name);
+    if(cc){if(!coords[cc]){const center=geoCenter(f);if(center)coords[cc]=center;}state.country=cc;state.org=null;renderPanel();if(coords[cc])fly(coords[cc][0],coords[cc][1],.57)}
+  })
   .pointsData([]).pointLat("lat").pointLng("lng").pointAltitude(.018).pointRadius(.28)
   .pointColor(()=>"#64b2ff").pointsTransitionDuration(150)
   .onPointClick(p=>selectCountry(p.cc)).onZoom(pov=>window.LobbyEarth?.update(pov));
