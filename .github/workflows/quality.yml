@@ -1,0 +1,25 @@
+name: Lobby quality checks
+on:
+  pull_request:
+  push:
+    branches: [feat/meridian-unified-desk-atlas]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check meridian.js
+          node --check atlas/app.js
+          node --check api/live.js
+          node --check api/explore.js
+          node --check api/news.js
+          node --check api/orgs.js
+          node --check api/team.js
+          node --check tests/api.test.cjs
+      - name: Run API regression tests
+        run: node --test tests/api.test.cjs
