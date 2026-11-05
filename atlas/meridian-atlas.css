@@ -88,3 +88,13 @@
 
 .rail-symbol{display:grid;place-items:center}.rail-symbol svg,.reset-view svg,.header-control svg,.search-icon svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .search-icon{display:grid;place-items:center}.search-icon svg{width:18px;height:18px}.reset-view svg{flex:none}.header-control svg{width:18px;height:18px}
+
+/* Preserve text contrast when the sunlit sky becomes bright. */
+.globe-stage[data-sky="day"] .map-head{color:#0b315d;text-shadow:none}
+.globe-stage[data-sky="day"] .map-head .eyebrow{color:#235c9a}
+.globe-stage[data-sky="day"] .map-head h1 span{color:#2165b5}
+.globe-stage[data-sky="day"] .map-head>p:last-child{color:#1c4776}
+.globe-stage[data-sky="day"] .stage-caption,.globe-stage[data-sky="day"] .stage-bottom,.globe-stage[data-sky="day"] .globe-status{color:#144a80}
+.globe-stage[data-sky="day"] .caption-secondary,.globe-stage[data-sky="day"] .bottom-detail{color:#316592}
+.globe-stage[data-sky="day"] .sky-indicator{color:#164878;background:rgba(235,246,255,.7);border-color:rgba(48,110,173,.24)}
+.globe-stage[data-sky="day"] .sky-clock{color:#316592}
