@@ -3,7 +3,7 @@
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const gameNames={lol:"League of Legends",cs2:"Counter-Strike 2",val:"VALORANT",rl:"Rocket League",r6:"Rainbow Six",dota:"Dota 2",mlbb:"Mobile Legends",hok:"Honor of Kings"};
-const countries=[["FR","France"],["DE","Allemagne"],["GB","Royaume-Uni"],["US","États-Unis"],["KR","Corée du Sud"],["CN","Chine"],["JP","Japon"],["BR","Brésil"],["CA","Canada"],["ES","Espagne"],["SE","Suède"],["DK","Danemark"],["PL","Pologne"],["UA","Ukraine"],["SA","Arabie saoudite"],["AE","Émirats arabes unis"],["AU","Australie"],["IN","Inde"],["ID","Indonésie"],["TR","Turquie"]];
+const countries=(()=>{const names=new Intl.DisplayNames(["fr"],{type:"region"}),out=[];for(let a=65;a<=90;a++)for(let b=65;b<=90;b++){const code=String.fromCharCode(a,b),name=names.of(code);if(name&&name!==code&&!/région inconnue/i.test(name))out.push([code,name])}return out})()
 const S={game:"all",matches:[],recent:[],updated:null,fetchError:false,view:"upcoming",category:"all",items:[],currentQuery:""};
 const html=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const validURL=u=>{try{const x=new URL(u);return x.protocol==="https:" ? x.href : ""}catch{return ""}};
@@ -67,6 +67,7 @@ function showAtlas(searchTerm){
 function hideAtlas(){viewChange(()=>atlasMode(false,""))}
 $$("[data-atlas]").forEach(b=>b.addEventListener("click",()=>showAtlas()));
 $("#atlasClose").addEventListener("click",hideAtlas);
+host.addEventListener("click",e=>{if(window.matchMedia("(max-width:650px)").matches&&!open&&!e.target.closest("button"))showAtlas()});
 frame.addEventListener("load",()=>{frameLoaded=true;frame.classList.add("frame-ready");if(open)frame.contentWindow?.postMessage({type:"lobby:atlas-mode",expanded:true},location.origin)});
 function openSearch(category){
  focusBefore=document.activeElement;
@@ -127,8 +128,10 @@ async function activateHit(key){
   const card=results.querySelector(".profile-card");if(!card)return;
   const players=(t.players||[]).filter(p=>p.active!==false);
   const roster=players.length?'<section class="profile-roster"><h4>Effectif actuel <small>selon PandaScore</small></h4>'+players.map(p=>'<div class="profile-player"><span>'+html(p.name)+'</span><small>'+html([p.role,p.country].filter(Boolean).join(" · "))+'</small></div>').join("")+'</section>':"";
-  card.querySelector(".profile-loading").outerHTML='<p class="profile-source">Source : PandaScore · '+html(t.game||item.game||"Données publiques")+' · ID '+html(item.id)+'</p>'+roster+
-    '<div class="profile-actions"><button type="button" id="profileAtlas" class="outline-btn">Localiser sur l’Atlas ↗</button></div>';
+  const canAtlas=item.type==="teams"||item.type==="players";
+  const dates=[t.begin&&"Début : "+date(t.begin),t.end&&"Fin : "+date(t.end)].filter(Boolean);
+  card.querySelector(".profile-loading").outerHTML='<p class="profile-source">Source : PandaScore · '+html(t.game||item.game||"Données publiques")+' · ID '+html(item.id)+'</p>'+(dates.length?'<p class="profile-source">'+html(dates.join(" · "))+'</p>':"")+roster+
+    (canAtlas?'<div class="profile-actions"><button type="button" id="profileAtlas" class="outline-btn">Rechercher sur l’Atlas ↗</button></div>':"");
   const atlasBtn=card.querySelector("#profileAtlas");atlasBtn?.addEventListener("click",()=>showAtlas(t.name));
  }catch(e){const card=results.querySelector(".profile-card");if(card){card.querySelector(".profile-loading").textContent="Détails indisponibles. La fiche de base reste accessible.";}}
 }
