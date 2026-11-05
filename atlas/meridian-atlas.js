@@ -28,7 +28,7 @@ function selectCountry(cc,animate=true){if(!coords[cc])return;state.country=cc;s
 function selectOrg(id){const o=state.orgs.find(x=>x.id===id);if(!o)return;state.org=o;state.country=o.cc;renderPanel();if(coords[o.cc])fly(coords[o.cc][0],coords[o.cc][1],.49)}
 function searchFocus(query){const q=norm(query);if(!q)return;const org=state.orgs.find(o=>norm(o.n)===q)||state.orgs.find(o=>norm(o.n).includes(q));if(org){selectOrg(org.id);return}const cc=Object.keys(coords).find(x=>norm(countryName(x))===q||norm(x)===q);if(cc){selectCountry(cc);return}queuedSearch=query;$("#globeStatus").textContent="Aucune localisation confirmée pour « "+query+" »."}
 function setExpanded(v){state.expanded=v;document.documentElement.classList.toggle("embedded",!v);if(v&&state.globe)fly(state.country?coords[state.country][0]:28,state.country?coords[state.country][1]:15,state.country?.67:1.7);setTimeout(resize,80);setTimeout(resize,450)}
-function searchRequest(){if(window.parent!==window){window.parent.postMessage({type:"lobby:open-search"},location.origin)}else {const q=prompt("Pays ou équipe à rechercher dans l'Atlas");if(q)searchFocus(q)}}
+function searchRequest(){if(window.parent!==window){window.parent.postMessage({type:"lobby:open-search"},location.origin)}else {location.href="/?search=1"}}
 $("#searchOpen").addEventListener("click",searchRequest);
 $("#atlasTheme").addEventListener("click",()=>theme(document.documentElement.dataset.theme==="dark"?"light":"dark"));
 $$("[data-layer]").forEach(b=>b.addEventListener("click",()=>{state.layer=b.dataset.layer;$$("[data-layer]").forEach(x=>x.classList.toggle("selected",x===b));if(state.layer==="competitions"){$("#panelTitle").textContent="Compétitions par pays";$("#panelSubtitle").textContent="Exploration géographique";$("#panelContent").innerHTML='<p class="note">Les compétitions ne sont pas toutes associées à un pays par PandaScore. Choisis un pays, puis une équipe pour retrouver ses jeux et rosters. Les localisations non confirmées ne sont pas inventées.</p>'}else{renderPanel()}updatePoints()}));
@@ -44,8 +44,8 @@ function resize(){const el=$("#globe3d");if(!state.globe||!el.clientWidth||!el.c
 const ccpoints=Object.entries(coords).map(([cc,v])=>({cc,lat:v[0],lng:v[1],count:0}));
 function updatePoints(){if(!state.globe)return;const counts={};state.orgs.forEach(o=>{counts[o.cc]=(counts[o.cc]||0)+1});
  ccpoints.forEach(x=>{x.count=counts[x.cc]||0});
- const points=state.layer==="teams"?ccpoints.filter(p=>p.count>0):ccpoints;
- state.globe.pointsData(points).pointColor(p=>p.count>0?"#59aeff":"#77a6d6").pointAltitude(p=>p.count>0?.018:.004).pointRadius(p=>p.count>0?.32:.18);
+ const points=ccpoints;
+ state.globe.pointsData(points).pointColor(p=>p.count>0?"#59aeff":"#77a6d6").pointAltitude(p=>p.count>0?.018:.004).pointRadius(p=>p.count>0?.32:.18).pointLabel(p=>countryName(p.cc)+(p.count?" · "+p.count+" équipes":""));
 }
 function fail(message){$("#globeStatus").textContent=message;/* Keep always-visible fallback globe */}
 function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Globe statique affiché · 3D indisponible");return}
@@ -56,7 +56,7 @@ function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Globe stati
   .polygonSideColor(()=>"#142e4e").polygonStrokeColor(()=>document.documentElement.dataset.theme==="light"?"#ffffff":"#4779af")
   .polygonAltitude(.003).polygonsTransitionDuration(280)
   .onPolygonClick(f=>{const code=f.properties?.ISO_A2||f.properties?.iso_a2||f.properties?.ISO2||f.properties?.iso2;const cc=code&&coords[code]?code:Object.keys(coords).find(c=>norm(countryName(c))===norm(f.properties?.name));if(cc)selectCountry(cc)})
-  .pointsData([]).pointLat("lat").pointLng("lng").pointAltitude(".018").pointRadius(".28")
+  .pointsData([]).pointLat("lat").pointLng("lng").pointAltitude(.018).pointRadius(.28)
   .pointColor(()=>"#64b2ff").pointsTransitionDuration(150)
   .onPointClick(p=>selectCountry(p.cc));
  state.globe=globe;
@@ -74,9 +74,9 @@ async function loadJS(src){return new Promise((resolve,reject)=>{const s=documen
 async function init(){
  // Two independent sources: bundled WebGL library proxy and small world TopoJSON.
  try{
- const [lib,topo]=await Promise.allSettled([loadJS("/lib/globe.gl.min.js"),loadJS("https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js")]);
+ const [lib,topo]=await Promise.allSettled([loadJS("/lib/globe.gl.min.js"),loadJS("/lib/topojson-client.min.js")]);
  if(lib.status!=="fulfilled"||topo.status!=="fulfilled")throw Error("library");
- const response=await fetch("https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json",{signal:AbortSignal.timeout(14000)});
+ const response=await fetch("/lib/countries-110m.json",{signal:AbortSignal.timeout(14000)});
  if(!response.ok)throw Error("world");
  const json=await response.json(),geo=topojson.feature(json,json.objects.countries);
  onWorld(geo);
