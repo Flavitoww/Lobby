@@ -1,0 +1,7 @@
+{
+  "cleanUrls": true,
+  "functions": { "api/*.js": { "maxDuration": 60 } },
+  "rewrites": [
+    { "source": "/lib/:file", "destination": "/api/lib?file=:file" }
+  ]
+}
