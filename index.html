@@ -1,441 +1,100 @@
 <!doctype html>
-<html lang="fr"><head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Lobby — Desk esport</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b0e14'/%3E%3Cpath d='M10 7h4v14h8v4H10z' fill='%23ff5a1f'/%3E%3C/svg%3E">
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1425">
+<title>Lobby — Toute la scène esport, au même endroit</title>
+<meta name="description" content="Explore les matchs esport, équipes, joueurs, compétitions et l'Atlas mondial en un seul endroit.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Spline+Sans+Mono:wght@400;500;600&display=swap">
-<style>
-:root{
-  --bg:#0a0d13;--panel:#0f131c;--panel2:#11161f;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.11);
-  --fg:#e9edf4;--mut:#8b94a6;--faint:#5a6474;--or:#ff5a1f;--ice:#9fc2ef;--win:#49d08b;--grid:rgba(159,194,239,.28);
-  --ui:"Schibsted Grotesk",system-ui,sans-serif;--mono:"Spline Sans Mono",ui-monospace,monospace;
-  color-scheme:dark;
-}
-*{box-sizing:border-box}html,body{margin:0;max-width:100%;overflow-x:clip}
-body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;min-height:100vh}
-a{color:inherit;text-decoration:none}
-img{display:block}
-h1,h2,h3{margin:0;font-weight:700}
-.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
-.wrap{max-width:1280px;margin:0 auto;padding:0 20px}
-/* reveal */
-#app{opacity:0}
-body.ready #app{opacity:1;transition:opacity .4s ease}
-.panel,.ticker{opacity:0;transform:translateY(8px)}
-body.ready .ticker{opacity:1;transform:none;transition:opacity .45s ease,transform .45s ease}
-body.ready .panel{opacity:1;transform:none;transition:opacity .45s ease,transform .45s ease}
-
-#app{transition:transform .35s ease}
-/* logos */
-.lg{width:var(--s,22px);height:var(--s,22px);border-radius:5px;object-fit:contain;background:#161b26;border:1px solid var(--line);padding:2px;flex:none}
-.ini{width:var(--s,22px);height:var(--s,22px);border-radius:5px;display:none;place-items:center;font-family:var(--ui);font-weight:800;font-size:calc(var(--s,22px)*.4);background:#161b26;border:1px solid var(--line);flex:none;color:var(--mut)}
-/* ticker */
-.ticker{display:flex;align-items:stretch;height:44px;border-bottom:1px solid var(--line);background:var(--panel);white-space:nowrap}
-.tklab{flex:none;display:flex;align-items:center;gap:8px;padding:0 16px;border-right:1px solid var(--line);font-weight:700;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut)}
-.tklab .dd{width:7px;height:7px;border-radius:50%;background:var(--or);flex:none;animation:pl 1.5s infinite}
-.tkview{flex:1;min-width:0;position:relative;overflow:hidden}
-.tkview::after{content:"";position:absolute;top:0;bottom:0;right:0;width:40px;pointer-events:none;background:linear-gradient(270deg,var(--panel),transparent)}
-.track{display:inline-flex;align-items:stretch;height:100%;animation:tick 150s linear infinite}
-.titem{display:inline-flex;align-items:center;gap:9px;padding:0 18px;border-right:1px solid var(--line);font-size:13px}
-.titem .dd{width:6px;height:6px;border-radius:50%;background:var(--or);flex:none;animation:pl 1.5s infinite}
-.titem .nm{font-weight:700;font-size:13.5px}
-.titem .vs{color:var(--faint);font-size:12px}
-.titem .sc{font-family:var(--mono);font-weight:600;font-size:14px}
-.titem .sc .w{color:var(--or)}
-.titem .tm{font-family:var(--mono);font-size:12.5px;color:var(--ice)}
-.titem .lgn{display:flex;align-items:center;gap:6px;color:var(--faint);font-size:11.5px;padding-left:4px;border-left:1px solid var(--line);margin-left:2px}
-.titem .lgn .lg,.titem .lgn .ini{--s:15px;border-radius:4px}
-/* nav */
-.nav{display:flex;align-items:center;gap:22px;height:58px;border-bottom:1px solid var(--line);background:var(--panel)}
-.brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:20px;letter-spacing:-.02em;cursor:pointer}
-.brand .mk{width:26px;height:26px;border-radius:7px;background:#11161f;border:1px solid var(--line2);display:grid;place-items:center;flex:none}
-.brand .mk svg{width:15px;height:15px;display:block}
-.brand b{color:var(--or)}
-.nlinks{display:flex;align-items:center;gap:3px;flex:1;min-width:0}
-.nlink{padding:7px 12px;border-radius:7px;font-weight:600;font-size:13.5px;color:var(--mut);cursor:pointer;white-space:nowrap}
-.nlink:hover{color:var(--fg);background:rgba(255,255,255,.04)}
-.nlink.on{color:var(--fg)}
-.nlink.on::after{content:"";display:block;height:2px;margin-top:5px;border-radius:2px;background:var(--or)}
-.nsearch{flex:none;display:flex;align-items:center;gap:9px;background:#0c0f16;border:1px solid var(--line2);border-radius:8px;padding:7px 11px;color:var(--faint);font-family:var(--ui);font-size:13px;cursor:pointer;width:230px}
-.nsearch svg{width:15px;height:15px;stroke:var(--mut);fill:none;stroke-width:2;flex:none}
-.nsearch span{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nsearch kbd{font-family:var(--mono);font-size:11px;color:var(--mut);background:#151a24;border:1px solid var(--line);border-radius:5px;padding:1px 6px}
-.ava{width:30px;height:30px;border-radius:50%;background:#1a2130;border:1px solid var(--line2);flex:none}
-/* subbar */
-.sub{display:flex;align-items:center;gap:7px;height:44px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
-.sub::-webkit-scrollbar{display:none}
-.chip{flex:none;display:flex;align-items:center;gap:7px;padding:6px 12px;border:1px solid var(--line);border-radius:999px;font-weight:600;font-size:12.5px;color:var(--mut);cursor:pointer;transition:border-color .15s,color .15s}
-.chip:hover{border-color:var(--line2);color:var(--fg)}
-.chip.on{color:var(--fg);border-color:var(--or);background:rgba(255,90,31,.08)}
-.chip .dd{width:6px;height:6px;border-radius:50%;background:var(--or);flex:none}
-/* grid */
-.grid{display:grid;grid-template-columns:296px minmax(0,1fr) 320px;gap:16px;padding:16px 0 40px;align-items:start}
-.col{display:flex;flex-direction:column;gap:16px;min-width:0}
-.panel{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
-.ph{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
-.ph .t{font-weight:700;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
-.ph .x{font-family:var(--mono);font-size:11px;color:var(--faint)}
-.ph .tabs{display:flex;gap:2px}
-.ph .tab{padding:4px 9px;border-radius:6px;font-weight:600;font-size:11.5px;color:var(--faint);cursor:pointer}
-.ph .tab.on{color:var(--fg);background:rgba(255,255,255,.06)}
-.pb{padding:4px 0}
-/* event row */
-.ev{display:flex;align-items:center;gap:11px;padding:10px 14px;border-top:1px solid var(--line);cursor:pointer}
-.ev:first-child{border-top:0}
-.ev:hover{background:rgba(255,255,255,.02)}
-.ev .lg,.ev .ini{--s:26px;border-radius:6px}
-.ev .nm{flex:1;min-width:0;font-weight:650;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ev .nm small{display:block;font-weight:400;font-size:11px;color:var(--faint);margin-top:1px}
-.ev .st{flex:none;font-family:var(--mono);font-size:11px;color:var(--ice)}
-.ev .st.live{color:var(--or);font-weight:600;display:flex;align-items:center;gap:5px}
-.ev .st.live .dd{width:6px;height:6px;border-radius:50%;background:var(--or);animation:pl 1.5s infinite}
-/* match row */
-.mrow{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;padding:9px 14px;border-top:1px solid var(--line);cursor:pointer}
-.mrow:first-child{border-top:0}
-.mrow:hover{background:rgba(255,255,255,.02)}
-.mrow .when{font-family:var(--mono);font-size:11.5px;color:var(--faint);line-height:1.3}
-.mrow .when .lv{color:var(--or);font-weight:600}
-.mrow .sd{display:flex;flex-direction:column;gap:5px;min-width:0}
-.mrow .side{display:flex;align-items:center;gap:8px;min-width:0}
-.mrow .side .lg,.mrow .side .ini{--s:20px}
-.mrow .side .tn{font-weight:650;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mrow .side.win .tn{color:var(--fg)}
-.mrow .side.lose .tn{color:var(--mut)}
-.mrow .sc{font-family:var(--mono);font-weight:600;font-size:13px;margin-left:auto;padding-left:8px;color:var(--mut)}
-.mrow .sc.w{color:var(--or)}
-.mrow .lgbadge{flex:none;display:flex;flex-direction:column;align-items:center;gap:3px;width:40px;text-align:center}
-.mrow .lgbadge .lg,.mrow .lgbadge .ini{--s:18px}
-.mrow .lgbadge small{font-size:9.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40px}
-/* featured */
-.feat{padding:16px 16px 14px}
-.feat .fh{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}
-.feat .lgn{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mut);font-weight:600;min-width:0}
-.feat .lgn .lg,.feat .lgn .ini{--s:20px;border-radius:5px}
-.feat .lgn span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pill{flex:none;display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:11px;letter-spacing:.04em;padding:4px 9px;border-radius:999px}
-.pill.live{color:#fff;background:var(--or)}
-.pill.soon{color:var(--ice);background:rgba(159,194,239,.12)}
-.pill .dd{width:6px;height:6px;border-radius:50%;background:#fff;animation:pl 1.5s infinite}
-.fmatch{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px}
-.fteam{display:flex;align-items:center;gap:12px}.fteam.r{flex-direction:row-reverse;text-align:right}
-.fteam .lg,.fteam .ini{--s:46px;border-radius:11px}
-.fteam .fn{font-weight:700;font-size:18px;line-height:1.05;letter-spacing:-.01em}
-.fteam .ac{font-size:11.5px;color:var(--faint);margin-top:3px}
-.fsc{text-align:center}
-.fsc .n{font-family:var(--mono);font-weight:600;font-size:30px;line-height:1}
-.fsc .n .w{color:var(--or)}.fsc .n .sep{color:var(--faint);margin:0 5px}
-.fsc .n .vs{font-size:16px;color:var(--faint);font-weight:500}
-.fsc .lab{font-size:10.5px;color:var(--mut);margin-top:5px;text-transform:uppercase;letter-spacing:.05em}
-.feat .fw{display:flex;align-items:center;gap:14px;margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
-.feat .watch{display:inline-flex;align-items:center;gap:7px;font-weight:600;font-size:12.5px;color:var(--or)}
-.feat .odds{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--mut);cursor:pointer}
-.feat .odds b{font-family:var(--mono);color:var(--fg);font-weight:600}
-/* explore list */
-.ex{display:flex;align-items:center;gap:11px;padding:11px 14px;border-top:1px solid var(--line);cursor:pointer}
-.ex:first-child{border-top:0}
-.ex:hover{background:rgba(255,255,255,.02)}
-.ex .ic{width:30px;height:30px;border-radius:8px;background:#141a24;border:1px solid var(--line);display:grid;place-items:center;flex:none;color:var(--mut)}
-.ex .ic svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
-.ex .tx{flex:1;min-width:0}
-.ex .tx b{font-weight:650;font-size:13.5px;display:block}
-.ex .tx small{color:var(--faint);font-size:11.5px}
-.ex .go{color:var(--faint);font-size:15px}
-/* footer */
-.foot{border-top:1px solid var(--line);padding:20px 0 40px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--faint);font-size:12px}
-.foot b{color:var(--mut)}
-.foot .mono{font-size:11px}
-/* palette */
-.pal{position:fixed;inset:0;z-index:120;display:flex;align-items:flex-start;justify-content:center;padding:76px 18px}
-.pal[hidden]{display:none}
-.pal .bd{position:absolute;inset:0;background:rgba(5,7,11,.72)}
-.pal .bx{position:relative;width:min(560px,100%);background:#0e121a;border:1px solid var(--line2);border-radius:12px;overflow:hidden;animation:popin .2s ease}
-.pal .in{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
-.pal .in svg{width:17px;height:17px;stroke:var(--mut);fill:none;stroke-width:1.8;flex:none}
-.pal .in input{flex:1;background:none;border:0;outline:none;color:var(--fg);font-family:var(--ui);font-size:15px}
-.pal .in input::placeholder{color:var(--faint)}
-.pal .sct{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding:12px 16px 7px}
-.pal .gg{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:0 13px 13px}
-.pal .it{display:flex;flex-direction:column;gap:1px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;cursor:pointer}
-.pal .it:hover{border-color:var(--or);background:rgba(255,90,31,.07)}
-.pal .it b{font-weight:650;font-size:13.5px}
-.pal .it small{font-size:11.5px;color:var(--mut)}
-/* globe */
-.globe{border-radius:50%;position:relative;overflow:hidden;background:radial-gradient(circle at 36% 30%,#1c2838,#0c1320 68%,#080c13);border:1px solid var(--line2);flex:none}
-.globe::before{content:"";position:absolute;inset:-25%;background-image:radial-gradient(var(--grid) 1px,transparent 1.5px);background-size:13px 13px;-webkit-mask:radial-gradient(circle at 50% 50%,#000 56%,transparent 72%);mask:radial-gradient(circle at 50% 50%,#000 56%,transparent 72%);animation:drift 7s linear infinite}
-.globe::after{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:inset -10px -12px 30px rgba(0,0,0,.6),inset 8px 8px 24px rgba(120,160,210,.08)}
-.globe .pin{position:absolute;width:7px;height:7px;border-radius:50%;background:var(--or);box-shadow:0 0 0 3px rgba(255,90,31,.2);z-index:2}
-.globe .pin::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:1px solid rgba(255,90,31,.5);animation:ping 2s ease-out infinite}
-/* intro */
-#intro{position:fixed;inset:0;z-index:300;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;transition:opacity .5s ease}
-#intro.gone{opacity:0;pointer-events:none}
-#intro .brandblock{display:flex;flex-direction:column;align-items:center;gap:14px;transition:opacity .5s ease,transform .5s ease}
-#intro .mark{width:72px;height:72px;border-radius:18px;background:#11161f;border:1px solid var(--line2);display:grid;place-items:center}
-#intro .mark svg{width:40px;height:40px}
-#intro .word{font-weight:800;font-size:40px;letter-spacing:-.03em}
-#intro .word b{color:var(--or)}
-#intro .tag{font-size:13.5px;color:var(--mut);letter-spacing:.02em}
-#intro .globe{width:186px;height:186px;opacity:0;transform:scale(.8);transition:opacity .6s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
-#intro .skip{position:absolute;bottom:26px;right:26px;font-size:12px;color:var(--faint);letter-spacing:.03em;cursor:pointer;display:flex;align-items:center;gap:7px}
-#intro .skip kbd{font-family:var(--mono);font-size:10.5px;color:var(--mut);background:#151a24;border:1px solid var(--line);border-radius:5px;padding:2px 7px}
-#intro[data-stage="2"] .brandblock{opacity:0;transform:translateY(-10px)}
-#intro[data-stage="2"] .globe{opacity:1;transform:scale(1)}
-#intro[data-stage="3"] .globe{opacity:0;transform:scale(1.35)}
-
-@keyframes pl{0%,100%{opacity:1}50%{opacity:.25}}
-@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-@keyframes drift{to{background-position:130px 0}}
-@keyframes ping{0%{transform:scale(1);opacity:.8}100%{transform:scale(2.4);opacity:0}}
-@keyframes popin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
-@media(prefers-reduced-motion:reduce){.track,.dd,.globe::before,.globe .pin::after{animation:none}#app,.panel,.ticker{opacity:1!important;transform:none!important;transition:none!important}}
-@media(max-width:1040px){.grid{grid-template-columns:1fr;gap:14px}.nsearch{width:170px}.nlinks{overflow-x:auto;scrollbar-width:none}.nlinks::-webkit-scrollbar{display:none}}
-@media(max-width:560px){.nsearch span,.nsearch kbd{display:none}.nsearch{width:auto;padding:8px}.fteam .fn{font-size:15px}.fteam .lg,.fteam .ini{--s:38px}.fsc .n{font-size:24px}.pal .gg{grid-template-columns:1fr}#intro .word{font-size:30px}}
-</style>
-</head><body>
-
-<div id="intro" data-stage="1">
-  <div class="brandblock">
-    <div class="mark"><svg viewBox="0 0 32 32"><path d="M10 7h4v14h8v4H10z" fill="#ff5a1f"/></svg></div>
-    <div class="word">LO<b>B</b>BY</div>
-    <div class="tag">le desk de l'esport</div>
-  </div>
-  <div class="globe" id="introGlobe"></div>
-  <div class="skip" id="skipIntro">Entrer <kbd>↵</kbd></div>
-</div>
-
-<div id="app">
-<div class="ticker"><span class="tklab"><i class="dd"></i>Live</span><div class="tkview"><div class="track" id="tk"></div></div></div>
-
-<div class="wrap">
-  <nav class="nav">
-    <a class="brand" id="brandHome"><span class="mk"><svg viewBox="0 0 32 32"><path d="M10 7h4v14h8v4H10z" fill="#ff5a1f"/></svg></span>LO<b>B</b>BY</a>
-    <div class="nlinks">
-      <span class="nlink on">Accueil</span>
-      <span class="nlink" data-pal>Compétitions</span>
-      <span class="nlink" data-pal>Équipes</span>
-      <span class="nlink" data-pal>Joueurs</span>
-      <span class="nlink" data-pal>Transferts</span>
-      <span class="nlink" data-pal>Business</span>
-      <span class="nlink" data-atlas>Atlas</span>
-    </div>
-    <button class="nsearch" id="openPal" type="button"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg><span>Rechercher…</span><kbd>⌘K</kbd></button>
-    <span class="ava"></span>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/meridian.css">
+</head>
+<body data-theme="dark">
+<a class="skip-link" href="#main">Aller au contenu</a>
+<header class="header">
+  <a href="/" class="brand" aria-label="Lobby, accueil"><span class="mark" aria-hidden="true"><i></i><i></i></span>Lobby</a>
+  <nav class="topnav" aria-label="Navigation principale">
+    <a class="nav-active" href="#main">Desk</a><button type="button" data-atlas>Atlas</button>
+    <a href="#matches">Matchs</a><button type="button" data-explore="teams">Équipes</button>
+    <button type="button" data-explore="leagues">Compétitions</button><a href="#news">Actualités</a>
   </nav>
-
-  <div class="sub" id="sub"></div>
-
-  <main class="grid">
-    <section class="col">
-      <div class="panel">
-        <div class="ph"><span class="t">Événements</span><span class="x" id="evx"></span></div>
-        <div class="pb" id="events"></div>
-      </div>
-      <div class="panel">
-        <div class="ph"><span class="t">Prochainement</span><span class="x">à suivre</span></div>
-        <div class="pb" id="soon"></div>
-      </div>
-    </section>
-
-    <section class="col">
-      <div class="panel" id="featPanel"><div class="feat" id="feat"></div></div>
-      <div class="panel">
-        <div class="ph">
-          <span class="t">Calendrier</span>
-          <div class="tabs"><span class="tab on" data-tab="prog">À venir</span><span class="tab" data-tab="res">Résultats</span></div>
-        </div>
-        <div class="pb" id="prog"></div>
-        <div class="pb" id="res" hidden></div>
-      </div>
-    </section>
-
-    <section class="col">
-      <div class="panel">
-        <div class="ph"><span class="t">Résultats récents</span><span class="x" id="resx"></span></div>
-        <div class="pb" id="recent"></div>
-      </div>
-      <div class="panel">
-        <div class="ph"><span class="t">Explorer</span></div>
-        <div class="pb">
-          <a class="ex" data-atlas><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></span><div class="tx"><b>Atlas mondial</b><small>La scène par région</small></div><span class="go">→</span></a>
-          <a class="ex" data-pal><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12M9 21v-6h6v6"/></svg></span><div class="tx"><b>Business &amp; sponsors</b><small>Le desk du marché</small></div><span class="go">→</span></a>
-          <a class="ex" data-pal><span class="ic"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-8 0v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg></span><div class="tx"><b>Équipes &amp; joueurs</b><small>Rosters, parcours, fiches</small></div><span class="go">→</span></a>
-          <a class="ex" data-pal><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></span><div class="tx"><b>Transferts</b><small>Rumeurs &amp; officialisations</small></div><span class="go">→</span></a>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="foot"><span><b>Lobby</b> — le desk de l'esport.</span><span class="mono" id="upd">données live PandaScore</span></footer>
+  <button class="search-trigger" id="searchTrigger" type="button" aria-haspopup="dialog" aria-controls="searchDialog"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><span>Équipe, joueur, compétition, pays, sponsor...</span><kbd>⌘ K</kbd></button>
+  <div class="header-actions"><button class="icon-button theme-toggle" id="themeToggle" type="button" aria-label="Changer de thème" title="Mode clair / sombre"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg></button><button class="icon-button" id="refresh" type="button" title="Actualiser les données" aria-label="Actualiser"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2 6M20 4v7h-7"/></svg></button></div>
+</header>
+<div class="gamebar" role="group" aria-label="Filtrer par jeu" id="gamebar">
+  <button class="game active" data-game="all" type="button">Tous les jeux</button>
+  <button class="game" data-game="lol" type="button">LoL</button><button class="game" data-game="cs2" type="button">CS2</button>
+  <button class="game" data-game="val" type="button">VALORANT</button><button class="game" data-game="rl" type="button">Rocket League</button>
+  <button class="game" data-game="r6" type="button">Rainbow Six</button><button class="game" data-game="dota" type="button">Dota 2</button>
+  <button class="game" data-game="mlbb" type="button">Mobile Legends</button><button class="game" data-game="hok" type="button">Honor of Kings</button>
 </div>
-</div>
-
-<div class="pal" id="pal" hidden>
-  <div class="bd" data-close></div>
-  <div class="bx" role="dialog" aria-label="Recherche">
-    <div class="in"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg><input id="palq" placeholder="Rechercher une équipe, un joueur, une ligue…"></div>
-    <div class="sct">Sections</div>
-    <div class="gg">
-      <a class="it"><b>Compétitions</b><small>Ligues &amp; brackets</small></a>
-      <a class="it"><b>Équipes</b><small>Orgs &amp; rosters</small></a>
-      <a class="it"><b>Joueurs</b><small>Stats &amp; parcours</small></a>
-      <a class="it"><b>Transferts</b><small>Rumeurs &amp; officiels</small></a>
-      <a class="it"><b>Business</b><small>Sponsors &amp; marché</small></a>
-      <a class="it" data-atlas><b>Atlas</b><small>Le globe mondial</small></a>
+<main id="main" class="shell">
+  <section class="lead-grid" aria-label="Atlas et matchs en direct">
+    <div class="atlas-card" id="atlasHost">
+      <iframe class="atlas-frame" id="atlasFrame" title="Atlas esport interactif" src="/atlas/?embed=1" loading="lazy" allow="fullscreen"></iframe>
+      <div class="atlas-scrim" aria-hidden="true"></div>
+      <div class="atlas-content">
+        <div class="eyebrow"><span class="eyebrow-line"></span> L'ATLAS MONDIAL DE L'ESPORT</div>
+        <h1>La scène esport.<br><span>Sans frontières.</span></h1>
+        <p>Explore les équipes, joueurs et compétitions sur un globe interactif. Un seul endroit pour suivre l'esport mondial.</p>
+        <button type="button" class="primary-btn" data-atlas>Explorer l'Atlas <span aria-hidden="true">↗</span></button>
+      </div>
+      <div class="atlas-caption"><span class="pulse-dot"></span> GLOBE INTERACTIF <span>·</span> Glisse pour explorer</div>
+      <button type="button" class="atlas-expand" data-atlas aria-label="Agrandir le globe">Plein écran <span aria-hidden="true">↗</span></button>
+      <div class="atlas-toolbar" id="atlasToolbar" hidden><button id="atlasClose" type="button" aria-label="Fermer l'Atlas">← <span>Retour au Desk</span></button><span>ATLAS / LOBBY</span></div>
     </div>
+    <section class="surface live-panel" id="matches">
+      <div class="section-head"><div class="section-title"><span class="live-dot"></span><h2>En direct</h2><span class="count" id="liveCount">—</span></div><span class="small-muted" id="liveUpdated">PandaScore</span></div>
+      <div id="liveList" class="live-list" aria-live="polite"><p class="empty">Chargement des matchs…</p></div>
+      <div class="panel-footer"><a href="#schedule">Voir le calendrier <span aria-hidden="true">→</span></a></div>
+    </section>
+  </section>
+
+  <div class="section-kicker">DÉCOUVRIR LA PLATEFORME</div>
+  <div class="destinations" aria-label="Explorer Lobby">
+    <button class="destination" type="button" data-atlas><span class="dest-icon">◎</span><span><strong>Atlas</strong><small>Le monde esport</small></span><b>↗</b></button>
+    <button class="destination" type="button" data-explore="teams"><span class="dest-icon">♧</span><span><strong>Équipes</strong><small>Orgs & rosters</small></span><b>↗</b></button>
+    <button class="destination" type="button" data-explore="players"><span class="dest-icon">♙</span><span><strong>Joueurs</strong><small>Profils & parcours</small></span><b>↗</b></button>
+    <button class="destination" type="button" data-explore="leagues"><span class="dest-icon">◇</span><span><strong>Compétitions</strong><small>Ligues & tournois</small></span><b>↗</b></button>
+    <button class="destination" type="button" data-explore="transfers"><span class="dest-icon">⇄</span><span><strong>Transferts</strong><small>Annonces & mercato</small></span><b>↗</b></button>
+    <button class="destination" type="button" data-explore="sponsors"><span class="dest-icon">◈</span><span><strong>Sponsors</strong><small>Écosystème business</small></span><b>↗</b></button>
   </div>
+
+  <section class="content-grid">
+    <div class="surface schedule" id="schedule">
+      <div class="section-head"><div class="section-title"><h2>Les matchs</h2></div><div class="segmented" role="tablist" aria-label="Période des matchs"><button class="selected" data-view="upcoming" role="tab" aria-selected="true">À venir</button><button data-view="past" role="tab" aria-selected="false">Résultats</button></div></div>
+      <div id="scheduleList" class="match-list" aria-live="polite"><p class="empty">Chargement du calendrier…</p></div>
+      <div class="panel-footer"><span class="small-muted">Horaires affichés dans ton fuseau local</span></div>
+    </div>
+    <section class="surface news" id="news">
+      <div class="section-head"><div class="section-title"><h2>À la une</h2></div><span class="small-muted">Actualités externes</span></div>
+      <div id="newsList" class="news-list"><p class="empty">Chargement des actualités…</p></div>
+      <div class="panel-footer"><span class="small-muted">Titres & liens vers les publications d'origine</span></div>
+    </section>
+    <section class="surface explore-panel">
+      <div class="section-head"><div class="section-title"><h2>Explorer</h2></div><button class="text-link" data-explore="teams" type="button">Rechercher →</button></div>
+      <div class="explore-callout"><span class="explore-overline">LOBBY / DISCOVER</span><h3>Tout l'écosystème, relié.</h3><p>Une équipe, ses joueurs, sa ligue, ses matchs et son pays : retrouve les connexions en quelques clics.</p><button type="button" class="outline-btn" data-explore="teams">Explorer les données →</button></div>
+      <div class="data-status"><span class="status-icon">i</span><p>Les données dépendent de la couverture de chaque source. Aucune statistique ni transfert inventé.</p></div>
+    </section>
+  </section>
+  <section class="source-note"><span class="pulse-dot"></span><span id="sourceStatus">Données esport : PandaScore · en cours de synchronisation</span></section>
+</main>
+<footer class="footer"><span class="footer-brand"><span class="mark"><i></i><i></i></span> Lobby</span><span>L'atlas mondial de l'esport. Une seule expérience.</span><span>Sources indiquées sur les contenus</span></footer>
+
+<div class="search-modal" id="searchDialog" hidden>
+  <div class="search-backdrop" data-search-close></div>
+  <section class="search-window" role="dialog" aria-modal="true" aria-labelledby="searchHeading">
+    <div class="search-inputbar"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><label class="sr-only" for="globalSearch" id="searchHeading">Recherche universelle</label><input id="globalSearch" type="search" autocomplete="off" placeholder="Rechercher une équipe, joueur, ligue, pays..." aria-describedby="searchHint"><button type="button" id="searchDismiss" aria-label="Fermer la recherche">ESC</button></div>
+    <div class="search-body">
+      <aside class="search-categories" aria-label="Catégories de recherche"><button class="active" type="button" data-category="all">Tout rechercher</button><button type="button" data-category="teams">Équipes</button><button type="button" data-category="players">Joueurs</button><button type="button" data-category="leagues">Ligues</button><button type="button" data-category="tournaments">Tournois</button><button type="button" data-category="countries">Pays</button><button type="button" data-category="sponsors">Sponsors</button><button type="button" data-category="transfers">Transferts</button></aside>
+      <div class="search-results"><div class="search-results-label" id="searchHint">ACCÈS RAPIDES</div><div id="resultsArea" aria-live="polite">
+        <div class="search-shortcuts"><button type="button" data-atlas class="atlas-shortcut"><span class="mini-orbit" aria-hidden="true"></span><span><strong>Atlas mondial</strong><small>Explorer les pays et équipes sur le globe 3D</small></span><b>↗</b></button><button type="button" class="shortcut" data-explore="teams"><strong>Explorer les équipes</strong><span>→</span></button><button type="button" class="shortcut" data-explore="leagues"><strong>Ligues & compétitions</strong><span>→</span></button></div>
+      </div></div>
+    </div>
+    <div class="search-foot"><span>↵ Ouvrir · ↑↓ Parcourir · ESC Fermer</span><span>Sources : PandaScore</span></div>
+  </section>
 </div>
 
-<script>
-var GLOBE="/atlas";
-var L="https://cdn-api.pandascore.co/images/team/image/";
-window.__SNAP={updated:Date.now(),matches:[
- {imp:120,tier:"s",id:1,status:"running",ts:Date.now()-3600000,game:"lol",comp:"Worlds",serie:"2026",ll:null,an:"Top Esports",as:"TES",al:L+"126059/top_esportslogo_square.png",sa:1,bn:"Invictus Gaming",bs:"IG",bl:L+"411/invictus_gaminglogo_square.png",sb:1,watch:"http://twitch.tv/riotgames"},
- {imp:120,tier:"s",id:2,status:"not_started",ts:Date.now()+5400000,game:"cs2",comp:"IEM",serie:"Beijing 2026",ll:null,an:"Natus Vincere",as:"NAVI",al:L+"3216/1022px_natus_vincere_2021_lightmode.png",sa:0,bn:"B8",bs:"B8",bl:L+"129381/b8_lightmode.png",sb:0},
- {imp:120,tier:"s",id:3,status:"not_started",ts:Date.now()+9000000,game:"cs2",comp:"IEM",serie:"Beijing 2026",ll:null,an:"MOUZ",as:"MOUZ",al:L+"3240/208px_mouz_2021_allmode.png",sa:0,bn:"PARIVISION",bs:"PRV",bl:L+"133719/250px_parivision_allmode.png",sb:0},
- {imp:60,tier:"a",id:4,status:"not_started",ts:Date.now()+14400000,game:"mlbb",comp:"MPL Indonesia",serie:"Season 18 2026",ll:null,an:"Alter Ego",as:"AE",al:L+"135291/610px_alter_ego_2022_allmode.png",sa:0,bn:"ONIC",bs:"ONIC",bl:L+"134974/logo_of_onic_esports.png",sb:0},
- {imp:100,tier:"s",id:5,status:"not_started",ts:Date.now()+18000000,game:"hok",comp:"King Pro League",serie:"Grand Finals 2026",ll:null,an:"Wolves",as:"WOL",al:L+"129564/692px_wolves_esports_allmode.png",sa:0,bn:"Talent Gaming",bs:"TTG",bl:L+"129041/190px_talent_gaming_logo.png",sb:0},
- {imp:120,tier:"s",id:6,status:"not_started",ts:Date.now()+90000000,game:"lol",comp:"Worlds",serie:"2026",ll:null,an:"Karmine Corp",as:"KC",al:L+"134078/karmine_corplogo_square.png",sa:0,bn:"T1",bs:"T1",bl:L+"126061/t_oscq04.png",sb:0},
- {imp:110,tier:"s",id:7,status:"not_started",ts:Date.now()+100000000,game:"r6",comp:"BLAST R6 Major",serie:"Osaka 2026",ll:null,an:"DarkZero",as:"DZ",al:L+"126926/600px_dark_zero_logo.png",sa:0,bn:"TYLOO",bs:"TYLOO",bl:L+"137676/900px_ty_loo_2016_allmode.png",sb:0}
-],recent:[
- {tier:"s",id:20,status:"finished",ts:Date.now()-7200000,game:"lol",comp:"Worlds",serie:"2026",ll:null,an:"Gen.G",as:"GEN",al:L+"2882/699px_gen.g_esports_2026_allmode.png",sa:3,bn:"LYON",bs:"LY",bl:L+"136066/lyon__25282024_american_team_2529logo_square.png",sb:1},
- {tier:"s",id:21,status:"finished",ts:Date.now()-18000000,game:"cs2",comp:"IEM",serie:"Beijing 2026",ll:null,an:"FURIA",as:"FURIA",al:L+"124530/8297.png",sa:0,bn:"TheMongolz",bs:"MGLZ",bl:L+"3272/702px_the_mongol_z_2024_03_allmode.png",sb:2},
- {tier:"s",id:22,status:"finished",ts:Date.now()-90000000,game:"lol",comp:"Worlds",serie:"2026",ll:null,an:"Dplus KIA",as:"DK",al:L+"132531/800px_dplus_lightmode.png",sa:2,bn:"Bilibili Gaming",bs:"BLG",bl:L+"1566/qw_yi_qu_j.png",sb:3},
- {tier:"a",id:23,status:"finished",ts:Date.now()-95000000,game:"mlbb",comp:"MPL Indonesia",serie:"Season 18 2026",ll:null,an:"EVOS",as:"EVOS",al:L+"137278/600px_evos_esports_allmode.png",sa:3,bn:"Bigetron",bs:"BTR",bl:L+"137277/600px_bigetron_by_vitality_full_darkmode.png",sb:1}
-]};
-var GAMEN={lol:"League of Legends",cs2:"Counter-Strike 2",val:"Valorant",rl:"Rocket League",dota:"Dota 2",r6:"Rainbow Six",ow:"Overwatch",cod:"Call of Duty",fc:"EA FC",mlbb:"Mobile Legends",hok:"Honor of Kings",sc:"StarCraft II",aoe:"Age of Empires"};
-var GAMES=[["all","Tous"],["lol","LoL"],["cs2","CS2"],["val","Valorant"],["rl","Rocket League"],["r6","R6"],["dota","Dota 2"],["mlbb","Mobile Legends"],["hok","Honor of Kings"]];
-function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
-function mk(url,short,extra){extra=extra||"";short=esc((short||"?").slice(0,4));if(url){return '<img class="lg '+extra+'" src="'+esc(url)+'" alt="" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'grid\'"><span class="ini '+extra+'">'+short+'</span>';}return '<span class="ini '+extra+'" style="display:grid">'+short+'</span>';}
-function p2(n){return(n<10?"0":"")+n;}
-function hhmm(ts){var d=new Date(ts);return p2(d.getHours())+":"+p2(d.getMinutes());}
-function sameDay(ts){var d=new Date(ts),n=new Date();return d.getDate()==n.getDate()&&d.getMonth()==n.getMonth()&&d.getFullYear()==n.getFullYear();}
-var DW=["dim","lun","mar","mer","jeu","ven","sam"];
-function when(ts){var d=new Date(ts);return sameDay(ts)?hhmm(ts):DW[d.getDay()]+" "+hhmm(ts);}
-function compLogo(m,s){return (m.ll?'<img class="lg" style="--s:'+(s||18)+'px" src="'+esc(m.ll)+'" alt="" onerror="this.remove()">':'');}
-
-var STATE={filter:"all",tab:"prog",data:{matches:[],recent:[]}};
-function filt(list){return STATE.filter==="all"?list:list.filter(function(m){return m.game===STATE.filter;});}
-
-function draw(){
-  var d=STATE.data,matches=(d.matches||[]).slice(),recent=(d.recent||[]).slice();
-  var running=matches.filter(function(m){return m.status==="running";});
-  var upcoming=matches.filter(function(m){return m.status!=="running";});
-  running.sort(function(a,b){return (b.imp||0)-(a.imp||0);});
-  upcoming.sort(function(a,b){return a.ts-b.ts;});
-
-  var tksrc=running.concat(upcoming).slice(0,24);
-  var ti=tksrc.map(function(m){
-    var live=m.status==="running";
-    var mid=live?('<span class="sc"><span class="w">'+m.sa+'</span> - '+m.sb+'</span>'):('<span class="tm">'+when(m.ts)+'</span>');
-    return '<span class="titem">'+(live?'<i class="dd"></i>':'')+mk(m.al,m.as)+'<span class="nm">'+esc(m.as)+'</span>'+mid+mk(m.bl,m.bs)+'<span class="nm">'+esc(m.bs)+'</span><span class="lgn">'+compLogo(m,15)+esc(m.comp)+'</span></span>';
-  });
-  if(!ti.length)ti=['<span class="titem"><span class="lgn">Aucun match pour le moment</span></span>'];
-  document.getElementById("tk").innerHTML=ti.join("")+ti.join("");
-
-  var present={};matches.concat(recent).forEach(function(m){present[m.game]=1;});
-  document.getElementById("sub").innerHTML=GAMES.filter(function(g){return g[0]==="all"||present[g[0]];}).map(function(g){
-    var on=STATE.filter===g[0];
-    var live=g[0]!=="all"&&running.some(function(m){return m.game===g[0];});
-    return '<span class="chip'+(on?" on":"")+'" data-g="'+g[0]+'">'+(live?'<i class="dd"></i>':'')+esc(g[1])+'</span>';
-  }).join("");
-
-  var fRunning=filt(running),fUpcoming=filt(upcoming),fRecent=filt(recent);
-
-  var f=fRunning[0]||fUpcoming[0];
-  var fe=document.getElementById("feat");
-  if(f){
-    var live=f.status==="running";
-    var nums=live?('<span class="w">'+f.sa+'</span><span class="sep">:</span><span>'+f.sb+'</span>'):('<span class="vs">VS</span>');
-    fe.innerHTML=
-      '<div class="fh"><span class="lgn">'+compLogo(f,20)+'<span>'+esc(GAMEN[f.game]||f.game)+' · '+esc(f.comp)+(f.serie?" "+esc(f.serie):"")+'</span></span>'+
-        (live?'<span class="pill live"><i class="dd"></i>LIVE</span>':'<span class="pill soon">'+when(f.ts)+'</span>')+'</div>'+
-      '<div class="fmatch">'+
-        '<div class="fteam">'+mk(f.al,f.as)+'<div><div class="fn">'+esc(f.an)+'</div><div class="ac">'+esc(f.as)+'</div></div></div>'+
-        '<div class="fsc"><div class="n">'+nums+'</div><div class="lab">'+(live?"en direct":when(f.ts))+'</div></div>'+
-        '<div class="fteam r">'+mk(f.bl,f.bs)+'<div><div class="fn">'+esc(f.bn)+'</div><div class="ac">'+esc(f.bs)+'</div></div></div>'+
-      '</div>'+
-      '<div class="fw">'+(f.watch?'<a class="watch" href="'+esc(f.watch)+'" target="_blank" rel="noopener">▶ Regarder le stream</a>':'<span class="ac">Stream à venir</span>')+
-        '<a class="odds" data-pal>Fiche du match <b style="color:var(--or)">→</b></a></div>';
-  }else{fe.innerHTML='<div class="ac">Aucun match à afficher pour ce filtre.</div>';}
-
-  var seen={},evs=[];
-  fRunning.concat(fUpcoming).forEach(function(m){var k=m.comp+"|"+m.game;if(seen[k])return;seen[k]=1;evs.push(m);});
-  evs=evs.slice(0,9);
-  document.getElementById("evx").textContent=evs.length?evs.length:"";
-  document.getElementById("events").innerHTML=evs.map(function(m){
-    var liveN=fRunning.filter(function(x){return x.comp===m.comp&&x.game===m.game;}).length;
-    var st=liveN?'<span class="st live"><i class="dd"></i>live</span>':'<span class="st">'+when(m.ts)+'</span>';
-    return '<div class="ev">'+mk(m.ll,m.comp)+'<div class="nm">'+esc(m.comp)+'<small>'+esc((GAMEN[m.game]||m.game))+(m.serie?" · "+esc(m.serie):"")+'</small></div>'+st+'</div>';
-  }).join("")||'<div class="ev"><div class="nm">Rien pour ce filtre</div></div>';
-
-  var soon=fUpcoming.slice().sort(function(a,b){return (b.imp-a.imp)||(a.ts-b.ts);}).slice(0,5);
-  document.getElementById("soon").innerHTML=soon.map(function(m){return mrow(m,false);}).join("")||'<div class="mrow"><div class="when"></div><div class="sd">Rien à venir</div></div>';
-
-  var prog=fUpcoming.slice(0,9);
-  document.getElementById("prog").innerHTML=prog.map(function(m){return mrow(m,false);}).join("")||'<div class="mrow"><div class="when"></div><div class="sd">Rien à venir</div></div>';
-  document.getElementById("res").innerHTML=fRecent.slice(0,10).map(function(m){return mrow(m,true);}).join("")||'<div class="mrow"><div class="when"></div><div class="sd">Pas de résultats</div></div>';
-  document.getElementById("resx").textContent=fRecent.length?fRecent.length:"";
-  document.getElementById("recent").innerHTML=fRecent.slice(0,8).map(function(m){return mrow(m,true);}).join("")||'<div class="mrow"><div class="when"></div><div class="sd">Pas encore de résultats</div></div>';
-
-
-  if(d.updated)document.getElementById("upd").textContent="maj "+hhmm(d.updated)+" · PandaScore";
-}
-
-function mrow(m,result){
-  var live=m.status==="running";
-  var aw=result&&m.sa>m.sb,bw=result&&m.sb>m.sa;
-  var when_=result?'<div class="when">'+when(m.ts)+'</div>':'<div class="when">'+(live?'<span class="lv">live</span>':when(m.ts))+'</div>';
-  function side(nm,lg,sc,win,lose){
-    return '<div class="side'+(win?" win":"")+(lose?" lose":"")+'">'+mk(lg,nm)+'<span class="tn">'+esc(nm)+'</span>'+
-      (result||live?'<span class="sc'+(win?" w":"")+'">'+sc+'</span>':'')+'</div>';
-  }
-  return '<div class="mrow">'+when_+
-    '<div class="sd">'+side(m.as,m.al,m.sa,aw,bw)+side(m.bs,m.bl,m.sb,bw,aw)+'</div>'+
-    '<div class="lgbadge">'+compLogo(m,18)+'<small>'+esc(m.comp)+'</small></div></div>';
-}
-
-function pins(el,n){var pts=[[34,30],[62,40],[48,62],[26,54],[70,66]];el.querySelectorAll(".pin").forEach(function(p){p.remove();});for(var i=0;i<n&&i<pts.length;i++){var s=document.createElement("span");s.className="pin";s.style.left=pts[i][0]+"%";s.style.top=pts[i][1]+"%";el.appendChild(s);}}
-
-// interactions
-document.addEventListener("click",function(e){
-  var chip=e.target.closest("[data-g]");if(chip){STATE.filter=chip.getAttribute("data-g");draw();return;}
-  var tab=e.target.closest("[data-tab]");if(tab){STATE.tab=tab.getAttribute("data-tab");
-    document.querySelectorAll(".ph .tab").forEach(function(t){t.classList.toggle("on",t===tab);});
-    document.getElementById("prog").hidden=STATE.tab!=="prog";document.getElementById("res").hidden=STATE.tab!=="res";return;}
-  if(e.target.closest("[data-atlas]")){location.href=GLOBE;return;}
-  if(e.target.closest("[data-pal],#openPal")){openPal();return;}
-  if(e.target.closest("[data-close]")){closePal();return;}
-});
-var pal=document.getElementById("pal"),palq=document.getElementById("palq");
-function openPal(){pal.hidden=false;setTimeout(function(){try{palq.focus();}catch(e){}},30);}
-function closePal(){pal.hidden=true;}
-document.addEventListener("keydown",function(e){
-  if((e.metaKey||e.ctrlKey)&&(e.key==="k"||e.key==="K")){e.preventDefault();pal.hidden?openPal():closePal();}
-  else if(e.key==="Escape"){if(!pal.hidden)closePal();}
-});
-
-window.render=function(data){if(data)STATE.data=data;draw();};
-function _use(d){STATE.data=(d&&d.matches&&d.matches.length)?d:window.__SNAP;draw();}fetch("/api/live").then(function(r){if(!r.ok)throw 0;return r.json();}).then(_use).catch(function(){fetch(GLOBE+"/api/live").then(function(r){return r.json();}).then(_use).catch(function(){STATE.data=window.__SNAP;draw();});});
-
-// intro experience : marque -> atlas -> desk (subtil, skippable)
-(function(){
-  var intro=document.getElementById("intro"),tmo=[];
-  var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var seen=false;try{seen=sessionStorage.getItem("lobby_seen")==="1";}catch(e){}
-  function reveal(){document.body.classList.add("ready");
-    var ps=document.querySelectorAll(".panel");ps.forEach(function(p,i){p.style.transitionDelay=(0.05+i*0.05)+"s";});
-    document.querySelector(".ticker").style.transitionDelay="0s";
-  }
-  function land(){tmo.forEach(clearTimeout);tmo=[];intro.classList.add("gone");reveal();try{sessionStorage.setItem("lobby_seen","1");}catch(e){}setTimeout(function(){intro.style.display="none";},600);}
-  if(reduce||seen){intro.style.display="none";document.body.classList.add("ready");return;}
-  pins(document.getElementById("introGlobe"),4);
-  tmo.push(setTimeout(function(){intro.setAttribute("data-stage","2");},1100));
-  tmo.push(setTimeout(function(){intro.setAttribute("data-stage","3");},2100));
-  tmo.push(setTimeout(land,2550));
-  document.getElementById("skipIntro").addEventListener("click",land);
-  ["click","keydown","wheel","touchstart"].forEach(function(ev){window.addEventListener(ev,function h(){land();},{once:true});});
-})();
-</script>
+<script src="/meridian.js" defer></script>
 </body></html>
