@@ -5,6 +5,10 @@ const $$ = s => [...document.querySelectorAll(s)];
 const gameNames={lol:"League of Legends",cs2:"Counter-Strike 2",val:"VALORANT",rl:"Rocket League",r6:"Rainbow Six",dota:"Dota 2",mlbb:"Mobile Legends",hok:"Honor of Kings",ow:"Overwatch",cod:"Call of Duty",fc:"EA Sports FC",sc:"StarCraft II",apex:"Apex Legends",fn:"Fortnite",pubg:"PUBG",tft:"Teamfight Tactics",aoe:"Age of Empires",sc2:"StarCraft II"};
 const countries=(()=>{const names=new Intl.DisplayNames(["fr"],{type:"region"}),out=[];for(let a=65;a<=90;a++)for(let b=65;b<=90;b++){const code=String.fromCharCode(a,b),name=names.of(code);if(name&&name!==code&&!/région inconnue/i.test(name))out.push([code,name])}return out})()
 const S={game:"all",scope:"major",matches:[],recent:[],updated:null,fetchError:false,view:"upcoming",category:"all",items:[],currentQuery:""};
+const favorites=(()=>{try{const a=JSON.parse(localStorage.getItem("lobby-favorite-teams")||"[]");return new Set(Array.isArray(a)?a.filter(x=>typeof x==="string").slice(0,200):[])}catch{return new Set()}})();
+const favKey=s=>String(s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+const favouriteMatch=m=>favorites.has(favKey(m.an))||favorites.has(favKey(m.bn));
+const saveFavorites=()=>{try{localStorage.setItem("lobby-favorite-teams",JSON.stringify([...favorites]))}catch(e){}};
 const html=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const validURL=u=>{try{const x=new URL(u);return x.protocol==="https:" ? x.href : ""}catch{return ""}};
 const date=t=>{const d=new Date(t);return Number.isNaN(+d)?"—":d.toLocaleString("fr-FR",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})};
@@ -17,6 +21,7 @@ const bigLeagues=/\b(LEC|LCK|LPL|LCS|CBLOL|MSI|Worlds?|World Championship|First 
 const lowTier=/\b(academy|amateur|community|collegiate|open cup|open qualifier|challengers?|contenders?|division 2|division 3|tier ?[23]|grassroots|betboom rise|predator league|spike series)\b/i;
 const featuredTeams=/\b(G2|G2 Esports|T1|Gen\.?G|Fnatic|Team Vitality|Vitality|Karmine Corp|KC|Team Liquid|NAVI|Natus Vincere|FaZe Clan|FaZe|Cloud9|Sentinels|Gentle Mates|BDS|MOUZ|FURIA|100 Thieves|DRX|EDward Gaming|Paper Rex|Team Spirit|Falcons)\b/i;
 const isMajor=m=>{
+ if(favouriteMatch(m))return true;
  const comp=[m.comp,m.serie,m.tournament].filter(Boolean).join(" ");
  if(m.tier==="s"||m.tier==="a")return !lowTier.test(comp);
  return bigLeagues.test(comp)&&!lowTier.test(comp);
@@ -24,7 +29,7 @@ const isMajor=m=>{
 const priority=m=>{
  const comp=[m.comp,m.serie,m.tournament].filter(Boolean).join(" ");
  return (m.tier==="s"?1600:m.tier==="a"?900:0)+(bigLeagues.test(comp)?450:0)+
- (featuredTeams.test([m.an,m.bn].join(" "))*210)+
+ (featuredTeams.test([m.an,m.bn].join(" "))*210)+(favouriteMatch(m)?4000:0)+
  (m.status==="running"?80:0)+(m.imp||0);
 };
 function renderMatches(){
@@ -123,7 +128,7 @@ function hitMarkup(item){
  return '<button class="search-hit" type="button" data-hit="'+html(item.type+":"+item.id)+'">'+pic+'<span class="hit-text"><strong>'+html(item.name)+'</strong><small>'+html(sub)+'</small></span><span class="hit-type">'+label+'</span></button>';
 }
 function renderSearch(items,unavailable=[]){
- S.items=items;
+ S.items=items;activeResult=0;
  $("#searchHint").textContent="RÉSULTATS TRIÉS PAR PERTINENCE"+(items.length?" · "+items.length:"");
  if(!items.length){
   results.innerHTML='<p class="empty">Aucun résultat pour cette recherche'+(unavailable.length?". Certaines sources sont indisponibles.":".")+'</p>';return;
@@ -150,6 +155,12 @@ async function activateHit(key){
   card.querySelector(".profile-loading").outerHTML='<p class="profile-source">Source : PandaScore · '+html(t.game||item.game||"Données publiques")+' · ID '+html(item.id)+'</p>'+(dates.length?'<p class="profile-source">'+html(dates.join(" · "))+'</p>':"")+roster+
     (canAtlas?'<div class="profile-actions"><button type="button" id="profileAtlas" class="outline-btn">Rechercher sur l’Atlas ↗</button></div>':"");
   const atlasBtn=card.querySelector("#profileAtlas");atlasBtn?.addEventListener("click",()=>showAtlas(t.name));
+  if(item.type==="teams"){
+    const actions=card.querySelector(".profile-actions")||card.appendChild(document.createElement("div"));actions.classList.add("profile-actions");
+    const follow=document.createElement("button");follow.type="button";follow.className="outline-btn";
+    const k=favKey(item.name);const refresh=()=>{follow.textContent=favorites.has(k)?"★ Équipe suivie — retirer":"☆ Suivre cette équipe";follow.setAttribute("aria-pressed",String(favorites.has(k)))};
+    refresh();actions.appendChild(follow);follow.addEventListener("click",()=>{favorites.has(k)?favorites.delete(k):favorites.add(k);saveFavorites();refresh();renderMatches()});
+  }
  }catch(e){const card=results.querySelector(".profile-card");if(card){card.querySelector(".profile-loading").textContent="Détails indisponibles. La fiche de base reste accessible.";}}
 }
 async function searchNow(){
@@ -189,8 +200,16 @@ $$("[data-explore]").forEach(b=>b.addEventListener("click",()=>openSearch(b.data
 document.addEventListener("keydown",e=>{
  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){e.preventDefault();modal.hidden?openSearch():closeSearch();return}
  if(e.key==="Escape"){if(!modal.hidden)closeSearch();else if(open)hideAtlas();return}
+ if(!modal.hidden&&(e.key==="ArrowDown"||e.key==="ArrowUp")){
+  const hits=[...results.querySelectorAll(".search-hit")];if(hits.length){
+    e.preventDefault();activeResult=(activeResult+(e.key==="ArrowDown"?1:-1)+hits.length)%hits.length;
+    hits.forEach((h,i)=>h.classList.toggle("keyboard-active",i===activeResult));
+    hits[activeResult].scrollIntoView({block:"nearest",behavior:"instant"});
+  }return;
+ }
  if(!modal.hidden&&e.key==="Enter"){
-  const first=results.querySelector(".search-hit");if(first){e.preventDefault();first.click()}else if(results.querySelector(".atlas-shortcut"))results.querySelector(".atlas-shortcut").click();
+  const hits=[...results.querySelectorAll(".search-hit")];const chosen=hits[activeResult]||hits[0];
+  if(chosen){e.preventDefault();chosen.click()}else if(results.querySelector(".atlas-shortcut"))results.querySelector(".atlas-shortcut").click();
  }
  if(!modal.hidden&&e.key==="Tab"){
   const f=$$("#searchDialog button,#searchDialog input").filter(el=>el.offsetParent!==null);
