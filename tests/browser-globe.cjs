@@ -11,6 +11,10 @@ async function checkRotation(page, selector, label){
  assert.ok(box&&box.width>150&&box.height>150,label+': 3D canvas missing');
  const current=async()=>stage.getAttribute('data-camera');
  const before=await current();
+ await sleep(600);
+ const idle=await current();
+ assert.equal(idle,before,label+': camera moved without dragging (auto-rotation must be disabled)');
+ const countBefore=Number(await stage.getAttribute('data-drag-count')||0);
  const x=box.x+box.width*.54,y=box.y+box.height*.54;
  await page.mouse.move(x,y);await page.mouse.down();
  await page.mouse.move(x+170,y+65,{steps:15});await page.mouse.up();
@@ -18,6 +22,8 @@ async function checkRotation(page, selector, label){
  const after=await current();
  console.log(label,{before,after,canvas:[Math.round(box.width),Math.round(box.height)]});
  assert.ok(after&&after!==before,label+': camera did not change on drag');
+ const countAfter=Number(await stage.getAttribute('data-drag-count')||0);
+ assert.ok(countAfter>countBefore,label+': pointermove never reached the actual 3D canvas');
 }
 (async()=>{
  const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});
@@ -39,12 +45,16 @@ async function checkRotation(page, selector, label){
   const el=frame.locator('#globe3d canvas'),box=await el.boundingBox();
   assert.ok(box&&box.width>150&&box.height>150,'Home Atlas missing WebGL canvas');
   let camera=await frame.locator('#globeStage').getAttribute('data-camera');
+ await sleep(500);
+ assert.equal(await frame.locator('#globeStage').getAttribute('data-camera'),camera,'Home globe moved without a drag');
+ const homeDragStart=Number(await frame.locator('#globeStage').getAttribute('data-drag-count')||0);
   await home.mouse.move(box.x+box.width*.64,box.y+box.height*.50);
   await home.mouse.down();await home.mouse.move(box.x+box.width*.64+130,box.y+box.height*.50+45,{steps:12});await home.mouse.up();
   await sleep(800);
   let next=await frame.locator('#globeStage').getAttribute('data-camera');
   console.log('Home iframe drag',{camera,next});
   assert.ok(next&&next!==camera,'Home embedded 3D globe not draggable');
+ assert.ok(Number(await frame.locator('#globeStage').getAttribute('data-drag-count')||0)>homeDragStart,'Home iframe pointer events are blocked by overlay');
   await home.screenshot({path:'/tmp/lobby-home-desktop.png',fullPage:true});
   const mobile=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
   await mobile.goto(target+'/atlas/',{waitUntil:'domcontentloaded',timeout:45000});
@@ -59,12 +69,14 @@ async function checkRotation(page, selector, label){
   const mobileCanvas=await mobile.locator('#globe3d canvas').boundingBox();
   assert.ok(mobileCanvas,'Mobile WebGL canvas missing');
   const mobileCamera=await mobileStage.getAttribute('data-camera');
+ const mobileDragStart=Number(await mobileStage.getAttribute('data-drag-count')||0);
   await mobile.mouse.move(mobileCanvas.x+mobileCanvas.width*.5,mobileCanvas.y+mobileCanvas.height*.5);
   await mobile.mouse.down();
   await mobile.mouse.move(mobileCanvas.x+mobileCanvas.width*.7,mobileCanvas.y+mobileCanvas.height*.62,{steps:10});
   await mobile.mouse.up();await sleep(550);
   const mobileCameraAfter=await mobileStage.getAttribute('data-camera');
   assert.ok(mobileCameraAfter&&mobileCamera!==mobileCameraAfter,'mobile globe camera did not respond to dragging');
+ assert.ok(Number(await mobileStage.getAttribute('data-drag-count')||0)>mobileDragStart,'mobile pointermove did not reach 3D canvas');
   console.log('Mobile drag',{before:mobileCamera,after:mobileCameraAfter});
   console.log('E2E 3D rotation and responsive navigation: PASS');
  }finally{await browser.close()}
