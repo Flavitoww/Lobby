@@ -231,3 +231,10 @@ body{font-size:15px;line-height:1.55}
  .panel-content{overflow-y:auto;min-height:0}
  .stage-caption .caption-secondary{display:none}
 }
+
+
+/* htmlElements renderer can live outside the globe-stage container.
+   Hide its country badges globally on touch-sized viewports. */
+@media (max-width:700px){
+ html body .country-marker{display:none!important;visibility:hidden!important;pointer-events:none!important}
+}
