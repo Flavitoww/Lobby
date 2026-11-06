@@ -44,7 +44,7 @@ function renderHighlights(){
  }
  const selected=[...leagues.values()].sort((a,b)=>b.importance-a.importance).slice(0,4);
  $("#competitionHighlights").innerHTML=selected.length?selected.map(x=>'<button type="button" class="competition-tile" data-competition="'+html(x.name)+'">'+(validURL(x.image)?'<img src="'+html(validURL(x.image))+'" loading="lazy" alt="">':'<span class="logo-placeholder">'+html(x.name.slice(0,2).toUpperCase())+'</span>')+'<span title="'+html(x.name)+'">'+html(x.name)+'</span></button>').join(""):'<p class="empty">Compétitions indisponibles pour le moment.</p>';
- $("#competitionHighlights [data-competition]").forEach(b=>b.addEventListener("click",()=>{openSearch("leagues");q.value=b.dataset.competition;searchNow()}));
+ $$("#competitionHighlights [data-competition]").forEach(b=>b.addEventListener("click",()=>{openSearch("leagues");q.value=b.dataset.competition;searchNow()}));
  $("#pulseLive").textContent=S.fetchError?"—":S.matches.filter(m=>m.status==="running").length;
  $("#pulseUpcoming").textContent=S.fetchError?"—":S.matches.filter(m=>m.status!=="running").length;
  $("#pulseLeagues").textContent=S.fetchError?"—":leagues.size;
@@ -58,7 +58,7 @@ function renderOrgs(data){
  const target=$("#orgHighlights");
  if(!orgs.length){target.innerHTML='<p class="empty">Index des organisations indisponible pour le moment.</p>';return}
  target.innerHTML=orgs.slice(0,4).map(o=>'<button class="org-tile" type="button" data-team="'+html(o.n)+'">'+(validURL(o.logo)?'<img src="'+html(validURL(o.logo))+'" loading="lazy" alt="">':'<span class="logo-placeholder">'+html(o.n.slice(0,2).toUpperCase())+'</span>')+'<span title="'+html(o.n)+'">'+html(o.n)+'</span><small>'+html(o.cc)+'</small></button>').join("");
- $("#orgHighlights [data-team]").forEach(b=>b.addEventListener("click",()=>{openSearch("teams");q.value=b.dataset.team;searchNow()}));
+ $$("#orgHighlights [data-team]").forEach(b=>b.addEventListener("click",()=>{openSearch("teams");q.value=b.dataset.team;searchNow()}));
 }
 
 function renderFeatured(){
@@ -269,7 +269,7 @@ $$("[data-category]").forEach(b=>b.addEventListener("click",()=>{
  $$("[data-category]").forEach(x=>x.classList.toggle("active",x===b));
  searchNow();q.focus();
 }));
-$("[data-explore]").forEach(b=>{if(b.closest("#searchDialog"))return;b.addEventListener("click",()=>{location.href="/discover/?type="+encodeURIComponent(b.dataset.explore)})});
+$$("[data-explore]").forEach(b=>{if(b.closest("#searchDialog"))return;b.addEventListener("click",()=>{location.href="/discover/?type="+encodeURIComponent(b.dataset.explore)})});
 document.addEventListener("keydown",e=>{
  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){e.preventDefault();modal.hidden?openSearch():closeSearch();return}
  if(e.key==="Escape"){if(!modal.hidden)closeSearch();else if(open)hideAtlas();return}
