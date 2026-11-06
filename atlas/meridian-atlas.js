@@ -165,14 +165,21 @@ function updateSummary(){
     orgs:sorted.map(o=>({n:o.n,cc:o.cc,logo:o.lg||o.ld||""}))},location.origin);
  }
 }
-function fail(message){$("#globeStatus").textContent=message;/* Keep always-visible fallback globe */}
-function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Globe statique affiché · 3D indisponible");return}
+function fail(message){
+ $("#globeStatus").textContent=message;
+ $("#globeLoadHint").textContent="Globe 3D indisponible";
+ $("#globeStage").classList.add("failed");
+ $("#globeUnavailable").hidden=false;
+ /* The fallback is a static preview, never described as interactive 3D. */
+}
+function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Moteur 3D non chargé");return}
  try{
  const globe=new Globe(el,{animateIn:false,waitForGlobeReady:false,rendererConfig:{alpha:true,antialias:window.devicePixelRatio<=1.6}})
   .backgroundColor("rgba(0,0,0,0)")
   .globeImageUrl("/lib/earth-day.jpg").bumpImageUrl("/lib/earth-topology.png")
   .showAtmosphere(true).atmosphereColor("#85c9ff").atmosphereAltitude(.11)
   .onGlobeClick(({lat,lng})=>{
+    if(state.pointer?.isRecentDrag())return;
     const f=geo.features.find(feature=>featureIncludes(feature,lat,lng));
     if(!f)return;
     const code=f.properties?.ISO_A2||f.properties?.iso_a2||f.properties?.ISO2||f.properties?.iso2;
@@ -184,9 +191,22 @@ function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Globe stati
   .onPointClick(p=>selectCountry(p.cc)).onZoom(pov=>{window.LobbyEarth?.update(pov);$("#globeStage").dataset.camera=[pov.lat,pov.lng,pov.altitude].map(n=>Number(n).toFixed(2)).join(",")});
  state.globe=globe;
  try{globe.renderer().setPixelRatio(Math.min(window.devicePixelRatio||1,1.5))}catch(e){}
- const controls=globe.controls();controls.enabled=true;controls.enableRotate=true;controls.enableZoom=true;controls.enableDamping=true;controls.dampingFactor=.07;controls.autoRotate=true;controls.autoRotateSpeed=.3;controls.enablePan=false;controls.minDistance=113;controls.maxDistance=500;
- controls.addEventListener("start",()=>{controls.autoRotate=false;$("#globeStage").classList.add("dragging")});
- controls.addEventListener("end",()=>{$("#globeStage").classList.remove("dragging")});
+ const controls=globe.controls();
+ controls.enabled=true;
+ controls.enableRotate=false; // Rotation is handled by reliable pointer events.
+ controls.enableZoom=true;
+ controls.enableDamping=false;
+ controls.autoRotate=false; // Prevent false positives: camera only moves on deliberate interaction.
+ controls.enablePan=false;
+ controls.minDistance=113;
+ controls.maxDistance=500;
+ const canvas=globe.renderer()?.domElement;
+ if(canvas&&window.LobbyPointerGlobe){
+   state.pointer=window.LobbyPointerGlobe.attach(globe,canvas,$("#globeStage"));
+ }else{
+   // Native OrbitControls fallback, still a genuine 3D camera.
+   controls.enableRotate=true;
+ }
  globe.pointOfView({lat:28,lng:15,altitude:el.clientWidth<560?2.45:embedded?2.25:1.9},0);
  updatePoints();resize();window.LobbyEarth?.init(globe);
  let revealed=false;
@@ -197,7 +217,8 @@ function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Globe stati
   if(!canvas||!canvas.isConnected||!canvas.getContext("webgl2")&&!canvas.getContext("webgl"))return;
   revealed=true;state.ready=true;
   $("#globeStage").classList.add("ready");
-  $("#globeStatus").textContent="Globe 3D actif · clique et glisse pour tourner";
+  $("#globeLoadHint").textContent="Glisse sur la Terre pour tourner";
+  $("#globeStatus").textContent="Globe 3D interactif · glisse pour tourner";
  };
  globe.onGlobeReady(reveal);
  // En cas de texture déjà chargée, l'événement 'ready' peut avoir eu lieu
@@ -236,6 +257,7 @@ async function loadLive(){
   associateMatches();
  }catch(e){$("#worldLive").textContent="—";$("#dataSource").textContent="Équipes : PandaScore · Live indisponible"}
 }
+$("#globeRetry").addEventListener("click",()=>location.reload());
 renderPanel();init();loadOrganizations();loadLive();
 const direct=new URLSearchParams(location.search);
 if(direct.get("country")&&/^[A-Z]{2}$/.test(direct.get("country").toUpperCase())){const cc=direct.get("country").toUpperCase();setTimeout(()=>selectCountry(cc),750)}
