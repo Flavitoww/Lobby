@@ -1,16 +1,6 @@
 name: Lobby WebGL browser test
 on:
-  push:
-    branches: [feat/meridian-unified-desk-atlas]
-    paths:
-      - '.github/workflows/globe-browser.yml'
-      - 'tests/browser-globe.cjs'
-      - 'atlas/meridian-atlas.js'
-      - 'atlas/meridian-atlas.css'
-      - 'atlas/earth.js'
-      - 'atlas/canvas-globe.js'
-      - 'meridian.css'
-      - 'index.html'
+  workflow_dispatch:
 jobs:
   webgl:
     runs-on: ubuntu-24.04
