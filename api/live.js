@@ -32,6 +32,8 @@ function pick(m) {
   return {
     imp, tier, id: m.id, status: m.status, ts, game,
     comp: league, serie, tournament,
+    leagueId: m.league?.id || null,
+    tournamentId: m.tournament?.id || null,
     ll: (m.league && m.league.image_url) || null,
     an: a.name, as: short(a), al: a.image_url || null, sa: score(a.id),
     bn: b.name, bs: short(b), bl: b.image_url || null, sb: score(b.id),
@@ -68,15 +70,17 @@ module.exports = async (req, res) => {
       '/matches/upcoming?sort=begin_at&page[size]=100&page[number]=1',
       '/matches/upcoming?sort=begin_at&page[size]=100&page[number]=2',
       '/matches/upcoming?sort=begin_at&page[size]=100&page[number]=3',
+      '/lol/matches/upcoming?sort=begin_at&page[size]=100',
+      '/lol/matches/running?page[size]=100',
       '/matches/past?sort=-begin_at&page[size]=100&page[number]=1',
       '/matches/past?sort=-begin_at&page[size]=100&page[number]=2'
     ];
     // Les pages secondaires peuvent échouer sans casser toute la page.
     const batches = await Promise.allSettled(base.map(path=>fetchList(path,token)));
     const ready = idx => batches[idx].status === 'fulfilled' ? batches[idx].value : [];
-    const running=ready(0);
-    const upcoming=ready(1).concat(ready(2),ready(3));
-    const past=ready(4).concat(ready(5));
+    const running=ready(0).concat(ready(5));
+    const upcoming=ready(1).concat(ready(2),ready(3),ready(4));
+    const past=ready(6).concat(ready(7));
     if(batches.every(b=>b.status!=='fulfilled'))throw Error("all sources unavailable");
 
     const seen = new Set();
@@ -93,7 +97,7 @@ module.exports = async (req, res) => {
     const matches = live.concat(next);
     // Les résultats complets de la première page de l'API sont conservés.
 
-    const body = { updated: now, matches, recent, source: 'PandaScore', meta: {running:live.length,upcoming:next.length,recent:recent.length,perPage:100,moreAvailable:true,pages:{upcoming:3,past:2},partial:batches.some(b=>b.status!=="fulfilled")} };
+    const body = { updated: now, matches, recent, source: 'PandaScore', meta: {running:live.length,upcoming:next.length,recent:recent.length,perPage:100,moreAvailable:true,pages:{upcoming:4,past:2},featuredGame:"lol",partial:batches.some(b=>b.status!=="fulfilled")} };
     CACHE = { at: now, body };
     res.setHeader('Cache-Control', 'public, max-age=60');
     res.status(200).json(body);
