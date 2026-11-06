@@ -264,8 +264,8 @@ $("#atlasTheme").addEventListener("click",()=>theme(document.documentElement.dat
 $$("[data-layer]").forEach(b=>b.addEventListener("click",()=>{state.layer=b.dataset.layer;$$("[data-layer]").forEach(x=>x.classList.toggle("selected",x===b));state.tab=state.layer==="live"?"live":"overview";$$("[data-tab]").forEach(x=>x.classList.toggle("selected",x.dataset.tab===state.tab));renderPanel();updatePoints()}));
 $$("[data-tab]").forEach(b=>b.addEventListener("click",()=>{state.tab=b.dataset.tab;$$("[data-tab]").forEach(x=>x.classList.toggle("selected",x===b));renderPanel()}));
 $("#home").addEventListener("click",home);$("#recenter").addEventListener("click",home);
-$("#zoomIn").addEventListener("click",()=>{if(state.globe){const v=state.globe.pointOfView();fly(v.lat,v.lng,Math.max(.25,v.altitude*.72))}});
-$("#zoomOut").addEventListener("click",()=>{if(state.globe){const v=state.globe.pointOfView();fly(v.lat,v.lng,Math.min(3,v.altitude*1.35))}});
+$("#zoomIn").addEventListener("click",()=>{if(state.globe){const v=state.globe.pointOfView();fly(v.lat,v.lng,Math.max(.06,v.altitude*.66));updateZoomReadout(Math.max(.06,v.altitude*.66))}});
+$("#zoomOut").addEventListener("click",()=>{if(state.globe){const v=state.globe.pointOfView();fly(v.lat,v.lng,Math.min(4,v.altitude*1.5));updateZoomReadout(Math.min(4,v.altitude*1.5))}});
 window.addEventListener("message",e=>{if(e.origin!==location.origin||!e.data)return;
  if(e.data.type==="lobby:theme")theme(e.data.theme);
  if(e.data.type==="lobby:match-data"&&Array.isArray(e.data.matches)){
@@ -277,24 +277,90 @@ window.addEventListener("message",e=>{if(e.origin!==location.origin||!e.data)ret
 });
 function resize(){const el=$("#globe3d");if(!state.globe||!el.clientWidth||!el.clientHeight)return;state.globe.width(el.clientWidth).height(el.clientHeight);state.globe.globeOffset(el.clientWidth<560?[0,0]:state.expanded?[Math.min(85,el.clientWidth*.08),0]:[Math.min(110,el.clientWidth*.15),0])}
 const ccpoints=Object.entries(coords).map(([cc,v])=>({cc,lat:v[0],lng:v[1],count:0}));
+function countryBadge(point){
+ const e=document.createElement("div");
+ e.className="atlas-country-marker";
+ e.innerHTML='<span>'+flag(point.cc)+'</span><span>'+esc(countryName(point.cc))+'</span><strong>'+point.count+'</strong>';
+ e.setAttribute("aria-hidden","true");
+ return e;
+}
+function orgBadge(point){
+ const e=document.createElement("div");
+ e.className="atlas-logo-marker"+(point.live?" atlas-live":"");
+ const src=safeImage(point.logo);
+ if(src){const img=document.createElement("img");img.alt="";img.loading="lazy";img.src=src;
+   img.onerror=()=>{img.remove();const span=document.createElement("span");span.className="fallback-initials";span.textContent=point.name.slice(0,2).toUpperCase();e.appendChild(span)};
+   e.appendChild(img);
+ }else{const span=document.createElement("span");span.className="fallback-initials";span.textContent=point.name.slice(0,2).toUpperCase();e.appendChild(span)}
+ e.setAttribute("aria-hidden","true");
+ return e;
+}
+function orgMarkersForCountry(cc){
+ const loc=coords[cc];if(!loc)return [];
+ const orgs=visibleOrgs().filter(o=>o.cc===cc).slice(0,24);
+ const cosine=Math.max(.4,Math.cos(loc[0]*Math.PI/180));
+ return orgs.map((o,i)=>{
+  const row=Math.floor(i/8),angle=2*Math.PI*((i%8)/8)+(row*.18);
+  const spread=.65+row*.48;
+  const lat=Math.max(-83,Math.min(83,loc[0]+Math.sin(angle)*spread));
+  const lng=loc[1]+Math.cos(angle)*spread/cosine;
+  return {kind:"org",orgId:o.id,cc,lat,lng,name:o.n,logo:o.lg||o.ld||"",
+   live:(state.liveByCountry.get(cc)||[]).some(m=>[m.an,m.bn].some(n=>norm(n)===norm(o.n)))};
+ });
+}
+function updateZoomReadout(alt){
+ const el=$("#atlasZoomReadout");if(!el)return;
+ el.textContent=alt>1.35?"Vue mondiale":alt>.55?"Vue régionale":alt>.25?"Vue pays":"Zoom rapproché";
+}
 function updatePoints(){
  if(!state.globe)return;
- const counts={};state.orgs.forEach(o=>{counts[o.cc]=(counts[o.cc]||0)+1});
- ccpoints.forEach(x=>{x.count=counts[x.cc]||0;x.live=(state.liveByCountry.get(x.cc)||[]).length});
- const p=ccpoints.filter(x=>state.layer==="live"?x.live>0:state.layer==="countries"?true:x.count>0);
- state.globe.pointsData(p)
- .pointColor(x=>x.live>0&&state.layer==="live"?"#ff687e":x.count>0?"#62b8ff":"#7da8d1")
- .pointAltitude(x=>x.live&&state.layer==="live"?.026:.012)
- .pointRadius(x=>x.live&&state.layer==="live"?.48:x.count>0?.31:.20)
- .pointLabel(x=>countryName(x.cc)+" · "+x.count+" organisations"+(x.live?" · "+x.live+" live":""));
- const livePoints=ccpoints.filter(x=>x.live>0).slice(0,12);
- state.globe.ringsData(state.layer==="live"?livePoints:[])
-  .ringLat("lat").ringLng("lng").ringAltitude(.023)
-  .ringMaxRadius(.8).ringPropagationSpeed(.28).ringRepeatPeriod(1600)
-  .ringColor(()=>["#ff768d","#ff768d00"]);
- // Geographic pins remain interactive in WebGL; HTML badges were covering
- // the drag surface and cluttering the map on smaller screens.
- state.globe.htmlElementsData([]);
+ const counts={};for(const o of visibleOrgs())counts[o.cc]=(counts[o.cc]||0)+1;
+ const competitionsByCountry={};
+ if(state.layer==="competitions"){
+  const nameToCountry=new Map(visibleOrgs().map(o=>[norm(o.n),o.cc]));
+  for(const m of state.events){
+   if(state.game!=="all"&&m.game!==state.game)continue;
+   for(const n of [m.an,m.bn]){
+    const cc=nameToCountry.get(norm(n));if(cc)competitionsByCountry[cc]=(competitionsByCountry[cc]||0)+1;
+   }
+  }
+ }
+ ccpoints.forEach(p=>{
+  p.count=counts[p.cc]||0;p.live=(state.liveByCountry.get(p.cc)||[]).length;
+  p.competitions=competitionsByCountry[p.cc]||0;p.kind="country";
+ });
+ const markers=state.country&&state.layer==="teams"?orgMarkersForCountry(state.country):[];
+ const countries=ccpoints.filter(p=>
+  state.layer==="live"?p.live>0:
+  state.layer==="competitions"?p.competitions>0:
+  state.layer==="countries"?true:p.count>0
+ );
+ // When a country is selected, logos are arranged around its centroid;
+ // they are intentionally not presented as exact organization addresses.
+ const points=markers.length?markers:countries;
+ state.globe.pointsData(points)
+ .pointColor(p=>p.kind==="org"?"#7fd0ff":
+   state.layer==="live"?"#ff647f":state.layer==="competitions"?"#b39bff":p.count?"#70bbff":"#7b9cc7")
+ .pointAltitude(p=>p.kind==="org"?.022:p.live&&state.layer==="live"?.024:.012)
+ .pointRadius(p=>p.kind==="org"?.17:p.live&&state.layer==="live"?.43:p.count?.28:.16)
+ .pointLabel(p=>p.kind==="org"?esc(p.name)+" · "+countryName(p.cc)+" (position indicative)":
+   countryName(p.cc)+" · "+p.count+" organisations"+(p.live?" · "+p.live+" live":""));
+ const activeRings=ccpoints.filter(p=>p.live>0).slice(0,14);
+ state.globe.ringsData(state.layer==="live"?activeRings:[])
+  .ringLat("lat").ringLng("lng").ringAltitude(.024)
+  .ringMaxRadius(.7).ringPropagationSpeed(.35).ringRepeatPeriod(1450)
+  .ringColor(()=>["#ff7994","#ff799400"]);
+ if(state.globe.htmlElementsData){
+  let badges=[];
+  if(state.expanded&&state.layer==="teams"&&markers.length){
+   badges=markers;
+  }else if(state.expanded&&state.layer==="teams"&&!state.country){
+   badges=[...countries].sort((a,b)=>b.count-a.count).slice(0,8).filter(p=>p.count>=1);
+  }
+  state.globe.htmlElementsData(badges)
+   .htmlLat("lat").htmlLng("lng").htmlAltitude(.039)
+   .htmlElement(p=>p.kind==="org"?orgBadge(p):countryBadge(p));
+ }
 }
 function updateSummary(){
  $("#worldTeams").textContent=state.orgs.length||"—";
@@ -367,7 +433,7 @@ function onWorld(geo){if(fallbackStarted)return;const el=$("#globe3d");if(!windo
   })
   .pointsData([]).pointLat("lat").pointLng("lng").pointAltitude(.018).pointRadius(.28)
   .pointColor(()=>"#64b2ff").pointsTransitionDuration(150)
-  .onPointClick(p=>selectCountry(p.cc)).onZoom(pov=>{window.LobbyEarth?.update(pov);$("#globeStage").dataset.camera=[pov.lat,pov.lng,pov.altitude].map(n=>Number(n).toFixed(2)).join(",")});
+  .onPointClick(p=>p.kind==="org"?selectOrg(p.orgId):selectCountry(p.cc)).onZoom(pov=>{window.LobbyEarth?.update(pov);updateZoomReadout(pov.altitude);$("#globeStage").dataset.camera=[pov.lat,pov.lng,pov.altitude].map(n=>Number(n).toFixed(2)).join(",")});
  state.globe=globe;
  try{globe.renderer().setPixelRatio(Math.min(window.devicePixelRatio||1,1.5))}catch(e){}
  const controls=globe.controls();
@@ -377,8 +443,8 @@ function onWorld(geo){if(fallbackStarted)return;const el=$("#globe3d");if(!windo
  controls.enableDamping=false;
  controls.autoRotate=false; // Prevent false positives: camera only moves on deliberate interaction.
  controls.enablePan=false;
- controls.minDistance=113;
- controls.maxDistance=500;
+ controls.minDistance=102;
+ controls.maxDistance=600;
  const canvas=globe.renderer()?.domElement;
  if(canvas){
   canvas.addEventListener("webglcontextlost",event=>{
