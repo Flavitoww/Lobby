@@ -238,3 +238,31 @@ body{font-size:15px;line-height:1.55}
 @media (max-width:700px){
  html body .country-marker{display:none!important;visibility:hidden!important;pointer-events:none!important}
 }
+
+
+/* Globe interaction and honest WebGL loading state */
+.globe-load-hint{position:absolute;right:21px;bottom:22px;z-index:5;pointer-events:none;
+  padding:9px 12px;border:1px solid rgba(154,201,250,.3);border-radius:8px;
+  background:rgba(5,22,46,.7);color:#e4f1ff;font:600 12px Inter,system-ui,sans-serif;
+  backdrop-filter:blur(10px);transition:opacity .35s ease}
+.globe-stage.ready .globe-load-hint{opacity:0}
+.globe-stage.failed .globe-load-hint{display:none}
+.globe-unavailable{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(330px,83%);z-index:9;display:flex;flex-direction:column;align-items:flex-start;
+  gap:12px;padding:24px;border-radius:14px;background:rgba(5,19,40,.92);
+  border:1px solid rgba(150,190,237,.5);color:#e9f3ff;box-shadow:0 20px 60px #0005}
+.globe-unavailable[hidden]{display:none!important}
+.globe-unavailable strong{font:700 17px "Space Grotesk",sans-serif}
+.globe-unavailable span{font:13px/1.6 Inter,sans-serif;color:#b7cfe8}
+.globe-unavailable button{padding:10px 15px;border-radius:8px;border:1px solid #659cda;
+  background:#173c72;color:#fff;font-weight:700;cursor:pointer}
+.globe-unavailable button:hover{background:#205494}
+.globe-stage.dragging{cursor:grabbing}
+.globe-stage.dragging #globe3d canvas{cursor:grabbing!important}
+.globe-stage.failed .globe-backdrop{opacity:1}
+:root.embedded .globe-load-hint{bottom:15px;right:15px;font-size:10px}
+@media(max-width:700px){
+ .globe-load-hint{right:12px;bottom:12px;font-size:10px}
+ .globe-unavailable{padding:18px;gap:9px}
+ .globe-unavailable strong{font-size:15px}
+}
