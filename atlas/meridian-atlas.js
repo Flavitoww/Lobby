@@ -162,14 +162,53 @@ function updateSummary(){
     orgs:sorted.map(o=>({n:o.n,cc:o.cc,logo:o.lg||o.ld||""}))},location.origin);
  }
 }
-function fail(message){
- $("#globeStatus").textContent=message;
- $("#globeLoadHint").textContent="Globe 3D indisponible";
- $("#globeStage").classList.add("failed");
- $("#globeUnavailable").hidden=false;
- /* The fallback is a static preview, never described as interactive 3D. */
+let fallbackStarted=false;
+let worldFeatures=[];
+function pickCountry(hit){
+ if(!hit)return;
+ let feature=worldFeatures.find(f=>featureIncludes(f,hit.lat,hit.lng));
+ let cc=feature?resolveCountry(feature.properties?.name):null;
+ if(!cc){
+  const nearest=Object.entries(coords)
+   .map(([code,[la,lo]])=>({code,dist:(la-hit.lat)**2+Math.cos(hit.lat*Math.PI/180)**2*(lo-hit.lng)**2}))
+   .sort((a,b)=>a.dist-b.dist)[0];
+  if(nearest?.dist<140)cc=nearest.code;
+ }
+ if(cc){
+  if(!coords[cc])coords[cc]=[hit.lat,hit.lng];
+  selectCountry(cc);
+ }
 }
-function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Moteur 3D non chargé");return}
+function startCompatibility(reason){
+ if(fallbackStarted||state.ready)return;
+ fallbackStarted=true;
+ console.warn("[Lobby Atlas] Mode compatible sans WebGL :",reason);
+ try{
+  state.globe?.pauseAnimation?.();
+  state.pointer?.dispose?.();
+  const g=window.LobbyCanvasGlobe?.create($("#globe3d"),{embedded,onPick:pickCountry});
+  if(!g)throw Error("canvas_renderer_missing");
+  state.globe=g;state.ready=true;
+  $("#globeStage").classList.remove("failed");
+  $("#globeStage").classList.add("ready","compatibility");
+  $("#globeUnavailable").hidden=true;
+  $("#globeLoadHint").textContent="Glisse pour tourner la Terre";
+  $("#globeStatus").textContent="Globe interactif · mode compatible sans WebGL";
+  updatePoints();
+  resize();
+  if(queuedSearch){const q=queuedSearch;queuedSearch="";searchFocus(q)}
+ }catch(e){
+  console.error("[Lobby Atlas] Le mode compatible n’a pas démarré",e);
+  $("#globeStage").classList.add("failed");
+  $("#globeUnavailable").hidden=false;
+  $("#globeStatus").textContent="Affichage de la Terre indisponible";
+ }
+}
+function fail(message){
+ console.warn("[Lobby Atlas] ",message);
+ startCompatibility(message);
+}
+function onWorld(geo){if(fallbackStarted)return;const el=$("#globe3d");if(!window.Globe){fail("Moteur 3D non chargé");return}
  try{
  const globe=new Globe(el,{animateIn:false,waitForGlobeReady:false,rendererConfig:{alpha:true,antialias:window.devicePixelRatio<=1.6}})
   .backgroundColor("rgba(0,0,0,0)")
@@ -198,6 +237,12 @@ function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Moteur 3D n
  controls.minDistance=113;
  controls.maxDistance=500;
  const canvas=globe.renderer()?.domElement;
+ if(canvas){
+  canvas.addEventListener("webglcontextlost",event=>{
+    event.preventDefault();
+    startCompatibility("Contexte WebGL perdu");
+  },{once:true});
+ }
  if(canvas&&window.LobbyPointerGlobe){
    state.pointer=window.LobbyPointerGlobe.attach(globe,canvas,$("#globeStage"));
  }else{
@@ -216,28 +261,63 @@ function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Moteur 3D n
   $("#globeStage").classList.add("ready");
   $("#globeLoadHint").textContent="Glisse sur la Terre pour tourner";
   $("#globeStatus").textContent="Globe 3D interactif · glisse pour tourner";
+  $("#globeUnavailable").hidden=true;
+  $("#globeStage").classList.remove("failed");
  };
  globe.onGlobeReady(reveal);
  // En cas de texture déjà chargée, l'événement 'ready' peut avoir eu lieu
  // avant l'installation du callback. On vérifie alors le canvas WebGL.
  setTimeout(reveal,400);
  setTimeout(reveal,1300);
+ setTimeout(()=>{if(!state.ready&&!fallbackStarted)startCompatibility("Le rendu WebGL n’a pas abouti");},9500);
  const observer=new ResizeObserver(resize);observer.observe(el);
  document.addEventListener("visibilitychange",()=>{if(document.hidden)globe.pauseAnimation?.();else globe.resumeAnimation?.()});
  if(queuedSearch){const q=queuedSearch;queuedSearch="";searchFocus(q)}
  }catch(e){console.error("[Lobby Atlas] Initialisation du moteur 3D impossible",e);fail("Globe 3D indisponible · consulte les erreurs du navigateur")}
 }
-async function loadJS(src){return new Promise((resolve,reject)=>{const s=document.createElement("script");s.src=src;s.onload=resolve;s.onerror=reject;document.head.appendChild(s)})}
-async function init(){
- // Two independent sources: bundled WebGL library proxy and small world TopoJSON.
+async function loadJS(src){
+ return new Promise((resolve,reject)=>{
+  const script=document.createElement("script");
+  script.src=src;script.async=true;
+  script.onload=()=>resolve();
+  script.onerror=()=>{script.remove();reject(new Error("asset:"+src))};
+  document.head.appendChild(script);
+ });
+}
+async function getWorld(){
  try{
- const [lib,topo]=await Promise.allSettled([loadJS("/lib/globe.gl.min.js"),loadJS("/lib/topojson-client.min.js")]);
- if(lib.status!=="fulfilled"||topo.status!=="fulfilled")throw Error("library");
- const response=await fetch("/lib/countries-110m.json",{signal:AbortSignal.timeout(14000)});
- if(!response.ok)throw Error("world");
- const json=await response.json(),geo=topojson.feature(json,json.objects.countries);
- onWorld(geo);
- }catch(e){console.error("[Lobby Atlas] Bibliothèques ou géométrie indisponibles",e);fail("Le moteur 3D n’a pas pu être chargé")}
+  const response=await fetch("/lib/countries-110m.json",{signal:AbortSignal.timeout(9000)});
+  if(!response.ok)throw Error("world:"+response.status);
+  const json=await response.json();
+  if(window.topojson?.feature){worldFeatures=window.topojson.feature(json,json.objects.countries).features;}
+ }catch(e){console.warn("[Lobby Atlas] Frontières indisponibles",e)}
+ return {features:worldFeatures};
+}
+async function init(){
+ // WebGL is optional. The local Canvas renderer remains interactive on all supported browsers.
+ const webgl=(()=>{
+  try{const c=document.createElement("canvas");return !!(c.getContext("webgl2")||c.getContext("webgl"))}
+  catch(e){return false}
+ })();
+ if(!webgl){startCompatibility("WebGL indisponible dans ce navigateur");return}
+ let timer=setTimeout(()=>{if(!state.ready)startCompatibility("Chargement du moteur trop long")},10000);
+ try{
+  const lib=await Promise.allSettled([
+    loadJS("/lib/globe.gl.min.js"),
+    loadJS("/lib/topojson-client.min.js")
+  ]);
+  if(fallbackStarted)return;
+  if(lib[0].status!=="fulfilled"||!window.Globe){
+   throw new Error("Librairie 3D inaccessible");
+  }
+  // Missing country geometries must not block a working 3D Earth.
+  const geo=await getWorld();
+  if(fallbackStarted)return;
+  onWorld(geo);
+ }catch(e){
+  console.warn("[Lobby Atlas] Démarrage WebGL",e);
+  startCompatibility(String(e.message||e));
+ }finally{clearTimeout(timer)}
 }
 async function loadOrganizations(){
  try{const saved=JSON.parse(localStorage.getItem("lobby.orgs")||"null");if(saved&&Array.isArray(saved.orgs)&&Date.now()-saved.updated<86400000){state.orgs=saved.orgs;updateSummary();associateMatches()}}catch(e){}
