@@ -5,6 +5,11 @@ on:
     paths:
       - '.github/workflows/globe-browser.yml'
       - 'tests/browser-globe.cjs'
+      - 'atlas/meridian-atlas.js'
+      - 'atlas/meridian-atlas.css'
+      - 'atlas/earth.js'
+      - 'meridian.css'
+      - 'index.html'
 jobs:
   webgl:
     runs-on: ubuntu-24.04
