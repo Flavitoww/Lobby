@@ -11,7 +11,8 @@ const channels=[
  {login:"zerator",name:"ZeratoR",focus:["Événements esport"]}
 ];
 const important=/\b(esport|esports|worlds?|lec|lck|lpl|lfl|rlcs|vct|valorant|cs2|counter.strike|league of legends|karmine|kc\b|t1\b|g2\b|vitality|major|champions|finale|cast|co.stream|co-stream|watch.party|watchparty|tournoi|match|compétition|tft|rocket league|six invitational)\b/i;
-const category=/\b(league of legends|valorant|counter.strike|rocket league|teamfight tactics|rainbow six)\b/i;
+const dedicatedCaster=new Set(["otplol_","rocketbaguette"]);
+const esportsBroadcast=/\b(worlds?|vct|lec|lck|lpl|lfl|rlcs|msi|major|champions tour|esport|esports|co.stream|co-stream|watch.party|watchparty|cast|commentary|quart|finale|t1\s*(vs|contre|v)\s*kc|kc\s*(vs|contre|v)\s*t1|karmine.*t1)\b/i;
 let token={value:"",at:0};
 let cached={items:[],at:0};
 async function getToken(client,secret){
@@ -37,7 +38,7 @@ async function getStreams(client,secret){
   const s=live.get(c.login);
   if(!s)return {login:c.login,name:c.name,url:"https://www.twitch.tv/"+c.login,live:false,esport:false};
   const title=String(s.title||"").slice(0,170),game=String(s.game_name||"").slice(0,65);
-  const esport=important.test(title)||category.test(game);
+  const esport=esportsBroadcast.test(title)||(dedicatedCaster.has(c.login)&&important.test(title));
   return {login:c.login,name:c.name,url:"https://www.twitch.tv/"+c.login,live:true,esport,
     game,title,viewers:Number(s.viewer_count||0),started:s.started_at||null,
     thumbnail:"https://static-cdn.jtvnw.net/previews-ttv/live_user_"+encodeURIComponent(c.login)+"-320x180.jpg"};
