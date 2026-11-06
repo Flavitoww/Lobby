@@ -118,7 +118,7 @@ function setExpanded(v){state.expanded=v;document.documentElement.classList.togg
 function searchRequest(){if(window.parent!==window){window.parent.postMessage({type:"lobby:open-search"},location.origin)}else {location.href="/?search=1"}}
 $("#searchOpen").addEventListener("click",searchRequest);
 $("#atlasTheme").addEventListener("click",()=>theme(document.documentElement.dataset.theme==="dark"?"light":"dark"));
-$("[data-layer]").forEach(b=>b.addEventListener("click",()=>{state.layer=b.dataset.layer;$("[data-layer]").forEach(x=>x.classList.toggle("selected",x===b));state.tab=state.layer==="live"?"live":"overview";$("[data-tab]").forEach(x=>x.classList.toggle("selected",x.dataset.tab===state.tab));renderPanel();updatePoints()}));
+$$("[data-layer]").forEach(b=>b.addEventListener("click",()=>{state.layer=b.dataset.layer;$$("[data-layer]").forEach(x=>x.classList.toggle("selected",x===b));state.tab=state.layer==="live"?"live":"overview";$$("[data-tab]").forEach(x=>x.classList.toggle("selected",x.dataset.tab===state.tab));renderPanel();updatePoints()}));
 $$("[data-tab]").forEach(b=>b.addEventListener("click",()=>{state.tab=b.dataset.tab;$$("[data-tab]").forEach(x=>x.classList.toggle("selected",x===b));renderPanel()}));
 $("#home").addEventListener("click",home);$("#recenter").addEventListener("click",home);
 $("#zoomIn").addEventListener("click",()=>{if(state.globe){const v=state.globe.pointOfView();fly(v.lat,v.lng,Math.max(.25,v.altitude*.72))}});
