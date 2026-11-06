@@ -28,7 +28,9 @@
   <div class="stage-caption"><span class="caption-dot"></span> LOBBY / ATLAS <span class="caption-secondary">MONDE ENTIER</span></div>
   <div class="sky-layer" aria-hidden="true"><span class="sky-sun"></span><span class="sky-moon"></span><span class="cloud-wisp one"></span><span class="cloud-wisp two"></span><span id="skyStars"></span></div>
   <div class="globe-backdrop" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="globe-fallback"><svg viewBox="0 0 520 520" role="presentation"><defs><radialGradient id="ocean" cx=".32" cy=".26"><stop stop-color="#235ea3"/><stop offset=".66" stop-color="#103963"/><stop offset="1" stop-color="#061731"/></radialGradient><clipPath id="earthclip"><circle cx="260" cy="260" r="247"/></clipPath></defs><circle cx="260" cy="260" r="247" fill="url(#ocean)" stroke="#71b2f1" stroke-opacity=".55" stroke-width="2"/><g clip-path="url(#earthclip)" fill="#7296bb" opacity=".74" stroke="#c5ddf2" stroke-opacity=".34" stroke-width="1.5"><path d="M72 123 101 79 151 75 186 104 209 141 192 163 167 155 152 188 127 192 114 223 91 205 93 172 67 157Z"/><path d="M154 212 192 218 221 261 219 305 197 351 181 399 157 435 143 377 126 337 135 288Z"/><path d="M247 119 274 95 305 107 319 125 353 110 387 123 443 117 495 141 480 176 439 199 410 194 382 220 354 212 342 251 307 239 299 192 265 185 253 159Z"/><path d="M272 215 320 225 347 258 338 309 320 358 287 390 258 353 236 305 245 255Z"/><path d="M413 360 471 353 495 385 473 414 431 402Z"/><path d="M101 66 137 43 164 52 156 81 126 95Z"/></g><g clip-path="url(#earthclip)" fill="none" stroke="#9ed7ff" stroke-opacity=".18"><ellipse cx="260" cy="260" rx="100" ry="247"/><ellipse cx="260" cy="260" rx="180" ry="247"/><path d="M13 260h494M42 145h436M42 375h436"/></g><circle cx="260" cy="260" r="247" fill="none" stroke="#a4d5ff" stroke-opacity=".36"/></svg></div></div>
-  <div id="globe3d" aria-label="Globe 3D interactif"></div>
+  <div id="globe3d" aria-label="Globe 3D interactif, maintenir le clic et glisser pour tourner"></div>
+  <div id="globeLoadHint" class="globe-load-hint" role="status">Chargement du globe 3D…</div>
+  <div id="globeUnavailable" class="globe-unavailable" role="alert" hidden><strong>Le moteur 3D n’a pas démarré.</strong><span>Active WebGL dans ton navigateur ou recharge la page pour réessayer.</span><button id="globeRetry" type="button">Réessayer</button></div>
   <div class="map-head"><p class="eyebrow">ATLAS MONDIAL</p><h1>Découvre<br><span>l'esport partout.</span></h1><p id="atlasSub">Sélectionne un pays sur le globe pour découvrir les équipes et leur scène compétitive.</p></div>
   <div class="sky-indicator"><span id="skyIcon">◐</span><span id="skyPeriod">Éclairage terrestre · heure réelle</span><span class="sky-clock" id="skyClock"></span></div>
   <div class="globe-controls"><button id="zoomIn" type="button" aria-label="Zoom avant">+</button><button id="zoomOut" type="button" aria-label="Zoom arrière">−</button><button id="home" type="button" aria-label="Vue mondiale">⌂</button></div>
@@ -44,5 +46,6 @@
 </aside>
 </div>
 <script src="/atlas/earth.js" defer></script>
+<script src="/atlas/pointer-globe.js" defer></script>
 <script src="/atlas/meridian-atlas.js" defer></script>
 </body></html>
