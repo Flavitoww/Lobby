@@ -98,3 +98,115 @@
 .globe-stage[data-sky="day"] .caption-secondary,.globe-stage[data-sky="day"] .bottom-detail{color:#316592}
 .globe-stage[data-sky="day"] .sky-indicator{color:#164878;background:rgba(235,246,255,.7);border-color:rgba(48,110,173,.24)}
 .globe-stage[data-sky="day"] .sky-clock{color:#316592}
+
+
+/* MERIDIAN ATLAS • interaction is the primary affordance */
+:root{--atlas-radius:12px}
+body{font-size:15px;line-height:1.55}
+.atlas-layout{grid-template-columns:190px minmax(0,1fr) minmax(332px,380px);grid-template-rows:72px minmax(0,1fr)}
+.atlas-header{gap:17px;padding-inline:23px}
+.atlas-brand{font-size:26px}
+.atlas-nav{gap:1px;margin-left:5px}
+.atlas-nav>*{font-size:13px;padding:11px 10px}
+.search-opener{height:44px;max-width:395px;font-size:13px}
+.header-control{width:43px;height:43px}
+.atlas-rail{padding:27px 12px;gap:6px}
+.rail-label,.overline{font-size:10px;letter-spacing:.1em}
+.rail-tab{min-height:49px;padding:12px 11px;font-size:14px;gap:12px}
+.rail-symbol{width:27px}
+.rail-symbol svg{height:22px;width:22px}
+.rail-hint{font-size:12px;line-height:1.7;color:var(--muted)}
+.reset-view{font-size:13px;min-height:44px}
+.globe-stage{cursor:grab}
+.globe-stage:active{cursor:grabbing}
+#globe3d{position:absolute;inset:0;z-index:1;cursor:grab;touch-action:none}
+#globe3d:active{cursor:grabbing}
+#globe3d canvas{display:block;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+#globe3d canvas:active{cursor:grabbing}
+.globe-backdrop,.sky-layer,.map-head,.stage-caption,.stage-bottom,.sky-indicator,.globe-status{pointer-events:none}
+.map-head{top:clamp(105px,17vh,190px);left:clamp(18px,3vw,46px);width:min(290px,35%)}
+.map-head h1{font-size:clamp(30px,3.15vw,46px);line-height:1.13}
+.map-head>p:last-child{font-size:14px;line-height:1.65}
+.stage-caption{font-size:11px}
+.stage-bottom{font-size:11px}
+.globe-status{font-size:12px;line-height:1.5;max-width:320px}
+.globe-controls{right:22px;bottom:24px;gap:6px}
+.globe-controls button{width:44px;height:44px;border-radius:10px;font-size:22px}
+.atlas-panel{background:var(--surface)}
+.panel-header{padding:29px 25px 23px}
+.panel-header h2{font-size:27px;line-height:1.18;margin:12px 0 8px}
+.panel-header p{font-size:13px}
+.world-stats{padding:0 25px 20px;gap:12px}
+.world-stats strong{font-size:23px}
+.world-stats span{font-size:11px;line-height:1.4}
+.panel-tabs{gap:21px;padding:0 25px}
+.panel-tabs button{font-size:13px;padding-bottom:15px}
+.panel-content{padding:20px 25px;font-size:13px}
+.data-label{font-size:11px;margin:21px 0 12px}
+.empty-panel h3{font-size:19px}
+.empty-panel p{font-size:13px}
+.country-stat{padding:18px;border-radius:11px}
+.country-stat .number{font-size:34px}
+.country-stat p{font-size:12px}
+.org-item{min-height:67px;padding:12px 7px;gap:13px;border-radius:7px}
+.org-logo,.org-fallback{width:45px;height:45px}
+.org-item strong{font-size:14px;line-height:1.3}
+.org-item small{font-size:12px}
+.match-mini{padding:16px 0}
+.match-mini-meta{font-size:12px}
+.match-mini-line{font-size:13px}
+.match-mini .match-note{font-size:11px}
+.match-mini a{font-size:12px}
+.note{font-size:12px;line-height:1.6}
+.panel-foot{padding:15px 25px;font-size:11px}
+.country-marker{font:600 11px Inter,sans-serif;padding:6px 10px;min-height:30px}
+:root.embedded .atlas-layout{display:block}
+:root.embedded .globe-stage{height:100dvh}
+:root.embedded #globe3d{touch-action:none}
+:root.embedded .map-head{display:none}
+:root.embedded .globe-controls{display:none}
+:root.embedded .globe-status{display:none}
+:root.embedded .globe-backdrop{opacity:1}
+:root.embedded .globe-stage.ready .globe-backdrop{opacity:0}
+@media(max-width:1230px){
+ .atlas-layout{grid-template-columns:72px minmax(0,1fr) 340px}
+ .atlas-header{gap:11px;padding-inline:14px}
+ .atlas-nav>*{font-size:12px;padding:8px 7px}
+ .atlas-rail{padding:22px 8px}
+ .rail-tab{justify-content:center;padding:13px 8px}
+ .rail-tab>span:not(.rail-symbol),.rail-label,.rail-hint,.reset-view span{display:none}
+ .reset-view{justify-content:center}
+ .map-head{width:35%}
+}
+@media(max-width:900px){
+ .atlas-layout{grid-template-columns:1fr;grid-template-rows:65px minmax(0,1fr) minmax(250px,37vh)}
+ .atlas-header{grid-column:1}
+ .atlas-nav,.atlas-rail{display:none}
+ .atlas-panel{grid-row:3;min-height:0}
+ .globe-stage{grid-row:2}
+ .map-head{width:42%;top:20%;left:22px}
+ .panel-header{padding:14px 20px 9px}
+ .panel-header h2{font-size:20px;margin:5px 0}
+ .world-stats{padding:4px 20px 13px}
+ .world-stats strong{font-size:17px}
+ .panel-tabs{padding:0 20px}
+ .panel-tabs button{padding-bottom:10px}
+ .panel-content{padding:12px 20px}
+ .globe-controls{bottom:14px;right:14px}
+ .globe-controls button{width:39px;height:39px}
+ .sky-indicator{right:14px;top:14px}
+}
+@media(max-width:560px){
+ .atlas-layout{grid-template-rows:59px minmax(0,1fr) minmax(265px,41vh)}
+ .atlas-brand{font-size:22px}
+ .globe-controls button{width:37px;height:37px}
+ .stage-caption{top:15px;left:15px;font-size:10px}
+ .globe-status{bottom:51px;left:15px;font-size:10px}
+ .stage-bottom{bottom:15px;left:15px;font-size:10px}
+ .panel-content{padding:12px 17px}
+ .world-stats{gap:6px;padding:0 17px 12px}
+ .world-stats span{font-size:10px}
+ .panel-header{padding-inline:17px}
+ .panel-tabs{padding-inline:17px}
+ .map-head{display:none}
+}
