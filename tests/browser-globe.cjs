@@ -53,6 +53,19 @@ async function checkRotation(page, selector, label){
   console.log('Mobile bounds',dimensions);
   assert.ok(dimensions.body<=dimensions.viewport+2,'Mobile Atlas horizontal overflow');
   await mobile.screenshot({path:'/tmp/lobby-atlas-mobile.png',fullPage:true});
+  const markers=await mobile.locator('.country-marker:visible').count();
+  assert.equal(markers,0,'mobile map must not have country badges overflowing the screen');
+  const mobileStage=mobile.locator('#globeStage');
+  const mobileCanvas=await mobile.locator('#globe3d canvas').boundingBox();
+  assert.ok(mobileCanvas,'Mobile WebGL canvas missing');
+  const mobileCamera=await mobileStage.getAttribute('data-camera');
+  await mobile.mouse.move(mobileCanvas.x+mobileCanvas.width*.5,mobileCanvas.y+mobileCanvas.height*.5);
+  await mobile.mouse.down();
+  await mobile.mouse.move(mobileCanvas.x+mobileCanvas.width*.7,mobileCanvas.y+mobileCanvas.height*.62,{steps:10});
+  await mobile.mouse.up();await sleep(550);
+  const mobileCameraAfter=await mobileStage.getAttribute('data-camera');
+  assert.ok(mobileCameraAfter&&mobileCamera!==mobileCameraAfter,'mobile globe camera did not respond to dragging');
+  console.log('Mobile drag',{before:mobileCamera,after:mobileCameraAfter});
   console.log('E2E 3D rotation and responsive navigation: PASS');
  }finally{await browser.close()}
 })().catch(e=>{console.error('E2E FAIL',e);process.exit(1)});
