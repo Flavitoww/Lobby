@@ -185,10 +185,25 @@ function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Globe stati
  state.globe=globe;
  try{globe.renderer().setPixelRatio(Math.min(window.devicePixelRatio||1,1.5))}catch(e){}
  const controls=globe.controls();controls.enabled=true;controls.enableRotate=true;controls.enableZoom=true;controls.enableDamping=true;controls.dampingFactor=.07;controls.autoRotate=true;controls.autoRotateSpeed=.3;controls.enablePan=false;controls.minDistance=113;controls.maxDistance=500;
- controls.addEventListener("start",()=>{controls.autoRotate=false});
+ controls.addEventListener("start",()=>{controls.autoRotate=false;$("#globeStage").classList.add("dragging")});
+ controls.addEventListener("end",()=>{$("#globeStage").classList.remove("dragging")});
  globe.pointOfView({lat:28,lng:15,altitude:embedded?2.25:1.9},0);
  updatePoints();resize();window.LobbyEarth?.init(globe);
- globe.onGlobeReady(()=>{$("#globeStage").classList.add("ready");$("#globeStatus").textContent="Globe 3D · tourne et sélectionne un pays";state.ready=true});
+ let revealed=false;
+ const reveal=()=>{
+  if(revealed)return;
+  const renderer=globe.renderer?.();
+  const canvas=renderer?.domElement;
+  if(!canvas||!canvas.isConnected||!canvas.getContext("webgl2")&&!canvas.getContext("webgl"))return;
+  revealed=true;state.ready=true;
+  $("#globeStage").classList.add("ready");
+  $("#globeStatus").textContent="Globe 3D actif · clique et glisse pour tourner";
+ };
+ globe.onGlobeReady(reveal);
+ // En cas de texture déjà chargée, l'événement 'ready' peut avoir eu lieu
+ // avant l'installation du callback. On vérifie alors le canvas WebGL.
+ setTimeout(reveal,400);
+ setTimeout(reveal,1300);
  const observer=new ResizeObserver(resize);observer.observe(el);
  document.addEventListener("visibilitychange",()=>{if(document.hidden)globe.pauseAnimation?.();else globe.resumeAnimation?.()});
  if(queuedSearch){const q=queuedSearch;queuedSearch="";searchFocus(q)}
