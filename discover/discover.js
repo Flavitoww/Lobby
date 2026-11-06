@@ -33,6 +33,12 @@ async function search(){
 }
 q.addEventListener("input",()=>{clearTimeout(window._searchTimer);window._searchTimer=setTimeout(search,320)});
 button.addEventListener("click",search);q.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();search()}});
+async function browseFallback(){
+ try{const r=await fetch("/api/explore?type="+encodeURIComponent(type)+"&browse=1",{signal:AbortSignal.timeout(10000)});
+  if(!r.ok)throw Error("browse");const d=await r.json();
+  show(d.items||[],type);$("#searchHelp").textContent="Catalogue PandaScore · les résultats initiaux ne sont pas un classement des meilleurs.";
+ }catch(e){results.innerHTML='<p class="directory-empty">Catalogue momentanément indisponible. Utilise la recherche pour accéder à une fiche.</p>'}
+}
 function initial(){
  if(type==="countries"){const primary=["FR","KR","CN","US","DE","GB","BR","JP","ES","SA","SE","DK","PL","CA","AU","TR","ID","VN"];const names=new Intl.DisplayNames(["fr"],{type:"region"});show(primary.map(cc=>({id:cc,cc,name:names.of(cc)})),"countries");return}
  if(type==="sponsors"||type==="transfers"){
@@ -40,16 +46,16 @@ function initial(){
   fetch("/api/news").then(r=>r.json()).then(d=>{window._news=(d.items||[]).filter(x=>(type==="sponsors"?/sponsor|partenariat|partnership|brand|marque/i:/transfert|mercato|recrute|sign|join|roster/i).test(x.title));articles(window._news)}).catch(()=>{results.innerHTML='<p class="directory-empty">Flux d’actualités indisponible.</p>'});return;
  }
  if(type==="teams"||type==="players"){
-  fetch("/api/orgs").then(r=>r.json()).then(d=>{
+  fetch("/api/orgs",{signal:AbortSignal.timeout(13000)}).then(r=>{if(!r.ok)throw Error("catalog");return r.json()}).then(d=>{
    if(type==="teams")show((d.orgs||[]).slice(0,60).map(o=>({...o,id:Object.values(o.g||{})[0]?.pid||"",name:o.n,image:o.lg||o.ld,country:o.cc,game:Object.keys(o.g||{}).join(" · ")})).filter(o=>o.id),type);
    else{const people=new Map();for(const o of d.orgs||[])for(const [game,v] of Object.entries(o.g||{}))for(const p of v.pl||[]){if(!people.has(p.id))people.set(p.id,{id:p.id,name:p.n,image:p.im,country:p.cc,game,team:o.n})}show([...people.values()].slice(0,60),"players")}
-  }).catch(()=>{results.innerHTML='<p class="directory-empty">Catalogue momentanément indisponible. Recherche directe possible ci-dessus.</p>'});return;
+  }).catch(()=>browseFallback());return;
  }
- fetch("/api/live").then(r=>r.json()).then(d=>{
+ fetch("/api/live",{signal:AbortSignal.timeout(10000)}).then(r=>{if(!r.ok)throw Error("matches");return r.json()}).then(d=>{
   const games=[...(d.matches||[]),...(d.recent||[])],map=new Map();
   for(const m of games){const name=type==="leagues"?m.comp:m.tournament;if(!name)continue;const id=type==="leagues"?m.leagueId:m.tournamentId;if(!id)continue;map.set(id,{id,name,image:m.ll,game:m.game})}
-  show([...map.values()].slice(0,45),type);
- }).catch(()=>{results.innerHTML='<p class="directory-empty">Aucun catalogue chargé. Utilise la recherche.</p>'});
+  if(map.size)show([...map.values()].slice(0,45),type);else browseFallback();
+ }).catch(()=>browseFallback());
 }
 $("#theme").addEventListener("click",()=>{document.body.dataset.theme=document.body.dataset.theme==="dark"?"light":"dark";localStorage.setItem("lobby-theme",document.body.dataset.theme)});
 const saved=(()=>{try{return localStorage.getItem("lobby-theme")}catch{return null}})();if(saved==="light")document.body.dataset.theme="light";
