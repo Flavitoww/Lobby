@@ -37,15 +37,105 @@ function geoCenter(feature){
  return [Math.max(-83,Math.min(83,lat)),lng>180?lng-360:lng];
 }
 const coords={FR:[46.6,2.3],DE:[51.2,10.4],GB:[54,-2],US:[38,-98],CA:[57,-104],BR:[-11,-52],KR:[36.5,127.8],CN:[35,104],JP:[36,138],ES:[40,-4],SE:[62,15],DK:[56,10],PL:[52,19],UA:[49,32],SA:[24,45],AE:[24,54],AU:[-25,134],IN:[21,79],ID:[-3,118],TR:[39,35],NL:[52,5],BE:[51,4],IT:[42,12],PT:[39,-8],NO:[62,10],FI:[64,26],CH:[47,8],AT:[48,14],CZ:[50,15],RO:[46,25],RS:[44,21],HR:[45,16],GR:[39,22],SG:[1.3,104],MY:[4,102],PH:[13,122],TH:[15,101],VN:[16,108],TW:[24,121],HK:[22,114],MX:[24,-102],AR:[-36,-64],CL:[-33,-71],PE:[-10,-76],CO:[4,-74],ZA:[-29,25],EG:[26,30],MA:[32,-6],TN:[34,10],IL:[31,35],KZ:[48,68],RU:[61,105],NZ:[-41,174]};
-const state={globe:null,orgs:[],country:null,org:null,layer:"teams",tab:"overview",expanded:!embedded,ready:false,liveMatches:[],liveByCountry:new Map()};
+const state={globe:null,orgs:[],country:null,org:null,layer:"teams",tab:"overview",expanded:!embedded,ready:false,liveMatches:[],liveByCountry:new Map(),events:[],competitions:[],game:"all",catalog:new Map(),fetching:new Set(),coverage:"Chargement du catalogue…"};
 let lastFocus=null,queuedSearch="";
 const flag=cc=>{if(!/^[A-Z]{2}$/.test(cc||""))return"◎";return String.fromCodePoint(...[...cc].map(c=>127397+c.charCodeAt(0)))};
 const countryName=cc=>names.of(cc)||cc;
 const ctrl=()=>state.globe?.controls?.();
 const duration=()=>matchMedia("(prefers-reduced-motion: reduce)").matches?0:1150;
-function fly(lat,lng,alt=.7){const width=$("#globe3d")?.clientWidth||1000;state.globe?.pointOfView({lat,lng,altitude:width<560?Math.max(1.2,alt):alt},duration())}
+function fly(lat,lng,alt=.7){state.globe?.pointOfView({lat,lng,altitude:Math.max(.06,Math.min(4,alt))},duration())}
 function home(){state.country=null;state.org=null;state.tab="overview";renderPanel();fly(28,15,2.15)}
 const safeUrl=s=>{try{const u=new URL(s);return u.protocol==="https:"?u.href:""}catch{return""}};
+const GAME_SLUGS={
+ "league-of-legends":"lol",lol:"lol",csgo:"cs2","cs-go":"cs2",counterstrike:"cs2","counter-strike":"cs2",
+ valorant:"val","rocket-league":"rl",rl:"rl",dota2:"dota","dota-2":"dota",r6siege:"r6","rainbow-six-siege":"r6",
+ ow:"ow",overwatch:"ow",codmw:"cod","call-of-duty":"cod",mlbb:"mlbb","mobile-legends":"mlbb",
+ kog:"hok","honor-of-kings":"hok",fifa:"fc","starcraft-2":"sc"
+};
+const GAMES={all:"Tous",lol:"League of Legends",cs2:"Counter-Strike 2",val:"VALORANT",rl:"Rocket League",
+ dota:"Dota 2",r6:"Rainbow Six",ow:"Overwatch",cod:"Call of Duty",mlbb:"Mobile Legends",hok:"Honor of Kings"};
+const orgGames=o=>Object.keys(o.g||{}).filter(g=>state.game==="all"||g===state.game);
+const visibleOrgs=()=>state.orgs.filter(o=>state.game==="all"||Object.hasOwn(o.g||{},state.game));
+const catalogueKey=(type,game,country)=>[type,game,country||""].join("|");
+const mapCountry=value=>{
+ const c=String(value||"").trim().toUpperCase();
+ if(/^[A-Z]{2}$/.test(c))return c;
+ return resolveCountry(value);
+};
+function mergeTeams(items,requestedGame){
+ let added=0;
+ const index=new Map(state.orgs.map(o=>[norm(o.n)+"|"+o.cc,o]));
+ for(const t of items||[]){
+  const cc=mapCountry(t.country);if(!cc||!t.name)continue;
+  const key=norm(t.name)+"|"+cc;if(!norm(t.name))continue;
+  let o=index.get(key);
+  if(!o){
+   o={id:norm(t.name)+"-"+cc.toLowerCase(),n:t.name,s:t.acronym||"",cc,lg:safeImage(t.image),ld:"",g:{}};
+   index.set(key,o);state.orgs.push(o);added++;
+  }
+  if(!o.lg&&safeImage(t.image))o.lg=safeImage(t.image);
+  if(!o.s&&t.acronym)o.s=t.acronym;
+  const game=GAME_SLUGS[t.gameSlug]||((requestedGame!=="all"&&GAMES[requestedGame])?requestedGame:null);
+  if(game&&t.id){
+   const old=o.g[game];
+   o.g[game]={pid:t.id,f:old?.f||1,pl:(t.players||[]).map(p=>({id:p.id,n:p.name,r:p.role||"",cc:p.country||"",im:p.image||""}))};
+  }
+ }
+ state.orgs.sort((a,b)=>Object.keys(b.g||{}).length-Object.keys(a.g||{}).length||a.n.localeCompare(b.n));
+ if(added>0){updateSummary();associateMatches();}
+ return added;
+}
+function addCompetitions(items){
+ const byId=new Map(state.competitions.map(c=>[String(c.id),c]));
+ for(const c of items||[])if(c.id&&c.name)byId.set(String(c.id),c);
+ state.competitions=[...byId.values()];
+}
+function coverageStatus(){
+ const active=visibleOrgs();
+ const games=state.game==="all"?"plusieurs jeux":GAMES[state.game]||state.game;
+ $("#atlasCoverage").textContent=active.length+" organisations disponibles · "+games+" · chargement progressif";
+ $("#dataSource").textContent="PandaScore · "+state.orgs.length+" organisations référencées (couverture partielle)";
+}
+async function loadCatalog({type="teams",game=state.game,country="",next=false}={}){
+ const key=catalogueKey(type,game,country),meta=state.catalog.get(key)||{page:0,hasMore:true,partial:false};
+ if(state.fetching.has(key)||next&&!meta.hasMore)return;
+ const page=next?meta.page+1:meta.page||1;
+ if(!next&&meta.page){renderPanel();return}
+ state.fetching.add(key);
+ $("#atlasCoverage").textContent="Chargement "+(type==="teams"?"des équipes":"des compétitions")+" · "+(GAMES[game]||game)+"…";
+ renderPanel();
+ try{
+  const u="/api/catalog?type="+encodeURIComponent(type)+"&game="+encodeURIComponent(game)
+    +"&page="+page+(country?"&country="+encodeURIComponent(country):"");
+  const r=await fetch(u,{signal:AbortSignal.timeout(15500)});
+  if(!r.ok)throw Error("catalog_"+r.status);
+  const data=await r.json();
+  if(!Array.isArray(data.items))throw Error("invalid");
+  state.catalog.set(key,{page,hasMore:!!data.hasMore,partial:!!data.partial,filterMode:data.filterMode,count:(meta.count||0)+data.items.length});
+  if(type==="teams")mergeTeams(data.items,game);else addCompetitions(data.items);
+ }catch(e){
+  state.catalog.set(key,{...meta,error:String(e.message||e)});
+ }finally{
+  state.fetching.delete(key);
+  coverageStatus();updatePoints();renderPanel();
+ }
+}
+function requestCountryTeams(cc){
+ const game=state.game;
+ if(!state.catalog.get(catalogueKey("teams",game,cc)))loadCatalog({game,country:cc});
+}
+async function setGame(game){
+ if(!GAMES[game]||state.game===game)return;
+ state.game=game;
+ $("[data-atlas-game]").forEach(b=>{
+  const selected=b.dataset.atlasGame===game;b.classList.toggle("selected",selected);
+  b.setAttribute("aria-pressed",String(selected));
+ });
+ coverageStatus();updatePoints();renderPanel();
+ if(state.layer==="competitions")loadCatalog({type:"leagues",game});
+ else loadCatalog({game,country:state.country||""});
+}
+
 function associateMatches(){
  const byName=new Map(),ambiguous=new Set();
  state.orgs.forEach(o=>{
@@ -92,7 +182,7 @@ function renderWorld(){
  '<p class="note">Pays d’origine des organisations, non géolocalisation de leurs bureaux ou des rencontres. Source : PandaScore.</p>';
  body.querySelectorAll("[data-country]").forEach(b=>b.addEventListener("click",()=>selectCountry(b.dataset.country)));
 }
-function theme(t){document.documentElement.dataset.theme=t==="light"?"light":"dark";try{localStorage.setItem("lobby-theme",document.documentElement.dataset.theme)}catch{};if(state.globe)state.globe.atmosphereColor(t==="light"?"#b6d9f7":"#68b5ff")}
+function theme(t){document.documentElement.dataset.theme=t==="light"?"light":"dark";try{localStorage.setItem("lobby-theme",document.documentElement.dataset.theme)}catch{};state.globe?.atmosphereColor?.(t==="light"?"#b6d9f7":"#68b5ff")}
 function renderPanel(){
  const title=$("#panelTitle"),sub=$("#panelSubtitle"),body=$("#panelContent");
  if(!state.country&&!state.org){renderWorld();return;}
