@@ -1,0 +1,73 @@
+body{min-height:100vh}.directory-shell{max-width:1490px;margin:0 auto;padding:40px clamp(18px,4vw,64px) 75px}.directory-heading{padding:5px 0 28px;border-bottom:1px solid var(--border-soft)}.breadcrumb{font:650 11px Inter,sans-serif;color:var(--accent);letter-spacing:.065em}.directory-heading h1{font:700 clamp(34px,4.5vw,56px)/1.08 var(--title);letter-spacing:-.06em;margin:19px 0 12px}.directory-heading p{font-size:15px;color:var(--muted);max-width:740px;line-height:1.6}.directory-layout{display:grid;grid-template-columns:205px minmax(0,1fr);gap:36px;margin-top:28px}.directory-nav{display:flex;flex-direction:column;gap:5px;align-self:start;position:sticky;top:94px}.directory-nav a{padding:12px 14px;border-radius:9px;font-size:14px;font-weight:600;color:var(--muted)}.directory-nav a:hover,.directory-nav a.current{color:var(--accent);background:var(--accent-soft)}.directory-nav .directory-cta{margin-top:20px;border:1px solid var(--border)}.directory-main{min-width:0}.directory-search{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:19px}.directory-search label{display:block;font:650 10px Inter,sans-serif;color:var(--subtle);letter-spacing:.09em;margin-bottom:10px}.directory-query{display:flex;align-items:center;gap:12px;border:1px solid var(--border);background:var(--bg);border-radius:10px;padding:6px 7px 6px 13px}.directory-query svg{width:19px;height:19px;color:var(--accent);fill:none;stroke:currentColor;stroke-width:1.7}.directory-query input{min-width:0;flex:1;color:var(--text);background:transparent;border:0;outline:0;font-size:15px}.directory-query button{background:var(--accent);color:white;border:0;border-radius:7px;padding:10px 15px;font-weight:700;font-size:12px}.search-help{font-size:11px;color:var(--subtle);margin:10px 0 0}.directory-control{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:25px 0 13px}.directory-control h2{font:700 19px var(--title);margin:0}.directory-control span{font-size:11px;color:var(--subtle)}.directory-results{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.directory-item{display:flex;min-height:119px;align-items:center;gap:14px;padding:17px;text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text)}.directory-item:hover{border-color:var(--accent);background:var(--surface-2)}.directory-item img{width:51px;height:51px;object-fit:contain;flex:none}.directory-placeholder{width:51px;height:51px;flex:none;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font:700 17px var(--title)}.directory-item .info{min-width:0;flex:1}.directory-item strong{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.directory-item small{display:block;font-size:11px;color:var(--muted);margin-top:5px;line-height:1.45}.directory-item .go{color:var(--accent);margin-left:auto}.directory-item.article{display:block;min-height:150px}.directory-item.article .tag{font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--accent)}.directory-item.article strong{white-space:normal;font-size:14px;line-height:1.5;margin:8px 0}.directory-empty{color:var(--muted);font-size:13px;padding:22px;grid-column:1/-1;background:var(--surface);border:1px solid var(--border);border-radius:11px}.directory-bottom{display:flex;gap:20px;justify-content:space-between;border-top:1px solid var(--border-soft);padding-top:16px;margin-top:26px;font-size:11px;color:var(--subtle)}.directory-bottom a{color:var(--accent)}@media(max-width:1100px){.directory-results{grid-template-columns:repeat(2,1fr)}}@media(max-width:760px){.directory-layout{grid-template-columns:1fr;gap:16px}.directory-nav{position:static;flex-direction:row;overflow-x:auto;scrollbar-width:none;padding-bottom:9px}.directory-nav a{flex:none;padding:10px}.directory-nav .directory-cta{margin-top:0}.directory-results{grid-template-columns:1fr}.directory-shell{padding-top:24px}.directory-heading h1{font-size:36px}.directory-search{padding:12px}.directory-query button{padding:9px}.directory-control span{font-size:10px}}
+
+/* Lobby directory • legible large-format entity cards */
+.directory-shell{max-width:1480px;padding:42px clamp(20px,3vw,54px) 80px}
+.directory-heading{padding-bottom:27px}
+.directory-heading h1{font-size:clamp(36px,4vw,54px);letter-spacing:-.055em}
+.directory-heading p{font-size:15px}
+.directory-layout{grid-template-columns:220px minmax(0,1fr);gap:28px}
+.directory-nav{top:100px}
+.directory-nav a{min-height:44px;display:flex;align-items:center;font-size:14px;border-radius:9px;padding:12px 14px}
+.directory-main{min-width:0}
+.directory-search{padding:23px;border-radius:13px}
+.directory-search label{font-size:11px}
+.directory-query{min-height:53px}
+.directory-query input{font-size:16px}
+.directory-query button{min-height:41px;font-size:13px}
+.search-help{font-size:12px;margin-top:11px}
+.directory-control{margin:29px 0 16px}
+.directory-control h2{font-size:22px}
+.directory-control span{font-size:12px}
+.directory-results{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.directory-item{min-height:118px;padding:18px;gap:16px;border-radius:12px;transition:border-color .15s,transform .15s}
+.directory-item:hover{transform:translateY(-2px)}
+.directory-item img,.directory-placeholder{width:58px;height:58px}
+.directory-placeholder{font-size:20px}
+.directory-item strong{font-size:15px}
+.directory-item small{font-size:12px;line-height:1.45}
+.directory-item.article{min-height:167px}
+.directory-item.article strong{font-size:15px}
+.directory-item.article .tag{font-size:11px}
+.directory-bottom{font-size:12px;line-height:1.6}
+@media(max-width:1150px){
+ .directory-layout{grid-template-columns:190px minmax(0,1fr);gap:20px}
+ .directory-results{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+ .directory-shell{padding:25px 16px 60px}
+ .directory-layout{grid-template-columns:1fr;gap:16px}
+ .directory-heading h1{font-size:37px}
+ .directory-heading p{font-size:14px}
+ .directory-nav{position:static;flex-direction:row;overflow-x:auto;gap:6px}
+ .directory-nav a{min-height:40px;font-size:12.5px;flex:none}
+ .directory-nav .directory-cta{margin-top:0}
+ .directory-search{padding:16px}
+ .directory-results{grid-template-columns:1fr}
+ .directory-item{min-height:96px;padding:14px}
+ .directory-item strong{font-size:14px}
+ .directory-item img,.directory-placeholder{width:49px;height:49px}
+ .directory-control h2{font-size:20px}
+}
+
+
+/* MERIDIAN directory refinement: discoverability, explicit filter coverage */
+.directory-tools{display:flex;align-items:center;gap:12px;padding:14px 2px 4px;flex-wrap:wrap}
+.directory-tools label{font:700 11px Inter,system-ui,sans-serif;color:var(--muted);letter-spacing:.06em}
+.directory-tools select{min-height:39px;min-width:195px;max-width:100%;padding:8px 34px 8px 12px;border-radius:9px;
+ border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;outline:none}
+.directory-tools select:focus-visible{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.directory-source{margin-left:auto;font-size:11px;color:var(--subtle);line-height:1.4}
+.directory-load-more{display:flex;justify-content:center;align-items:center;gap:10px;
+ width:min(400px,100%);min-height:45px;margin:25px auto 0;
+ background:var(--surface-2);border:1px solid var(--border);border-radius:10px;
+ font-size:13px;font-weight:700;color:var(--accent)}
+.directory-load-more:hover{border-color:var(--accent);background:var(--accent-soft)}
+.directory-load-more[hidden]{display:none}
+.directory-item{position:relative}
+.directory-tag{display:inline-block;margin-top:8px;padding:4px 7px;border-radius:5px;
+ border:1px solid rgba(78,157,252,.27);color:var(--accent);background:var(--accent-soft);
+ font-size:10px;line-height:1.25;font-weight:650}
+.directory-item .info{overflow:hidden}
+.directory-item.article .article-go{display:block;margin-top:10px;color:var(--accent);font-size:12px;font-weight:700}
+.directory-item:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(max-width:700px){.directory-tools{gap:8px}.directory-source{width:100%;margin-left:0}.directory-tools select{flex:1;min-width:170px}}

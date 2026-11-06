@@ -3,9 +3,18 @@ const MAP = {
   'three.module.min.js': 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.min.js',
   'three.core.min.js': 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.core.min.js',
   'globe.gl.min.js': 'https://cdn.jsdelivr.net/npm/globe.gl@2.45.3/dist/globe.gl.min.js',
-  'earth-night.jpg': 'https://cdn.jsdelivr.net/npm/three-globe@2.45.6/example/img/earth-night.jpg'
+  'earth-night.jpg': 'https://cdn.jsdelivr.net/npm/three-globe@2.45.6/example/img/earth-night.jpg',
+  'earth-day.jpg': 'https://cdn.jsdelivr.net/npm/three-globe@2.45.6/example/img/earth-day.jpg',
+  'earth-topology.png': 'https://cdn.jsdelivr.net/npm/three-globe@2.45.6/example/img/earth-topology.png',
+  'earth-blue-marble.jpg': 'https://cdn.jsdelivr.net/npm/three-globe@2.45.6/example/img/earth-blue-marble.jpg',
+  'night-sky.png': 'https://cdn.jsdelivr.net/npm/three-globe@2.45.6/example/img/night-sky.png',
+  'earth-clouds.png': 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r168/examples/textures/planets/earth_clouds_1024.png',
+  'three.module.js': 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js',
+  'three.core.js': 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.core.js',
+  'topojson-client.min.js': 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js',
+  'countries-110m.json': 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json'
 };
-const TYPE = { js: 'application/javascript; charset=utf-8', jpg: 'image/jpeg' };
+const TYPE = { js: 'application/javascript; charset=utf-8', jpg: 'image/jpeg', png: 'image/png', json: 'application/json; charset=utf-8' };
 
 module.exports = async (req, res) => {
   let file = (req.query && req.query.file) || '';
@@ -16,6 +25,7 @@ module.exports = async (req, res) => {
     const r = await fetch(url, { signal: AbortSignal.timeout(15000) });
     if (!r.ok) { res.status(502).json({ error: 'upstream', status: r.status }); return; }
     const buf = Buffer.from(await r.arrayBuffer());
+    if(buf.length>6000000){res.status(502).json({error:'asset_too_large'});return;}
     const ext = file.split('.').pop();
     res.setHeader('Content-Type', TYPE[ext] || r.headers.get('content-type') || 'application/octet-stream');
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');

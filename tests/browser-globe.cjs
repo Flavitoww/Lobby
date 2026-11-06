@@ -1,0 +1,112 @@
+const { chromium } = require('playwright');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const target = process.env.LOBBY_PREVIEW_URL || 'https://lobby-esport-git-feat-meridian-unified-desk-atlas-spike2-3cd9.vercel.app';
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+async function checkRotation(page, selector, label){
+ const stage=page.locator(selector);
+ await stage.waitFor({state:'visible',timeout:45000});
+ await page.waitForFunction(() => !!document.querySelector('#globeStage.ready'), null, {timeout:45000}).catch(()=>{});
+ const box=await page.locator('#globe3d canvas').boundingBox();
+ assert.ok(box&&box.width>150&&box.height>150,label+': 3D canvas missing');
+ const current=async()=>stage.getAttribute('data-camera');
+ await page.waitForFunction(()=>!!document.querySelector('#globeStage')?.dataset.camera,null,{timeout:12000});
+ const before=await current();
+ await sleep(600);
+ const idle=await current();
+ assert.equal(idle,before,label+': camera moved without dragging (auto-rotation must be disabled)');
+ const countBefore=Number(await stage.getAttribute('data-drag-count')||0);
+ const x=box.x+box.width*.54,y=box.y+box.height*.54;
+ await page.mouse.move(x,y);await page.mouse.down();
+ await page.mouse.move(x+170,y+65,{steps:15});await page.mouse.up();
+ await sleep(800);
+ const after=await current();
+ console.log(label,{before,after,canvas:[Math.round(box.width),Math.round(box.height)]});
+ assert.ok(after&&after!==before,label+': camera did not change on drag');
+ const countAfter=Number(await stage.getAttribute('data-drag-count')||0);
+ assert.ok(countAfter>countBefore,label+': pointermove never reached the actual 3D canvas');
+}
+(async()=>{
+ const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});
+ try{
+  const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const response=await page.goto(target+'/atlas/',{waitUntil:'domcontentloaded',timeout:45000});
+  console.log('standalone',response?.status(),page.url());
+  assert.equal(response?.status(),200);
+  await page.locator('#globeStage.ready').waitFor({timeout:45000});
+  await checkRotation(page,'#globeStage','Standalone Atlas');
+  await page.screenshot({path:'/tmp/lobby-atlas-desktop.png',fullPage:true});
+  console.log('Browser errors',errors.slice(0,12));
+  const home=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1});
+  const resp2=await home.goto(target+'/',{waitUntil:'domcontentloaded',timeout:45000});
+  assert.equal(resp2?.status(),200);
+  const frame=home.frameLocator('#atlasFrame');
+  await frame.locator('#globeStage.ready').waitFor({timeout:45000});
+  const el=frame.locator('#globe3d canvas'),box=await el.boundingBox();
+  assert.ok(box&&box.width>150&&box.height>150,'Home Atlas missing WebGL canvas');
+  let camera=await frame.locator('#globeStage').getAttribute('data-camera');
+ await sleep(500);
+ assert.equal(await frame.locator('#globeStage').getAttribute('data-camera'),camera,'Home globe moved without a drag');
+ const homeDragStart=Number(await frame.locator('#globeStage').getAttribute('data-drag-count')||0);
+  await home.mouse.move(box.x+box.width*.64,box.y+box.height*.50);
+  await home.mouse.down();await home.mouse.move(box.x+box.width*.64+130,box.y+box.height*.50+45,{steps:12});await home.mouse.up();
+  await sleep(800);
+  let next=await frame.locator('#globeStage').getAttribute('data-camera');
+  console.log('Home iframe drag',{camera,next});
+  assert.ok(next&&next!==camera,'Home embedded 3D globe not draggable');
+ assert.ok(Number(await frame.locator('#globeStage').getAttribute('data-drag-count')||0)>homeDragStart,'Home iframe pointer events are blocked by overlay');
+  await home.screenshot({path:'/tmp/lobby-home-desktop.png',fullPage:true});
+  const mobile=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
+  await mobile.goto(target+'/atlas/',{waitUntil:'domcontentloaded',timeout:45000});
+  await mobile.locator('#globeStage.ready').waitFor({timeout:45000});
+  const dimensions=await mobile.evaluate(()=>({body:document.body.scrollWidth,viewport:window.innerWidth}));
+  console.log('Mobile bounds',dimensions);
+  assert.ok(dimensions.body<=dimensions.viewport+2,'Mobile Atlas horizontal overflow');
+  await mobile.screenshot({path:'/tmp/lobby-atlas-mobile.png',fullPage:true});
+  const markers=await mobile.locator('.country-marker:visible').count();
+  assert.equal(markers,0,'mobile map must not have country badges overflowing the screen');
+  const mobileStage=mobile.locator('#globeStage');
+  const mobileCanvas=await mobile.locator('#globe3d canvas').boundingBox();
+  assert.ok(mobileCanvas,'Mobile WebGL canvas missing');
+  const mobileCamera=await mobileStage.getAttribute('data-camera');
+ const mobileDragStart=Number(await mobileStage.getAttribute('data-drag-count')||0);
+  await mobile.mouse.move(mobileCanvas.x+mobileCanvas.width*.5,mobileCanvas.y+mobileCanvas.height*.5);
+  await mobile.mouse.down();
+  await mobile.mouse.move(mobileCanvas.x+mobileCanvas.width*.7,mobileCanvas.y+mobileCanvas.height*.62,{steps:10});
+  await mobile.mouse.up();await sleep(550);
+  const mobileCameraAfter=await mobileStage.getAttribute('data-camera');
+  assert.ok(mobileCameraAfter&&mobileCamera!==mobileCameraAfter,'mobile globe camera did not respond to dragging');
+ assert.ok(Number(await mobileStage.getAttribute('data-drag-count')||0)>mobileDragStart,'mobile pointermove did not reach 3D canvas');
+  console.log('Mobile drag',{before:mobileCamera,after:mobileCameraAfter});
+
+  // Simulate browsers where WebGL is blocked/disabled. Globe must remain draggable.
+  const compat=await browser.newPage({viewport:{width:1280,height:800},deviceScaleFactor:1});
+  await compat.addInitScript(()=>{
+    const original=HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext=function(kind,...args){
+      if(['webgl','webgl2','experimental-webgl'].includes(kind))return null;
+      return original.call(this,kind,...args);
+    };
+  });
+  const compatResponse=await compat.goto(target+'/atlas/',{waitUntil:'domcontentloaded',timeout:45000});
+  assert.equal(compatResponse?.status(),200);
+  await compat.locator('#globeStage.compatibility.ready').waitFor({timeout:20000});
+  assert.equal(await compat.locator('#globeUnavailable').isVisible(),false,'compatibility globe still displays blocking error');
+  await checkRotation(compat,'#globeStage','WebGL disabled compatibility globe');
+  await compat.screenshot({path:'/tmp/lobby-atlas-canvas-compatible.png',fullPage:true});
+  console.log('Canvas compatibility globe: PASS');
+
+  // Simulate CDN/proxy failure without disabling WebGL; local Canvas still works.
+  const blocked=await browser.newPage({viewport:{width:1200,height:800},deviceScaleFactor:1});
+  await blocked.route('**/lib/*',route=>route.abort());
+  const blockedResponse=await blocked.goto(target+'/atlas/',{waitUntil:'domcontentloaded',timeout:45000});
+  assert.equal(blockedResponse?.status(),200);
+  await blocked.locator('#globeStage.compatibility.ready').waitFor({timeout:20000});
+  assert.equal(await blocked.locator('#globeUnavailable').isVisible(),false);
+  await checkRotation(blocked,'#globeStage','Assets unavailable compatibility globe');
+  console.log('Missing CDN assets fallback: PASS');
+
+  console.log('E2E 3D rotation and responsive navigation: PASS');
+ }finally{await browser.close()}
+})().catch(e=>{console.error('E2E FAIL',e);process.exit(1)});

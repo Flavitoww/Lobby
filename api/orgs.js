@@ -16,6 +16,8 @@ const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-
 module.exports = async (req, res) => {
   const token = process.env.PANDASCORE_TOKEN;
   if (!token) { res.status(503).json({ error: 'no_key' }); return; }
+  // Fast, quota-aware index for interactive pages; deep catalog remains optional.
+  if (String(req.query?.full||"") !== "1") return require("./fast-orgs")(req,res,token);
   let errs = 0, last429 = '', hdr = '';
   const t0 = Date.now();
   const get = async (path, lim) => {
