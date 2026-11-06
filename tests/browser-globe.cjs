@@ -78,6 +78,34 @@ async function checkRotation(page, selector, label){
   assert.ok(mobileCameraAfter&&mobileCamera!==mobileCameraAfter,'mobile globe camera did not respond to dragging');
  assert.ok(Number(await mobileStage.getAttribute('data-drag-count')||0)>mobileDragStart,'mobile pointermove did not reach 3D canvas');
   console.log('Mobile drag',{before:mobileCamera,after:mobileCameraAfter});
+
+  // Simulate browsers where WebGL is blocked/disabled. Globe must remain draggable.
+  const compat=await browser.newPage({viewport:{width:1280,height:800},deviceScaleFactor:1});
+  await compat.addInitScript(()=>{
+    const original=HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext=function(kind,...args){
+      if(['webgl','webgl2','experimental-webgl'].includes(kind))return null;
+      return original.call(this,kind,...args);
+    };
+  });
+  const compatResponse=await compat.goto(target+'/atlas/',{waitUntil:'domcontentloaded',timeout:45000});
+  assert.equal(compatResponse?.status(),200);
+  await compat.locator('#globeStage.compatibility.ready').waitFor({timeout:20000});
+  assert.equal(await compat.locator('#globeUnavailable').isVisible(),false,'compatibility globe still displays blocking error');
+  await checkRotation(compat,'#globeStage','WebGL disabled compatibility globe');
+  await compat.screenshot({path:'/tmp/lobby-atlas-canvas-compatible.png',fullPage:true});
+  console.log('Canvas compatibility globe: PASS');
+
+  // Simulate CDN/proxy failure without disabling WebGL; local Canvas still works.
+  const blocked=await browser.newPage({viewport:{width:1200,height:800},deviceScaleFactor:1});
+  await blocked.route('**/lib/*',route=>route.abort());
+  const blockedResponse=await blocked.goto(target+'/atlas/',{waitUntil:'domcontentloaded',timeout:45000});
+  assert.equal(blockedResponse?.status(),200);
+  await blocked.locator('#globeStage.compatibility.ready').waitFor({timeout:20000});
+  assert.equal(await blocked.locator('#globeUnavailable').isVisible(),false);
+  await checkRotation(blocked,'#globeStage','Assets unavailable compatibility globe');
+  console.log('Missing CDN assets fallback: PASS');
+
   console.log('E2E 3D rotation and responsive navigation: PASS');
  }finally{await browser.close()}
 })().catch(e=>{console.error('E2E FAIL',e);process.exit(1)});
