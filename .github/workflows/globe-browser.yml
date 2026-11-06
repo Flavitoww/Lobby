@@ -8,6 +8,7 @@ on:
       - 'atlas/meridian-atlas.js'
       - 'atlas/meridian-atlas.css'
       - 'atlas/earth.js'
+      - 'atlas/canvas-globe.js'
       - 'meridian.css'
       - 'index.html'
 jobs:
