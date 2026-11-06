@@ -43,7 +43,7 @@ const flag=cc=>{if(!/^[A-Z]{2}$/.test(cc||""))return"◎";return String.fromCode
 const countryName=cc=>names.of(cc)||cc;
 const ctrl=()=>state.globe?.controls?.();
 const duration=()=>matchMedia("(prefers-reduced-motion: reduce)").matches?0:1150;
-function fly(lat,lng,alt=.7){state.globe?.pointOfView({lat,lng,altitude:alt},duration())}
+function fly(lat,lng,alt=.7){const width=$("#globe3d")?.clientWidth||1000;state.globe?.pointOfView({lat,lng,altitude:width<560?Math.max(1.2,alt):alt},duration())}
 function home(){state.country=null;state.org=null;state.tab="overview";renderPanel();fly(28,15,2.15)}
 const safeUrl=s=>{try{const u=new URL(s);return u.protocol==="https:"?u.href:""}catch{return""}};
 function associateMatches(){
@@ -110,7 +110,7 @@ function selectOrg(id){const o=state.orgs.find(x=>x.id===id);if(!o)return;state.
 function searchFocus(query){const q=norm(query);if(!q)return;const org=state.orgs.find(o=>norm(o.n)===q)||state.orgs.find(o=>norm(o.n).includes(q));if(org){selectOrg(org.id);return}const cc=Object.keys(coords).find(x=>norm(countryName(x))===q||norm(x)===q);if(cc){selectCountry(cc);return}queuedSearch=query;$("#globeStatus").textContent="Aucune localisation confirmée pour « "+query+" »."}
 function setExpanded(v){state.expanded=v;document.documentElement.classList.toggle("embedded",!v);
  if(state.globe){
-  if(v)fly(state.country?coords[state.country][0]:28,state.country?coords[state.country][1]:15,state.country?.57:1.2);
+  if(v)fly(state.country?coords[state.country][0]:28,state.country?coords[state.country][1]:15,state.country?.57:$("#globe3d").clientWidth<560?2.45:1.2);
   else fly(28,15,2.25);
  }
  setTimeout(resize,80);setTimeout(resize,450);setTimeout(resize,1250)
@@ -132,7 +132,7 @@ window.addEventListener("message",e=>{if(e.origin!==location.origin||!e.data)ret
  if(e.data.type==="lobby:atlas-mode"){setExpanded(!!e.data.expanded);if(e.data.search)searchFocus(e.data.search)}
  if(e.data.type==="lobby:atlas-country"&&/^[A-Z]{2}$/.test(e.data.country||""))selectCountry(e.data.country)
 });
-function resize(){const el=$("#globe3d");if(!state.globe||!el.clientWidth||!el.clientHeight)return;state.globe.width(el.clientWidth).height(el.clientHeight);state.globe.globeOffset(state.expanded?[Math.min(85,el.clientWidth*.08),0]:[Math.min(110,el.clientWidth*.15),0])}
+function resize(){const el=$("#globe3d");if(!state.globe||!el.clientWidth||!el.clientHeight)return;state.globe.width(el.clientWidth).height(el.clientHeight);state.globe.globeOffset(el.clientWidth<560?[0,0]:state.expanded?[Math.min(85,el.clientWidth*.08),0]:[Math.min(110,el.clientWidth*.15),0])}
 const ccpoints=Object.entries(coords).map(([cc,v])=>({cc,lat:v[0],lng:v[1],count:0}));
 function updatePoints(){
  if(!state.globe)return;
@@ -150,7 +150,7 @@ function updatePoints(){
   .ringMaxRadius(.8).ringPropagationSpeed(.28).ringRepeatPeriod(1600)
   .ringColor(()=>["#ff768d","#ff768d00"]);
  const leader=Object.entries(counts).filter(([cc,n])=>coords[cc]&&n>0).sort((a,b)=>b[1]-a[1]).slice(0,8);
- if(state.expanded&&state.layer!=="live"){
+ if(state.expanded&&state.layer!=="live"&&$("#globe3d").clientWidth>=720){
   state.globe.htmlElementsData(leader.map(([cc,n])=>({cc,n,lat:coords[cc][0],lng:coords[cc][1]})))
   .htmlLat("lat").htmlLng("lng").htmlAltitude(.045)
   .htmlElement(d=>{const button=document.createElement("button");button.className="country-marker";button.type="button";button.textContent=countryName(d.cc)+" · "+d.n;button.setAttribute("aria-label",countryName(d.cc)+", "+d.n+" organisations");button.onclick=e=>{e.stopPropagation();selectCountry(d.cc)};return button});
@@ -187,7 +187,7 @@ function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Globe stati
  const controls=globe.controls();controls.enabled=true;controls.enableRotate=true;controls.enableZoom=true;controls.enableDamping=true;controls.dampingFactor=.07;controls.autoRotate=true;controls.autoRotateSpeed=.3;controls.enablePan=false;controls.minDistance=113;controls.maxDistance=500;
  controls.addEventListener("start",()=>{controls.autoRotate=false;$("#globeStage").classList.add("dragging")});
  controls.addEventListener("end",()=>{$("#globeStage").classList.remove("dragging")});
- globe.pointOfView({lat:28,lng:15,altitude:embedded?2.25:1.9},0);
+ globe.pointOfView({lat:28,lng:15,altitude:el.clientWidth<560?2.45:embedded?2.25:1.9},0);
  updatePoints();resize();window.LobbyEarth?.init(globe);
  let revealed=false;
  const reveal=()=>{
