@@ -377,6 +377,8 @@ let fallbackStarted=false;
 let worldFeatures=[];
 function pickCountry(hit){
  if(!hit)return;
+ if(hit.marker?.kind==="org"){selectOrg(hit.marker.orgId);return}
+ if(hit.marker?.kind==="country"){selectCountry(hit.marker.cc);return}
  let feature=worldFeatures.find(f=>featureIncludes(f,hit.lat,hit.lng));
  let cc=feature?resolveCountry(feature.properties?.name):null;
  if(!cc){
@@ -510,7 +512,7 @@ async function init(){
   try{const c=document.createElement("canvas");return !!(c.getContext("webgl2")||c.getContext("webgl"))}
   catch(e){return false}
  })();
- if(!webgl){startCompatibility("WebGL indisponible dans ce navigateur");return}
+ if(!webgl){startCompatibility("WebGL indisponible dans ce navigateur");loadJS("/lib/topojson-client.min.js").then(getWorld).catch(()=>{});return}
  let timer=setTimeout(()=>{if(!state.ready)startCompatibility("Chargement du moteur trop long")},10000);
  try{
   const lib=await Promise.allSettled([
@@ -555,7 +557,7 @@ async function loadOrganizations(){
   }
  }catch(e){console.warn("[Lobby Atlas] Featured orgs unavailable",e)}
  // Populate the actual catalog independently of the small match-derived shortlist.
- const games=embedded?["all"]:["all","lol","val","cs2"];
+ const games=embedded?["all"]:([...new Set(["all","lol","val","cs2",state.game])]);
  await Promise.allSettled(games.map(game=>loadCatalog({game})));
  try{localStorage.setItem("lobby.orgs.v4",JSON.stringify({updated:Date.now(),orgs:state.orgs.slice(0,500)}))}catch(e){}
  coverageStatus();
