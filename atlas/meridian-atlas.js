@@ -127,7 +127,7 @@ function requestCountryTeams(cc){
 async function setGame(game){
  if(!GAMES[game]||state.game===game)return;
  state.game=game;
- $("[data-atlas-game]").forEach(b=>{
+ $$("[data-atlas-game]").forEach(b=>{
   const selected=b.dataset.atlasGame===game;b.classList.toggle("selected",selected);
   b.setAttribute("aria-pressed",String(selected));
  });
@@ -261,8 +261,8 @@ function setExpanded(v){state.expanded=v;document.documentElement.classList.togg
 function searchRequest(){if(window.parent!==window){window.parent.postMessage({type:"lobby:open-search"},location.origin)}else {location.href="/?search=1"}}
 $("#searchOpen").addEventListener("click",searchRequest);
 $("#atlasTheme").addEventListener("click",()=>theme(document.documentElement.dataset.theme==="dark"?"light":"dark"));
-$("[data-layer]").forEach(b=>b.addEventListener("click",()=>{state.layer=b.dataset.layer;$("[data-layer]").forEach(x=>x.classList.toggle("selected",x===b));state.tab=state.layer==="live"?"live":"overview";$("[data-tab]").forEach(x=>x.classList.toggle("selected",x.dataset.tab===state.tab));renderPanel();updatePoints();if(state.layer==="competitions")loadCatalog({type:"leagues",game:state.game});}));
-$("[data-atlas-game]").forEach(b=>b.addEventListener("click",()=>setGame(b.dataset.atlasGame)));
+$$("[data-layer]").forEach(b=>b.addEventListener("click",()=>{state.layer=b.dataset.layer;$$("[data-layer]").forEach(x=>x.classList.toggle("selected",x===b));state.tab=state.layer==="live"?"live":"overview";$$("[data-tab]").forEach(x=>x.classList.toggle("selected",x.dataset.tab===state.tab));renderPanel();updatePoints();if(state.layer==="competitions")loadCatalog({type:"leagues",game:state.game});}));
+$$("[data-atlas-game]").forEach(b=>b.addEventListener("click",()=>setGame(b.dataset.atlasGame)));
 $$("[data-tab]").forEach(b=>b.addEventListener("click",()=>{state.tab=b.dataset.tab;$$("[data-tab]").forEach(x=>x.classList.toggle("selected",x===b));renderPanel()}));
 $("#home").addEventListener("click",home);$("#recenter").addEventListener("click",home);
 $("#zoomIn").addEventListener("click",()=>{if(state.globe){const v=state.globe.pointOfView();fly(v.lat,v.lng,Math.max(.06,v.altitude*.66));updateZoomReadout(Math.max(.06,v.altitude*.66))}});
@@ -576,7 +576,7 @@ async function loadLive(){
 $("#globeRetry").addEventListener("click",()=>location.reload());
 const startGame=new URLSearchParams(location.search).get("game");
 if(startGame&&GAMES[startGame])state.game=startGame;
-$("[data-atlas-game]").forEach(b=>{b.classList.toggle("selected",b.dataset.atlasGame===state.game);b.setAttribute("aria-pressed",String(b.dataset.atlasGame===state.game))});
+$$("[data-atlas-game]").forEach(b=>{b.classList.toggle("selected",b.dataset.atlasGame===state.game);b.setAttribute("aria-pressed",String(b.dataset.atlasGame===state.game))});
 renderPanel();init();loadOrganizations();loadLive();
 const direct=new URLSearchParams(location.search);
 if(direct.get("country")&&/^[A-Z]{2}$/.test(direct.get("country").toUpperCase())){const cc=direct.get("country").toUpperCase();setTimeout(()=>selectCountry(cc),750)}
