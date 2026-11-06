@@ -10,8 +10,10 @@
     </nav>
     <div class="directory-main">
       <div class="directory-search" id="searchSection"><label for="query">RECHERCHE DANS CETTE CATÉGORIE</label><div class="directory-query"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input type="search" id="query" autocomplete="off" placeholder="Nom, pseudo, compétition…"><button id="searchButton" type="button">Rechercher</button></div><p class="search-help" id="searchHelp">Entre au moins deux caractères.</p></div>
+      <div class="directory-tools" id="directoryTools"><label for="countryFilter" id="countryLabel">Pays</label><select id="countryFilter" aria-label="Filtrer par pays"><option value="">Tous les pays disponibles</option></select><span class="directory-source" id="directorySource">PandaScore · données vérifiables</span></div>
       <div class="directory-control"><h2 id="sectionTitle">À découvrir</h2><span id="resultsMeta">PandaScore · selon disponibilité</span></div>
       <div class="directory-results" id="directoryResults" aria-live="polite"><p class="directory-empty">Chargement des ressources…</p></div>
+      <button id="directoryLoadMore" class="directory-load-more" type="button" hidden>Charger davantage de résultats <span aria-hidden="true">↓</span></button>
       <div class="directory-bottom"><span>Sources, couverture et dates sont précisées pour chaque donnée.</span><a href="/">Revenir au Desk ↗</a></div>
     </div>
   </div>
