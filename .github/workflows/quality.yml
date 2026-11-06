@@ -1,8 +1,6 @@
 name: Lobby quality checks
 on:
-  pull_request:
-  push:
-    branches: [feat/meridian-unified-desk-atlas]
+  workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
