@@ -23,7 +23,7 @@ $$("[data-tab]").forEach(x=>{x.classList.toggle("current",x.dataset.tab===type);
 const searchValue=p.get("q")||"";input.value=searchValue;
 function setCountryControl(){
  const enabled=type==="teams";
- country.parentElement.hidden=!enabled;
+ country.hidden=!enabled;countryLabel.hidden=!enabled;
  if(!enabled)return;
  const list=["FR","DE","GB","KR","CN","US","CA","BR","JP","ES","SE","DK","PL","TR","SA","AU","VN","ID","TW","NL","CH","IT","PT","MX"];
  for(const cc of list){const option=document.createElement("option");option.value=cc;option.textContent=flag(cc)+" "+ccname.of(cc);country.appendChild(option)}
@@ -125,7 +125,7 @@ async function loadArticles(){
  }catch(e){state.items=[]}
  state.loading=false;state.hasMore=false;render();
 }
-function refresh(){state.serial++;state.items=[];state.page=0;state.hasMore=false;state.partial=false;
+function refresh(){state.serial++;state.loading=false;state.items=[];state.page=0;state.hasMore=false;state.partial=false;
  if(type==="countries")return renderCountries();
  if(type==="sponsors"||type==="transfers")return loadArticles();
  return fetchPage({reset:true});
