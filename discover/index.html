@@ -1,0 +1,20 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b1425"><title>Découvrir — Lobby</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/meridian.css"><link rel="stylesheet" href="/discover/discover.css"></head>
+<body data-theme="dark">
+<header class="header"><a class="brand" href="/"><span class="mark" aria-hidden="true"><i></i><i></i></span>Lobby</a><nav class="topnav"><a href="/">Desk</a><a href="/atlas/">Atlas</a><a href="/matches/">Matchs</a><a href="/news/">Actualités</a><a href="/streams/">Streams</a></nav><button class="search-trigger" id="openSearch" type="button" aria-label="Chercher dans Lobby"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><span>Chercher dans Lobby</span><kbd>⌘K</kbd></button><button id="theme" class="icon-button" type="button" aria-label="Basculer le thème">◐</button></header>
+<main class="directory-shell">
+  <div class="directory-heading"><a href="/" class="breadcrumb">← LOBBY / DISCOVER</a><h1 id="pageTitle">Explorer Lobby</h1><p id="pageDescription">Des équipes, des joueurs, des compétitions et toute la scène esport, réunis au même endroit.</p></div>
+  <div class="directory-layout">
+    <nav class="directory-nav" aria-label="Catégories">
+      <a data-tab="teams" href="/discover/?type=teams">Équipes</a><a data-tab="players" href="/discover/?type=players">Joueurs</a><a data-tab="leagues" href="/discover/?type=leagues">Ligues</a><a data-tab="tournaments" href="/discover/?type=tournaments">Tournois</a><a data-tab="countries" href="/discover/?type=countries">Pays</a><a data-tab="transfers" href="/discover/?type=transfers">Transferts</a><a data-tab="sponsors" href="/discover/?type=sponsors">Sponsors</a>
+      <a href="/atlas/" class="directory-cta">Explorer le globe ↗</a>
+    </nav>
+    <div class="directory-main">
+      <div class="directory-search" id="searchSection"><label for="query">RECHERCHE DANS CETTE CATÉGORIE</label><div class="directory-query"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input type="search" id="query" autocomplete="off" placeholder="Nom, pseudo, compétition…"><button id="searchButton" type="button">Rechercher</button></div><p class="search-help" id="searchHelp">Entre au moins deux caractères.</p></div>
+      <div class="directory-control"><h2 id="sectionTitle">À découvrir</h2><span id="resultsMeta">PandaScore · selon disponibilité</span></div>
+      <div class="directory-results" id="directoryResults" aria-live="polite"><p class="directory-empty">Chargement des ressources…</p></div>
+      <div class="directory-bottom"><span>Sources, couverture et dates sont précisées pour chaque donnée.</span><a href="/">Revenir au Desk ↗</a></div>
+    </div>
+  </div>
+</main>
+<script src="/discover/discover.js" defer></script>
+</body></html>
