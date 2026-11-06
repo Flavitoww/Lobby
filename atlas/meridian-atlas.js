@@ -180,7 +180,7 @@ function pickCountry(hit){
  }
 }
 function startCompatibility(reason){
- if(fallbackStarted||state.ready)return;
+ if(fallbackStarted)return;
  fallbackStarted=true;
  console.warn("[Lobby Atlas] Mode compatible sans WebGL :",reason);
  try{
