@@ -48,3 +48,26 @@ body{min-height:100vh}.directory-shell{max-width:1490px;margin:0 auto;padding:40
  .directory-item img,.directory-placeholder{width:49px;height:49px}
  .directory-control h2{font-size:20px}
 }
+
+
+/* MERIDIAN directory refinement: discoverability, explicit filter coverage */
+.directory-tools{display:flex;align-items:center;gap:12px;padding:14px 2px 4px;flex-wrap:wrap}
+.directory-tools label{font:700 11px Inter,system-ui,sans-serif;color:var(--muted);letter-spacing:.06em}
+.directory-tools select{min-height:39px;min-width:195px;max-width:100%;padding:8px 34px 8px 12px;border-radius:9px;
+ border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;outline:none}
+.directory-tools select:focus-visible{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.directory-source{margin-left:auto;font-size:11px;color:var(--subtle);line-height:1.4}
+.directory-load-more{display:flex;justify-content:center;align-items:center;gap:10px;
+ width:min(400px,100%);min-height:45px;margin:25px auto 0;
+ background:var(--surface-2);border:1px solid var(--border);border-radius:10px;
+ font-size:13px;font-weight:700;color:var(--accent)}
+.directory-load-more:hover{border-color:var(--accent);background:var(--accent-soft)}
+.directory-load-more[hidden]{display:none}
+.directory-item{position:relative}
+.directory-tag{display:inline-block;margin-top:8px;padding:4px 7px;border-radius:5px;
+ border:1px solid rgba(78,157,252,.27);color:var(--accent);background:var(--accent-soft);
+ font-size:10px;line-height:1.25;font-weight:650}
+.directory-item .info{overflow:hidden}
+.directory-item.article .article-go{display:block;margin-top:10px;color:var(--accent);font-size:12px;font-weight:700}
+.directory-item:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(max-width:700px){.directory-tools{gap:8px}.directory-source{width:100%;margin-left:0}.directory-tools select{flex:1;min-width:170px}}
