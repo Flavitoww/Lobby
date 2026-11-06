@@ -149,12 +149,9 @@ function updatePoints(){
   .ringLat("lat").ringLng("lng").ringAltitude(.023)
   .ringMaxRadius(.8).ringPropagationSpeed(.28).ringRepeatPeriod(1600)
   .ringColor(()=>["#ff768d","#ff768d00"]);
- const leader=Object.entries(counts).filter(([cc,n])=>coords[cc]&&n>0).sort((a,b)=>b[1]-a[1]).slice(0,8);
- if(state.expanded&&state.layer!=="live"&&$("#globe3d").clientWidth>=720){
-  state.globe.htmlElementsData(leader.map(([cc,n])=>({cc,n,lat:coords[cc][0],lng:coords[cc][1]})))
-  .htmlLat("lat").htmlLng("lng").htmlAltitude(.045)
-  .htmlElement(d=>{const button=document.createElement("button");button.className="country-marker";button.type="button";button.textContent=countryName(d.cc)+" · "+d.n;button.setAttribute("aria-label",countryName(d.cc)+", "+d.n+" organisations");button.onclick=e=>{e.stopPropagation();selectCountry(d.cc)};return button});
- }else state.globe.htmlElementsData([]);
+ // Geographic pins remain interactive in WebGL; HTML badges were covering
+ // the drag surface and cluttering the map on smaller screens.
+ state.globe.htmlElementsData([]);
 }
 function updateSummary(){
  $("#worldTeams").textContent=state.orgs.length||"—";
