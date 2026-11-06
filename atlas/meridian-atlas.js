@@ -168,7 +168,7 @@ function updateSummary(){
 function fail(message){$("#globeStatus").textContent=message;/* Keep always-visible fallback globe */}
 function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Globe statique affiché · 3D indisponible");return}
  try{
- const globe=Globe({animateIn:false,rendererConfig:{alpha:true,antialias:window.devicePixelRatio<=1.6}})(el)
+ const globe=new Globe(el,{animateIn:false,waitForGlobeReady:false,rendererConfig:{alpha:true,antialias:window.devicePixelRatio<=1.6}})
   .backgroundColor("rgba(0,0,0,0)")
   .globeImageUrl("/lib/earth-day.jpg").bumpImageUrl("/lib/earth-topology.png")
   .showAtmosphere(true).atmosphereColor("#85c9ff").atmosphereAltitude(.11)
@@ -192,7 +192,7 @@ function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Globe stati
  const observer=new ResizeObserver(resize);observer.observe(el);
  document.addEventListener("visibilitychange",()=>{if(document.hidden)globe.pauseAnimation?.();else globe.resumeAnimation?.()});
  if(queuedSearch){const q=queuedSearch;queuedSearch="";searchFocus(q)}
- }catch(e){fail("Globe statique disponible · erreur de rendu 3D")}
+ }catch(e){console.error("[Lobby Atlas] Initialisation du moteur 3D impossible",e);fail("Globe 3D indisponible · consulte les erreurs du navigateur")}
 }
 async function loadJS(src){return new Promise((resolve,reject)=>{const s=document.createElement("script");s.src=src;s.onload=resolve;s.onerror=reject;document.head.appendChild(s)})}
 async function init(){
@@ -204,7 +204,7 @@ async function init(){
  if(!response.ok)throw Error("world");
  const json=await response.json(),geo=topojson.feature(json,json.objects.countries);
  onWorld(geo);
- }catch(e){fail("Aperçu de la planète disponible · 3D non chargée")}
+ }catch(e){console.error("[Lobby Atlas] Bibliothèques ou géométrie indisponibles",e);fail("Le moteur 3D n’a pas pu être chargé")}
 }
 async function loadOrganizations(){
  try{const saved=JSON.parse(localStorage.getItem("lobby.orgs")||"null");if(saved&&Array.isArray(saved.orgs)&&Date.now()-saved.updated<86400000){state.orgs=saved.orgs;updateSummary();associateMatches()}}catch(e){}
