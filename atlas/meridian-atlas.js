@@ -171,32 +171,85 @@ function countryLiveHtml(cc){
  const matches=cc?(state.liveByCountry.get(cc)||[]):state.liveMatches;
  return matches.length?matches.slice(0,9).map(matchCard).join(""):'<p class="note">Aucun match en direct relié à ce pays actuellement. Couverture limitée à PandaScore.</p>';
 }
+function renderCompetitionPanel(){
+ const title=$("#panelTitle"),sub=$("#panelSubtitle"),body=$("#panelContent");
+ title.textContent="Compétitions";sub.textContent=GAMES[state.game]||"Toutes les disciplines";
+ const derived=new Map();
+ for(const m of state.events){
+  if(state.game!=="all"&&m.game!==state.game)continue;
+  if(!m.leagueId||!m.comp)continue;
+  const id=String(m.leagueId);
+  if(!derived.has(id))derived.set(id,{id:Number(id),name:m.comp,image:m.ll||"",gameSlug:m.game||"",tier:m.tier||"",isMatch:true});
+ }
+ for(const c of state.competitions){
+  if(state.game!=="all"){
+   const game=GAME_SLUGS[c.gameSlug]||c.gameSlug;
+   if(game&&game!==state.game)continue;
+  }
+  derived.set(String(c.id),{...derived.get(String(c.id)),...c});
+ }
+ const list=[...derived.values()].sort((a,b)=>{
+  const score=x=>(x.tier==="s"?300:x.tier==="a"?180:0)+(/[Ww]orlds?|[Mm]asters|[Cc]hampions|[Ll][Ee][Cc]|[Ll][Cc][Kk]|[Ii][Ee][Mm]/.test(x.name)?120:0);
+  return score(b)-score(a)||a.name.localeCompare(b.name);
+ });
+ const key=catalogueKey("leagues",state.game,""),meta=state.catalog.get(key),busy=state.fetching.has(key);
+ body.innerHTML='<div class="atlas-list-head"><div class="data-label">LIGUES & CIRCUITS</div><span class="atlas-list-count">'+list.length+' identifiés</span></div>'+
+  (list.length?list.slice(0,42).map(c=>{
+   const u=safeImage(c.image),game=GAME_SLUGS[c.gameSlug]||c.gameSlug||"Esport";
+   return '<a class="atlas-competition-row" href="/profile/?type=leagues&id='+encodeURIComponent(c.id)+'">'+
+    (u?'<img loading="lazy" src="'+esc(u)+'" alt="">':'<span class="atlas-comp-fallback">◇</span>')+
+    '<span><strong>'+esc(c.name)+'</strong><small>'+esc(GAMES[game]||game)+'</small></span><span class="arrow">↗</span></a>';
+  }).join(""):'<p class="note">Compétitions en cours de chargement…</p>')+
+  (busy?'<p class="atlas-coverage-note">Chargement des compétitions…</p>':
+   (meta?.hasMore?'<button type="button" class="atlas-load-more" data-load-catalog="leagues">Charger d’autres compétitions ↓</button>':''))+
+  '<p class="atlas-coverage-note">Les compétitions ne sont pas placées à un endroit géographique sans lieu vérifié. '+
+  'Ce catalogue est paginé, il n’est pas exhaustif.</p>'+
+  '<a class="atlas-load-more" href="/discover/?type=leagues&game='+encodeURIComponent(state.game)+'">Explorer l’annuaire complet ↗</a>';
+ const more=body.querySelector('[data-load-catalog]');
+ if(more)more.addEventListener("click",()=>loadCatalog({type:"leagues",game:state.game,next:true}));
+}
+
 function renderWorld(){
- const body=$("#panelContent"),list=Object.entries(Object.groupBy?Object.groupBy(state.orgs,o=>o.cc):state.orgs.reduce((a,o)=>{(a[o.cc]||=[]).push(o);return a},{}))
+ const body=$("#panelContent"),list=Object.entries(Object.groupBy?Object.groupBy(visibleOrgs(),o=>o.cc):visibleOrgs().reduce((a,o)=>{(a[o.cc]||=[]).push(o);return a},{}))
   .map(([cc,orgs])=>({cc,orgs})).filter(x=>x.cc).sort((a,b)=>b.orgs.length-a.orgs.length).slice(0,8);
  $("#panelTitle").textContent="Le monde esport";$("#panelSubtitle").textContent="Une scène mondiale, des données identifiées";
  $("#countryLiveCount").textContent=state.liveMatches.length;
  body.innerHTML='<div class="data-label">EN CE MOMENT</div><div class="globe-key"><span class="key-dot live"></span><span>Matchs en direct associés au pays d’une équipe</span></div>'+
  (state.liveMatches.length?state.liveMatches.slice(0,4).map(matchCard).join(""):'<p class="note">Aucun live confirmé dans la fenêtre PandaScore actuelle.</p>')+
  '<div class="data-label">PAYS LES PLUS REPRÉSENTÉS</div>'+list.map(x=>'<button class="org-item" type="button" data-country="'+esc(x.cc)+'"><span class="org-fallback">'+flag(x.cc)+'</span><span><strong>'+esc(countryName(x.cc))+'</strong><small>'+x.orgs.length+' organisations indexées</small></span><span class="arrow">↗</span></button>').join("")+
- '<p class="note">Pays d’origine des organisations, non géolocalisation de leurs bureaux ou des rencontres. Source : PandaScore.</p>';
+ '<p class="note">Pays des organisations uniquement, pas leurs adresses. Couverture progressive et non exhaustive · PandaScore.</p><a class="atlas-load-more" href="/discover/?type=teams&game=' + encodeURIComponent(state.game) + '">Parcourir toutes les équipes ↗</a>';
  body.querySelectorAll("[data-country]").forEach(b=>b.addEventListener("click",()=>selectCountry(b.dataset.country)));
 }
 function theme(t){document.documentElement.dataset.theme=t==="light"?"light":"dark";try{localStorage.setItem("lobby-theme",document.documentElement.dataset.theme)}catch{};state.globe?.atmosphereColor?.(t==="light"?"#b6d9f7":"#68b5ff")}
 function renderPanel(){
  const title=$("#panelTitle"),sub=$("#panelSubtitle"),body=$("#panelContent");
+ if(state.layer==="competitions"&&!state.org){renderCompetitionPanel();return;}
  if(!state.country&&!state.org){renderWorld();return;}
  if(state.org){const o=state.org;title.textContent=o.n;sub.textContent=(o.cc?countryName(o.cc):"")+(o.s?" · "+o.s:"");const logo=safeImage(o.lg||o.ld);const sets=Object.entries(o.g||{});body.innerHTML='<button type="button" class="detail-back" id="countryBack">← '+esc(countryName(o.cc))+'</button><div class="detail-head">'+(logo?'<img src="'+esc(logo)+'" alt="" loading="lazy">':'<span class="org-fallback">'+esc(o.n.slice(0,2))+'</span>')+'<div><h3>'+esc(o.n)+'</h3><p>'+esc(countryName(o.cc))+'</p></div></div><div class="country-stat"><div class="number">'+sets.length+'</div><p>Jeu'+(sets.length===1?"":"x")+' représenté'+(sets.length===1?"":"s")+'</p></div><div class="data-label">EFFECTIFS PAR JEU</div>'+sets.map(([game,v])=>'<div><p><strong>'+esc(game.toUpperCase())+'</strong></p>'+((v.pl||[]).length?(v.pl||[]).slice(0,12).map(p=>'<div class="roster-row"><strong>'+esc(p.n)+'</strong><small>'+esc([p.r,p.cc].filter(Boolean).join(" · "))+'</small></div>').join(""):'<p class="note">Effectif non renseigné par la source.</p>')+'</div>').join("")+'<p class="note">Source : PandaScore. Les rosters peuvent évoluer et ne couvrent pas toutes les compétitions.</p>';$("#countryBack").addEventListener("click",()=>selectCountry(o.cc,false));return;}
- const cc=state.country,orgs=state.orgs.filter(o=>o.cc===cc),shown=orgs.slice(0,70);title.textContent=flag(cc)+" "+countryName(cc);sub.textContent="Scène esport · "+cc;$("#countryLiveCount").textContent=(state.liveByCountry.get(cc)||[]).length;
+ const cc=state.country,orgs=visibleOrgs().filter(o=>o.cc===cc),shown=orgs.slice(0,72);title.textContent=flag(cc)+" "+countryName(cc);sub.textContent="Scène esport · "+cc;$("#countryLiveCount").textContent=(state.liveByCountry.get(cc)||[]).length;
  const logos=shown.map(o=>{const u=safeImage(o.lg||o.ld);return'<button class="org-item" type="button" data-org="'+esc(o.id)+'">'+(u?'<img class="org-logo" src="'+esc(u)+'" alt="" loading="lazy">':'<span class="org-fallback">'+esc(o.n.slice(0,2))+'</span>')+'<span><strong>'+esc(o.n)+'</strong><small>'+esc(Object.keys(o.g||{}).map(k=>k.toUpperCase()).join(" · "))+'</small></span><span class="arrow">↗</span></button>'}).join("");
  body.innerHTML='<div class="country-stat"><div class="number">'+(state.orgs.length?orgs.length:"—")+'</div><p>Organisations indexées par Lobby</p></div>'+
  (state.tab==="live"?'<div class="data-label">MATCHS EN DIRECT · ASSOCIÉS À CE PAYS</div>'+countryLiveHtml(cc):
  '<div class="data-label">ÉQUIPES DANS CETTE RÉGION</div>'+(state.orgs.length?(logos||'<p class="note">Aucune équipe indexée dans ce pays pour le moment.</p>'):'<p class="note">Chargement des équipes…</p>'))+
- '<p class="note">Pays des organisations, pas lieux de rencontre. La couverture dépend des données PandaScore.</p>';
+ '<p class="note">Les logos représentent le pays des équipes, pas l’adresse de leurs locaux. Couverture non exhaustive.</p>'+
+ (state.tab!=="live"&&state.catalog.get(catalogueKey("teams",state.game,cc))?.hasMore?
+ '<button type="button" class="atlas-load-more" data-load-catalog="teams">Charger davantage d’équipes ↓</button>':'')+
+ (state.tab!=="live"?'<a class="atlas-load-more" href="/discover/?type=teams&game='+encodeURIComponent(state.game)+'&country='+esc(cc)+'">Parcourir les équipes ↗</a>':'');
  body.querySelectorAll("[data-org]").forEach(el=>el.addEventListener("click",()=>selectOrg(el.dataset.org)));
+ const more=body.querySelector("[data-load-catalog]");if(more)more.addEventListener("click",()=>loadCatalog({game:state.game,country:cc,next:true}));
 }
-function selectCountry(cc,animate=true){if(!coords[cc])return;state.country=cc;state.org=null;renderPanel();if(!state.expanded&&window.parent!==window){window.parent.postMessage({type:"lobby:atlas-expand",country:cc},location.origin)}if(animate)fly(coords[cc][0],coords[cc][1],.57)}
-function selectOrg(id){const o=state.orgs.find(x=>x.id===id);if(!o)return;state.org=o;state.country=o.cc;renderPanel();if(coords[o.cc])fly(coords[o.cc][0],coords[o.cc][1],.49)}
+function selectCountry(cc,animate=true){
+ if(!coords[cc]){
+  const feature=worldFeatures.find(f=>resolveCountry(f.properties?.name)===cc);
+  const center=feature&&geoCenter(feature);if(!center)return;
+  coords[cc]=center;ccpoints.push({cc,lat:center[0],lng:center[1],count:0});
+ }
+ state.country=cc;state.org=null;state.tab="overview";
+ renderPanel();updatePoints();requestCountryTeams(cc);
+ if(!state.expanded&&window.parent!==window)window.parent.postMessage({type:"lobby:atlas-expand",country:cc},location.origin);
+ if(animate)fly(coords[cc][0],coords[cc][1],.35);
+}
+function selectOrg(id){const o=state.orgs.find(x=>x.id===id);if(!o)return;state.org=o;state.country=o.cc;renderPanel();updatePoints();if(coords[o.cc])fly(coords[o.cc][0],coords[o.cc][1],.22)}
 function searchFocus(query){const q=norm(query);if(!q)return;const org=state.orgs.find(o=>norm(o.n)===q)||state.orgs.find(o=>norm(o.n).includes(q));if(org){selectOrg(org.id);return}const cc=Object.keys(coords).find(x=>norm(countryName(x))===q||norm(x)===q);if(cc){selectCountry(cc);return}queuedSearch=query;$("#globeStatus").textContent="Aucune localisation confirmée pour « "+query+" »."}
 function setExpanded(v){state.expanded=v;document.documentElement.classList.toggle("embedded",!v);
  if(state.globe){
