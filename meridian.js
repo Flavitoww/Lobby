@@ -60,6 +60,42 @@ function renderOrgs(data){
  target.innerHTML=orgs.slice(0,4).map(o=>'<button class="org-tile" type="button" data-team="'+html(o.n)+'">'+(validURL(o.logo)?'<img src="'+html(validURL(o.logo))+'" loading="lazy" alt="">':'<span class="logo-placeholder">'+html(o.n.slice(0,2).toUpperCase())+'</span>')+'<span title="'+html(o.n)+'">'+html(o.n)+'</span><small>'+html(o.cc)+'</small></button>').join("");
  $("#orgHighlights [data-team]").forEach(b=>b.addEventListener("click",()=>{openSearch("teams");q.value=b.dataset.team;searchNow()}));
 }
+
+function renderFeatured(){
+ const now=Date.now(),candidates=S.matches.filter(m=>m.status==="running"||(m.status==="not_started"&&m.ts>=now-30*60000&&m.ts<now+48*3600000));
+ candidates.sort((a,b)=>{
+  const score=m=>{
+   const names=[m.an,m.bn].map(v=>String(v||"").toLowerCase());
+   const kc=names.some(n=>/\bkarmine\b|\bkc\b/.test(n)),t1=names.some(n=>/\bt1\b/.test(n));
+   const special=(kc&&t1)?10000:0;
+   const today=Math.abs(m.ts-now)<24*3600000?1200:0;
+   return special+today+priority(m);
+  };
+  return score(b)-score(a)||a.ts-b.ts;
+ });
+ const m=candidates.find(isMajor),el=$("#featuredMatch");
+ if(!m){el.hidden=true;return;}
+ const when=m.status==="running"?"● LIVE":date(m.ts);
+ const view=validURL(m.watch);
+ el.hidden=false;
+ el.innerHTML='<div class="featured-eyebrow"><span class="featured-pulse"></span> À NE PAS MANQUER · '+html(gameNames[m.game]||m.game)+'</div><div class="featured-body"><div class="featured-description"><strong>'+html(m.comp||m.tournament||"Compétition majeure")+'</strong><span>'+html(m.serie||"Affiche esport")+'</span></div><div class="featured-teams"><span>'+logo(m.al,m.an)+'<b>'+html(m.an)+'</b></span><em>'+html(m.status==="running"?m.sa+" — "+m.sb:"VS")+'</em><span>'+logo(m.bl,m.bn)+'<b>'+html(m.bn)+'</b></span></div><div class="featured-action"><strong>'+html(when)+'</strong>'+(view?'<a href="'+html(view)+'" target="_blank" rel="noopener noreferrer">Voir le direct ↗</a>':'<a href="/matches/">Voir les matchs ↗</a>')+'</div></div>';
+}
+async function loadStreams(){
+ const el=$("#streamHighlights");
+ try{
+  const r=await fetch("/api/twitch",{signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error("unavailable");
+  const d=await r.json(),items=(d.items||[]).slice(0,8);
+  if(d.verified){
+   items.sort((a,b)=>Number(b.live&&b.esport)-Number(a.live&&a.esport)||Number(b.live)-Number(a.live));
+  }
+  el.innerHTML=items.map(x=>{
+   const live=d.verified&&x.live===true,esport=live&&x.esport===true;
+   const subtitle=d.verified?(esport?"LIVE · ESPORT":live?"EN DIRECT · AUTRE":"HORS LIGNE"):"STATUT NON VÉRIFIÉ";
+   return '<a class="stream-tile" href="'+html(validURL(x.url))+'" target="_blank" rel="noopener noreferrer"><span class="stream-identity">'+html(x.name.slice(0,2).toUpperCase())+'</span><span class="stream-info"><strong>'+html(x.name)+'</strong><small class="'+(esport?"stream-active":"")+'">'+html(subtitle)+'</small></span><span class="stream-go">↗</span></a>';
+  }).join("");
+  $("#streamStatus").textContent=d.verified?"Statut Twitch Helix · actualisation automatique":"API Twitch non configurée · aucun statut LIVE annoncé";
+ }catch(e){el.innerHTML='<p class="empty">Statut Twitch temporairement indisponible. <a href="/streams/">Voir les chaînes →</a></p>';$("#streamStatus").textContent="Connexion indisponible"}
+}
 function renderMatches(){
  const byGame=(arr)=>S.game==="all"?arr:arr.filter(m=>m.game===S.game);
  const apply=(arr)=>S.scope==="major"?arr.filter(isMajor):arr;
@@ -73,6 +109,7 @@ function renderMatches(){
  document.querySelectorAll("[data-all-matches]").forEach(b=>b.addEventListener("click",()=>setScope("all")));
  $("#sourceStatus").textContent=S.fetchError?"Connexion aux matchs indisponible":("PandaScore · actualisé "+(S.updated?time(S.updated):"—")+" · niveau S/A prioritaire");
  $("#liveUpdated").textContent=S.fetchError?"Indisponible":S.scope==="major"?"Compétitions majeures":"Toutes divisions";
+ renderFeatured();
 }
 function setScope(scope){S.scope=scope;$$("[data-scope]").forEach(b=>{b.classList.toggle("selected",b.dataset.scope===scope);b.setAttribute("aria-pressed",String(b.dataset.scope===scope))});renderMatches();}
 $$("[data-scope]").forEach(b=>b.addEventListener("click",()=>setScope(b.dataset.scope)));
@@ -100,7 +137,7 @@ $$("[data-game]").forEach(b=>b.addEventListener("click",()=>{
  S.game=b.dataset.game;$$("[data-game]").forEach(x=>{x.classList.toggle("active",x===b);x.setAttribute("aria-pressed",String(x===b))});renderMatches();
 }));
 $$("[data-view]").forEach(b=>b.addEventListener("click",()=>{S.view=b.dataset.view;$$("[data-view]").forEach(x=>{x.classList.toggle("selected",x===b);x.setAttribute("aria-selected",String(x===b))});renderMatches()}));
-$("#refresh").addEventListener("click",()=>{loadMatches();loadNews()});
+$("#refresh").addEventListener("click",()=>{loadMatches();loadNews();loadStreams()});
 const frame=$("#atlasFrame"),host=$("#atlasHost"),modal=$("#searchDialog"),q=$("#globalSearch"),results=$("#resultsArea");
 let frameLoaded=false,open=false,focusBefore=null,queryAbort=null,queryTimer=null,requestSerial=0,resultsPending=false,activeResult=0;
 const reduced=()=>window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -188,6 +225,9 @@ async function activateHit(key){
   card.querySelector(".profile-loading").outerHTML='<p class="profile-source">Source : PandaScore · '+html(t.game||item.game||"Données publiques")+' · ID '+html(item.id)+'</p>'+(dates.length?'<p class="profile-source">'+html(dates.join(" · "))+'</p>':"")+roster+
     (canAtlas?'<div class="profile-actions"><button type="button" id="profileAtlas" class="outline-btn">Rechercher sur l’Atlas ↗</button></div>':"");
   const atlasBtn=card.querySelector("#profileAtlas");atlasBtn?.addEventListener("click",()=>showAtlas(t.name));
+  const nav=card.querySelector(".profile-actions")||card.appendChild(document.createElement("div"));
+  nav.classList.add("profile-actions");
+  const link=document.createElement("a");link.className="outline-btn";link.href="/profile/?type="+encodeURIComponent(item.type)+"&id="+encodeURIComponent(item.id);link.textContent="Ouvrir la fiche complète ↗";nav.appendChild(link);
   if(item.type==="teams"){
     const actions=card.querySelector(".profile-actions")||card.appendChild(document.createElement("div"));actions.classList.add("profile-actions");
     const follow=document.createElement("button");follow.type="button";follow.className="outline-btn";
@@ -229,7 +269,7 @@ $$("[data-category]").forEach(b=>b.addEventListener("click",()=>{
  $$("[data-category]").forEach(x=>x.classList.toggle("active",x===b));
  searchNow();q.focus();
 }));
-$$("[data-explore]").forEach(b=>b.addEventListener("click",()=>openSearch(b.dataset.explore)));
+$("[data-explore]").forEach(b=>{if(b.closest("#searchDialog"))return;b.addEventListener("click",()=>{location.href="/discover/?type="+encodeURIComponent(b.dataset.explore)})});
 document.addEventListener("keydown",e=>{
  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){e.preventDefault();modal.hidden?openSearch():closeSearch();return}
  if(e.key==="Escape"){if(!modal.hidden)closeSearch();else if(open)hideAtlas();return}
@@ -257,7 +297,7 @@ setTheme(storedTheme==="light"?"light":"dark");
 $("#themeToggle").addEventListener("click",()=>setTheme(document.body.dataset.theme==="dark"?"light":"dark"));
 window.addEventListener("message",e=>{if(e.origin!==location.origin)return;if(e.data?.type==="lobby:atlas-close")hideAtlas();if(e.data?.type==="lobby:open-search")openSearch();if(e.data?.type==="lobby:org-summary")renderOrgs(e.data)});
 if(location.hash==="#atlas")showAtlas();
-renderMatches();loadMatches();loadNews();
+renderMatches();loadMatches();loadNews();loadStreams();
 if(new URLSearchParams(location.search).has("search"))openSearch();
 document.addEventListener("visibilitychange",()=>{if(!document.hidden && (!S.updated||Date.now()-S.updated>180000))loadMatches()});
 setInterval(()=>{if(!document.hidden)loadMatches()},180000);
