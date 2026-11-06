@@ -198,3 +198,163 @@ body{font-size:15.5px;line-height:1.58}
 .profile-actions a.outline-btn{display:inline-flex;align-items:center;text-decoration:none}
 @media(max-width:1100px){.featured-body{grid-template-columns:1fr 1.7fr;gap:12px}.featured-action{grid-column:1/-1;flex-direction:row;justify-content:space-between;align-items:center}.stream-highlights{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){.featured-match{padding:14px}.featured-body{display:flex;flex-direction:column;align-items:stretch;gap:14px}.featured-teams{justify-content:space-between;gap:9px}.featured-teams b{font-size:13px}.featured-teams .team-logo,.featured-teams .team-initial{width:27px;height:27px}.featured-description strong{font-size:14px}.stream-highlights{grid-template-columns:1fr 1fr;gap:7px;padding:10px}.stream-tile{padding:9px;gap:7px}.stream-identity{width:34px;height:34px;font-size:11px}.stream-info strong{font-size:11px}.stream-info small{font-size:8px}.stream-go{display:none}}
+
+
+/* MERIDIAN • UI SYSTEM 2026 — hierarchy, legibility, responsive touch targets */
+:root{--ui-radius:12px;--ui-space:16px;--ui-line:1.55;--focus-glow:0 0 0 3px rgba(72,151,255,.18)}
+body{font-size:15px;line-height:var(--ui-line)}
+.header{height:74px;gap:clamp(10px,1.2vw,18px);padding-inline:clamp(20px,2.5vw,44px)}
+.brand{font-size:27px;letter-spacing:-.065em}
+.topnav{gap:1px}
+.topnav a,.topnav button{font-size:13px;height:43px;padding:0 clamp(8px,.8vw,13px);border-radius:9px}
+.search-trigger{height:44px;max-width:430px;background:var(--surface);border-radius:11px}
+.search-trigger span{font-size:13px}
+.search-trigger kbd{font-size:11px}
+.gamebar{padding:11px clamp(20px,2.5vw,44px);gap:7px}
+.game{padding:8px 14px;font-size:12.5px;border-radius:9px;min-height:38px}
+.game.active{border-color:color-mix(in srgb,var(--accent) 55%,var(--border))}
+.shell{max-width:1600px;padding:24px clamp(20px,2.5vw,44px) 72px}
+.lead-grid{grid-template-columns:minmax(0,1.95fr) minmax(330px,.95fr);gap:18px;align-items:stretch;min-height:500px}
+.atlas-card{min-height:500px;border-radius:17px;border-color:#345278;background:#0b1f3c}
+.atlas-frame{width:100%;height:100%;pointer-events:auto}
+.atlas-scrim{pointer-events:none;background:linear-gradient(90deg,rgba(6,17,35,.99) 0%,rgba(6,17,35,.92) 26%,rgba(6,17,35,.54) 46%,rgba(6,17,35,.00) 75%),linear-gradient(0deg,rgba(5,16,31,.48),transparent 32%)}
+.atlas-content{padding:clamp(29px,3vw,49px);width:min(430px,54%);pointer-events:none}
+.atlas-content>*{pointer-events:none!important}
+.atlas-content .primary-btn{pointer-events:auto!important}
+.atlas-content h1{font-size:clamp(34px,3.4vw,52px);line-height:1.10;letter-spacing:-.055em;margin:22px 0 17px}
+.atlas-content p{font-size:14px;line-height:1.7;max-width:320px;margin-bottom:24px}
+.atlas-content .eyebrow{font-size:10.5px;line-height:1.5}
+.primary-btn{font-size:13px;min-height:46px;gap:15px;border-radius:9px}
+.atlas-caption{font-size:10.5px;left:29px;bottom:22px}
+.atlas-expand{font-size:12px;padding:12px 14px;right:19px;bottom:17px}
+.hero-quickstats{gap:17px;margin-top:22px;max-width:340px}
+.hero-quickstats strong{font-size:21px}
+.hero-quickstats small{font-size:11px}
+.live-panel{min-height:0;max-height:500px}
+.live-list{flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.live-match{padding:14px 11px;gap:10px}
+.live-match .match-meta{font-size:11.5px}
+.team-side{font-size:13px;gap:9px}
+.team-logo,.team-initial{width:34px;height:34px}
+.team-initial{font-size:11px}
+.match-score{font-size:15px}
+.badge-live{font-size:10px}
+.section-head{padding:17px 20px;min-height:65px}
+.section-head h2{font-size:18px}
+.small-muted,.count{font-size:12px}
+.panel-footer{padding:13px 20px}
+.panel-footer a{font-size:13px}
+.featured-match{padding:20px 24px}
+.featured-eyebrow{font-size:11px}
+.featured-description strong{font-size:15px}
+.featured-description span{font-size:12px}
+.featured-teams b{font-size:18px}
+.featured-teams .team-logo,.featured-teams .team-initial{width:43px;height:43px}
+.featured-action strong,.featured-action a{font-size:13px}
+.section-kicker{font-size:11px;margin:27px 0 14px}
+.destinations{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.destination{min-height:85px;padding:15px 18px;gap:15px;border-radius:11px}
+.dest-icon{height:44px;width:44px;border-radius:10px}
+.dest-icon svg{height:22px;width:22px;stroke-width:1.7}
+.destination strong{font-size:15px;line-height:1.25}
+.destination small{font-size:12px;line-height:1.4}
+.destination b{font-size:16px}
+.pulse-heading h2{font-size:23px}
+.pulse-stat{padding:19px 20px;min-height:126px;gap:9px}
+.stat-label{font-size:11px;letter-spacing:.03em}
+.pulse-stat>strong{font-size:34px}
+.stat-foot{font-size:12px}
+.spotlight-grid{gap:17px}
+.competition-items,.org-items{gap:11px;padding:17px}
+.competition-tile,.org-tile{min-height:112px;border-radius:11px;padding:12px 10px}
+.competition-tile img,.org-tile img{height:43px;width:60px}
+.competition-tile span,.org-tile span{font-size:12px}
+.org-tile small{font-size:11px}
+.stream-intro{font-size:13px}
+.stream-highlights{gap:12px;padding:17px}
+.stream-tile{min-height:74px;padding:13px}
+.stream-identity{height:42px;width:42px}
+.stream-info strong{font-size:14px}
+.stream-info small{font-size:10px}
+.news-item h3{font-size:15px}
+.news-item time,.news-item .news-src{font-size:11.5px}
+.schedule-teams{font-size:14px}
+.schedule-comp{font-size:12.5px}
+.schedule-date{font-size:12px}
+.search-window{max-width:960px}
+.search-hit{min-height:73px}
+.search-hit strong{font-size:15px}
+.search-hit small{font-size:12px}
+.search-results-label{font-size:11px}
+.search-inputbar input{font-size:17px}
+body.atlas-open .atlas-content{display:none}
+body.atlas-open .atlas-frame{pointer-events:auto}
+@media(max-width:1380px){
+  .topnav a,.topnav button{font-size:12.5px;padding-inline:8px}
+  .search-trigger{max-width:340px}
+  .lead-grid{grid-template-columns:minmax(0,1.65fr) minmax(320px,.9fr)}
+  .atlas-content{width:min(390px,57%)}
+  .atlas-content h1{font-size:clamp(32px,3.3vw,45px)}
+  .hero-quickstats{gap:12px}
+  .stream-highlights{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:1100px){
+  .lead-grid{grid-template-columns:minmax(0,1fr) minmax(315px,.85fr)}
+  .atlas-card{min-height:445px}
+  .live-panel{max-height:445px}
+  .atlas-content{width:min(365px,59%);padding:31px}
+  .atlas-content p{font-size:13px}
+  .destination{padding:13px 12px}
+  .dest-icon{width:39px;height:39px}
+  .destination strong{font-size:13px}
+  .destination small{font-size:11px}
+}
+@media(max-width:920px){
+  .lead-grid{grid-template-columns:1fr}
+  .atlas-card{min-height:475px}
+  .live-panel{max-height:none;min-height:0}
+  .live-list{max-height:400px}
+  .atlas-content{width:min(410px,52%)}
+  .destinations{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:650px){
+  .shell{padding:16px 14px 50px}
+  .header{height:64px;padding-inline:14px}
+  .brand{font-size:23px}
+  .gamebar{padding:9px 14px;gap:4px}
+  .game{font-size:12px;min-height:36px;padding:7px 11px}
+  .atlas-card{min-height:405px;border-radius:13px}
+  .atlas-content{padding:24px 19px;width:64%}
+  .atlas-content .eyebrow{font-size:9px}
+  .atlas-content h1{font-size:clamp(28px,7vw,35px);margin:22px 0 14px}
+  .atlas-content p{font-size:12px;max-width:235px;line-height:1.55}
+  .primary-btn{font-size:11px;min-height:42px;padding:10px 12px}
+  .atlas-scrim{background:linear-gradient(90deg,rgba(6,17,35,.98),rgba(6,17,35,.85) 38%,rgba(6,17,35,.13) 81%)}
+  .hero-quickstats{gap:11px;margin-top:20px}
+  .hero-quickstats strong{font-size:18px}
+  .hero-quickstats small{font-size:9.5px}
+  .atlas-caption{left:16px;bottom:18px;font-size:9px}
+  .atlas-expand{font-size:10px;padding:10px;right:10px;bottom:10px}
+  .section-head h2{font-size:17px}
+  .team-side{font-size:12px}
+  .team-logo,.team-initial{width:29px;height:29px}
+  .destinations{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .destination{padding:13px 10px;min-height:75px;gap:9px}
+  .destination strong{font-size:12.5px}
+  .destination small{font-size:10.5px}
+  .dest-icon{width:35px;height:35px}
+  .dest-icon svg{height:19px;width:19px}
+  .destination b{display:none}
+  .pulse-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .pulse-stat{min-height:112px;padding:13px}
+  .stat-label{font-size:10px}
+  .pulse-stat>strong{font-size:29px}
+  .stat-foot{font-size:10.5px}
+  .competition-items,.org-items{gap:7px;padding:11px}
+  .competition-tile,.org-tile{min-height:96px;padding:8px}
+  .competition-tile img,.org-tile img{height:34px;width:43px}
+  .competition-tile span,.org-tile span{font-size:10px}
+  .stream-tile{min-height:62px;padding:8px}
+  .stream-info strong{font-size:12px}
+  .stream-info small{font-size:9px}
+}
