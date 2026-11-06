@@ -134,7 +134,7 @@ async function loadNews(){
  finally{clearTimeout(t)}
 }
 $$("[data-game]").forEach(b=>b.addEventListener("click",()=>{
- S.game=b.dataset.game;$("[data-game]").forEach(x=>{x.classList.toggle("active",x===b);x.setAttribute("aria-pressed",String(x===b))});renderMatches();
+ S.game=b.dataset.game;$$("[data-game]").forEach(x=>{x.classList.toggle("active",x===b);x.setAttribute("aria-pressed",String(x===b))});renderMatches();
  $("#atlasFrame")?.contentWindow?.postMessage({type:"lobby:game",game:S.game},location.origin);
 }));
 $$("[data-view]").forEach(b=>b.addEventListener("click",()=>{S.view=b.dataset.view;$$("[data-view]").forEach(x=>{x.classList.toggle("selected",x===b);x.setAttribute("aria-selected",String(x===b))});renderMatches()}));
