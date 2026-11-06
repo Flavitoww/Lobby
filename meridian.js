@@ -243,8 +243,8 @@ async function searchNow(){
  if(queryAbort)queryAbort.abort();
  if(term.length<2){showShortcuts();return;}
  if(S.category==="sponsors"||S.category==="transfers"){
-  $("#searchHint").textContent="COUVERTURE DES DONNÉES";
-  results.innerHTML='<p class="empty">Cette catégorie attend une source de données vérifiée. Aucun sponsor ou transfert n’est présenté sans preuve. Les autres catégories sont recherchables dès maintenant.</p>';return;
+  $("#searchHint").textContent="ANNONCES SOURCÉES";
+  results.innerHTML='<div class="search-shortcuts"><a class="shortcut" href="/discover/?type='+encodeURIComponent(S.category)+'&q='+encodeURIComponent(term)+'"><strong>Consulter les '+(S.category==="sponsors"?"partenariats et sponsors":"transferts et annonces")+'</strong><span>↗</span></a><p class="empty">Aucun contrat ou transfert n’est présenté sans publication vérifiable.</p></div>';return;
  }
  const local=S.category==="all"||S.category==="countries"?countryResults(term):[];
  if(S.category==="countries"){renderSearch(local);return;}
