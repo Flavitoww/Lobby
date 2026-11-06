@@ -5,9 +5,12 @@ test('Globe uses the current official WebGL constructor',()=>{
  const src=read('atlas/meridian-atlas.js');
  assert.match(src,/new Globe\(el,\{animateIn:false/);
  assert.doesNotMatch(src,/Globe\(\{animateIn:false[^\n]*\}\)\(el\)/);
- assert.match(src,/controls\.enableRotate=true/);
+ assert.match(src,/controls\.enableRotate=false/);
+ assert.match(src,/controls\.autoRotate=false/);
+ assert.match(src,/LobbyPointerGlobe\.attach/);
+ assert.match(read("atlas/pointer-globe.js"),/canvas\.addEventListener\("pointermove"/);
  assert.match(src,/controls\.enableZoom=true/);
- assert.match(src,/controls\.addEventListener\("start"/);
+ assert.doesNotMatch(src,/controls\.autoRotate=true/);
  assert.match(src,/globe\.onGlobeReady\(reveal\)/);
 });
 test('Home globe is not covered by headline or scrim pointer layers',()=>{
@@ -31,4 +34,11 @@ test('3D globe has verified terrain, globe texture and time-dependent lighting',
  assert.match(src,/\.globeImageUrl\("\/lib\/earth-day\.jpg"\)/);
  assert.match(src,/\.bumpImageUrl\("\/lib\/earth-topology\.png"\)/);
  assert.match(earth,/sunGeo/);
+});
+
+test('fallback globe must disclose that WebGL is not interactive',()=>{
+ const markup=read('atlas/index.html');
+ assert.match(markup,/id="globeUnavailable"/);
+ assert.match(markup,/id="globeRetry"/);
+ assert.match(markup,/src="\/atlas\/pointer-globe\.js"/);
 });
