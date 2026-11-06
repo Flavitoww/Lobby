@@ -1,6 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const ROOT=path.resolve(__dirname,'..');
-function smoke(filename){
+function smoke(filename,fetcher){
  const elements=new Map();
  const elem=()=>({
   dataset:{},style:{},innerHTML:'',textContent:'',hidden:false,value:'',className:'',
@@ -22,7 +22,7 @@ function smoke(filename){
  const localStorage={getItem(){return null},setItem(){}};
  const ctx={window:win,document:doc,location,history:{replaceState(){}},localStorage,
   URLSearchParams,Intl,URL,Date,Math,console,
-  fetch:()=>new Promise(()=>{}),
+  fetch:fetcher||(()=>new Promise(()=>{})),
   setTimeout:()=>0,clearTimeout(){},setInterval:()=>0,clearInterval(){},
   AbortController,AbortSignal,ResizeObserver:class {observe(){}},IntersectionObserver:class{observe(){}}
  };
@@ -37,4 +37,23 @@ test('collection click handlers must use querySelectorAll, not querySelector',()
   const src=fs.readFileSync(path.join(ROOT,name),'utf8');
   assert.doesNotMatch(src,/(?<!\$)\$\("[^"]+"\)\.forEach\(/,name);
  }
+});
+
+test('Desk renders verified match statistics and content after API response',async()=>{
+ const now=Date.now();
+ const match={id:101,status:'running',ts:now,game:'lol',tier:'s',imp:120,comp:'Worlds',serie:'Knockout',tournament:'Quarterfinals',
+  an:'Karmine Corp',bn:'T1',as:'KC',bs:'T1',sa:1,sb:0,al:null,bl:null,ll:null};
+ const respond=async url=>({
+  ok:true,
+  json:async()=>String(url).includes('/api/live')?{updated:now,matches:[match],recent:[]}:
+   String(url).includes('/api/news')?{items:[{title:'Esport headline',url:'https://example.com',source:'Example',published:new Date(now).toISOString()}]}:
+   {configured:false,verified:false,items:[]}
+ });
+ const {doc}=smoke('meridian.js',respond);
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(doc.querySelector('#pulseLive').textContent,1);
+ assert.equal(doc.querySelector('#pulseLeagues').textContent,1);
+ assert.equal(doc.querySelector('#heroMatchCount').textContent,1);
+ assert.equal(doc.querySelector('#liveCount').textContent,1);
+ assert.equal(doc.querySelector('#featuredMatch').hidden,false);
 });
