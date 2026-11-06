@@ -105,7 +105,7 @@ function renderPanel(){
  '<p class="note">Pays des organisations, pas lieux de rencontre. La couverture dépend des données PandaScore.</p>';
  body.querySelectorAll("[data-org]").forEach(el=>el.addEventListener("click",()=>selectOrg(el.dataset.org)));
 }
-function selectCountry(cc,animate=true){if(!coords[cc])return;state.country=cc;state.org=null;renderPanel();if(animate)fly(coords[cc][0],coords[cc][1],.57)}
+function selectCountry(cc,animate=true){if(!coords[cc])return;state.country=cc;state.org=null;renderPanel();if(!state.expanded&&window.parent!==window){window.parent.postMessage({type:"lobby:atlas-expand",country:cc},location.origin)}if(animate)fly(coords[cc][0],coords[cc][1],.57)}
 function selectOrg(id){const o=state.orgs.find(x=>x.id===id);if(!o)return;state.org=o;state.country=o.cc;renderPanel();if(coords[o.cc])fly(coords[o.cc][0],coords[o.cc][1],.49)}
 function searchFocus(query){const q=norm(query);if(!q)return;const org=state.orgs.find(o=>norm(o.n)===q)||state.orgs.find(o=>norm(o.n).includes(q));if(org){selectOrg(org.id);return}const cc=Object.keys(coords).find(x=>norm(countryName(x))===q||norm(x)===q);if(cc){selectCountry(cc);return}queuedSearch=query;$("#globeStatus").textContent="Aucune localisation confirmée pour « "+query+" »."}
 function setExpanded(v){state.expanded=v;document.documentElement.classList.toggle("embedded",!v);
@@ -130,8 +130,9 @@ window.addEventListener("message",e=>{if(e.origin!==location.origin||!e.data)ret
  }
  if(e.data.type==="lobby:visibility"&&state.globe){if(e.data.visible)state.globe.resumeAnimation?.();else state.globe.pauseAnimation?.()}
  if(e.data.type==="lobby:atlas-mode"){setExpanded(!!e.data.expanded);if(e.data.search)searchFocus(e.data.search)}
+ if(e.data.type==="lobby:atlas-country"&&/^[A-Z]{2}$/.test(e.data.country||""))selectCountry(e.data.country)
 });
-function resize(){const el=$("#globe3d");if(!state.globe||!el.clientWidth||!el.clientHeight)return;state.globe.width(el.clientWidth).height(el.clientHeight);state.globe.globeOffset(embedded?[Math.min(110,el.clientWidth*.15),0]:[Math.min(85,el.clientWidth*.08),0])}
+function resize(){const el=$("#globe3d");if(!state.globe||!el.clientWidth||!el.clientHeight)return;state.globe.width(el.clientWidth).height(el.clientHeight);state.globe.globeOffset(state.expanded?[Math.min(85,el.clientWidth*.08),0]:[Math.min(110,el.clientWidth*.15),0])}
 const ccpoints=Object.entries(coords).map(([cc,v])=>({cc,lat:v[0],lng:v[1],count:0}));
 function updatePoints(){
  if(!state.globe)return;
@@ -149,7 +150,7 @@ function updatePoints(){
   .ringMaxRadius(.8).ringPropagationSpeed(.28).ringRepeatPeriod(1600)
   .ringColor(()=>["#ff768d","#ff768d00"]);
  const leader=Object.entries(counts).filter(([cc,n])=>coords[cc]&&n>0).sort((a,b)=>b[1]-a[1]).slice(0,8);
- if(!embedded&&state.layer!=="live"){
+ if(state.expanded&&state.layer!=="live"){
   state.globe.htmlElementsData(leader.map(([cc,n])=>({cc,n,lat:coords[cc][0],lng:coords[cc][1]})))
   .htmlLat("lat").htmlLng("lng").htmlAltitude(.045)
   .htmlElement(d=>{const button=document.createElement("button");button.className="country-marker";button.type="button";button.textContent=countryName(d.cc)+" · "+d.n;button.setAttribute("aria-label",countryName(d.cc)+", "+d.n+" organisations");button.onclick=e=>{e.stopPropagation();selectCountry(d.cc)};return button});
@@ -176,7 +177,7 @@ function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Globe stati
     if(!f)return;
     const code=f.properties?.ISO_A2||f.properties?.iso_a2||f.properties?.ISO2||f.properties?.iso2;
     const cc=code&&coords[code]?code:resolveCountry(f.properties?.name);
-    if(cc){if(!coords[cc]){const center=geoCenter(f);if(center)coords[cc]=center;}state.country=cc;state.org=null;renderPanel();if(coords[cc])fly(coords[cc][0],coords[cc][1],.57)}
+    if(cc){if(!coords[cc]){const center=geoCenter(f);if(center)coords[cc]=center;}selectCountry(cc)}
   })
   .pointsData([]).pointLat("lat").pointLng("lng").pointAltitude(.018).pointRadius(.28)
   .pointColor(()=>"#64b2ff").pointsTransitionDuration(150)
@@ -221,4 +222,7 @@ async function loadLive(){
  }catch(e){$("#worldLive").textContent="—";$("#dataSource").textContent="Équipes : PandaScore · Live indisponible"}
 }
 renderPanel();init();loadOrganizations();loadLive();
+const direct=new URLSearchParams(location.search);
+if(direct.get("country")&&/^[A-Z]{2}$/.test(direct.get("country").toUpperCase())){const cc=direct.get("country").toUpperCase();setTimeout(()=>selectCountry(cc),750)}
+else if(direct.get("search")){const query=direct.get("search").slice(0,80);setTimeout(()=>searchFocus(query),750)}
 })();
