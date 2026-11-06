@@ -261,7 +261,8 @@ function setExpanded(v){state.expanded=v;document.documentElement.classList.togg
 function searchRequest(){if(window.parent!==window){window.parent.postMessage({type:"lobby:open-search"},location.origin)}else {location.href="/?search=1"}}
 $("#searchOpen").addEventListener("click",searchRequest);
 $("#atlasTheme").addEventListener("click",()=>theme(document.documentElement.dataset.theme==="dark"?"light":"dark"));
-$$("[data-layer]").forEach(b=>b.addEventListener("click",()=>{state.layer=b.dataset.layer;$$("[data-layer]").forEach(x=>x.classList.toggle("selected",x===b));state.tab=state.layer==="live"?"live":"overview";$$("[data-tab]").forEach(x=>x.classList.toggle("selected",x.dataset.tab===state.tab));renderPanel();updatePoints()}));
+$("[data-layer]").forEach(b=>b.addEventListener("click",()=>{state.layer=b.dataset.layer;$("[data-layer]").forEach(x=>x.classList.toggle("selected",x===b));state.tab=state.layer==="live"?"live":"overview";$("[data-tab]").forEach(x=>x.classList.toggle("selected",x.dataset.tab===state.tab));renderPanel();updatePoints();if(state.layer==="competitions")loadCatalog({type:"leagues",game:state.game});}));
+$("[data-atlas-game]").forEach(b=>b.addEventListener("click",()=>setGame(b.dataset.atlasGame)));
 $$("[data-tab]").forEach(b=>b.addEventListener("click",()=>{state.tab=b.dataset.tab;$$("[data-tab]").forEach(x=>x.classList.toggle("selected",x===b));renderPanel()}));
 $("#home").addEventListener("click",home);$("#recenter").addEventListener("click",home);
 $("#zoomIn").addEventListener("click",()=>{if(state.globe){const v=state.globe.pointOfView();fly(v.lat,v.lng,Math.max(.06,v.altitude*.66));updateZoomReadout(Math.max(.06,v.altitude*.66))}});
@@ -273,7 +274,8 @@ window.addEventListener("message",e=>{if(e.origin!==location.origin||!e.data)ret
  }
  if(e.data.type==="lobby:visibility"&&state.globe){if(e.data.visible)state.globe.resumeAnimation?.();else state.globe.pauseAnimation?.()}
  if(e.data.type==="lobby:atlas-mode"){setExpanded(!!e.data.expanded);if(e.data.search)searchFocus(e.data.search)}
- if(e.data.type==="lobby:atlas-country"&&/^[A-Z]{2}$/.test(e.data.country||""))selectCountry(e.data.country)
+ if(e.data.type==="lobby:atlas-country"&&/^[A-Z]{2}$/.test(e.data.country||""))selectCountry(e.data.country);
+ if(e.data.type==="lobby:game"&&GAMES[e.data.game])setGame(e.data.game)
 });
 function resize(){const el=$("#globe3d");if(!state.globe||!el.clientWidth||!el.clientHeight)return;state.globe.width(el.clientWidth).height(el.clientHeight);state.globe.globeOffset(el.clientWidth<560?[0,0]:state.expanded?[Math.min(85,el.clientWidth*.08),0]:[Math.min(110,el.clientWidth*.15),0])}
 const ccpoints=Object.entries(coords).map(([cc,v])=>({cc,lat:v[0],lng:v[1],count:0}));
@@ -529,9 +531,34 @@ async function init(){
  }finally{clearTimeout(timer)}
 }
 async function loadOrganizations(){
- try{const saved=JSON.parse(localStorage.getItem("lobby.orgs")||"null");if(saved&&Array.isArray(saved.orgs)&&Date.now()-saved.updated<86400000){state.orgs=saved.orgs;updateSummary();associateMatches()}}catch(e){}
- try{const r=await fetch("/api/orgs",{signal:AbortSignal.timeout(45000)});if(!r.ok)throw Error("data");const json=await r.json();if(!Array.isArray(json.orgs))throw Error("invalid");state.orgs=json.orgs;updateSummary();associateMatches();try{localStorage.setItem("lobby.orgs",JSON.stringify({updated:Date.now(),orgs:json.orgs}))}catch(e){};updatePoints();renderPanel();$("#dataSource").textContent="Équipes : PandaScore · "+json.orgs.length+" organisations indexées";if(queuedSearch){const q=queuedSearch;queuedSearch="";searchFocus(q)}}
- catch(e){$("#dataSource").textContent="Équipes temporairement indisponibles · PandaScore";renderPanel()}
+ try{
+  const saved=JSON.parse(localStorage.getItem("lobby.orgs.v4")||"null");
+  if(saved&&Array.isArray(saved.orgs)&&Date.now()-saved.updated<12*3600000){
+   mergeTeams(saved.orgs.flatMap(o=>Object.entries(o.g||{}).map(([game,v])=>({
+    id:v.pid,name:o.n,acronym:o.s,country:o.cc,image:o.lg||o.ld,gameSlug:game,
+    players:(v.pl||[]).map(p=>({id:p.id,name:p.n,role:p.r,country:p.cc,image:p.im}))
+   }))),"all");
+  }
+ }catch(e){}
+ try{
+  const r=await fetch("/api/orgs",{signal:AbortSignal.timeout(17000)});
+  if(!r.ok)throw Error("source");
+  const json=await r.json();
+  if(Array.isArray(json.orgs)){
+   const byKey=new Map(state.orgs.map(o=>[norm(o.n)+"|"+o.cc,o]));
+   for(const org of json.orgs){
+    const key=norm(org.n)+"|"+org.cc,prev=byKey.get(key);
+    if(prev){prev.g={...org.g,...prev.g};prev.lg=prev.lg||org.lg||org.ld;prev.s=prev.s||org.s}
+    else if(org.cc){state.orgs.push(org);byKey.set(key,org)}
+   }
+   updateSummary();associateMatches();coverageStatus();updatePoints();renderPanel();
+  }
+ }catch(e){console.warn("[Lobby Atlas] Featured orgs unavailable",e)}
+ // Populate the actual catalog independently of the small match-derived shortlist.
+ const games=embedded?["all"]:["all","lol","val","cs2"];
+ await Promise.allSettled(games.map(game=>loadCatalog({game})));
+ try{localStorage.setItem("lobby.orgs.v4",JSON.stringify({updated:Date.now(),orgs:state.orgs.slice(0,500)}))}catch(e){}
+ coverageStatus();
 }
 async function loadLive(){
  try{
@@ -539,11 +566,15 @@ async function loadLive(){
   if(!r.ok)throw Error("source");
   const data=await r.json();
   if(!Array.isArray(data.matches))throw Error("format");
+  state.events=[...data.matches,...(data.recent||[])];
   state.liveMatches=data.matches.filter(m=>m.status==="running").slice(0,100);
-  associateMatches();
- }catch(e){$("#worldLive").textContent="—";$("#dataSource").textContent="Équipes : PandaScore · Live indisponible"}
+  associateMatches();renderPanel();
+ }catch(e){$("#worldLive").textContent="—";$("#dataSource").textContent="PandaScore · Matchs momentanément indisponibles"}
 }
 $("#globeRetry").addEventListener("click",()=>location.reload());
+const startGame=new URLSearchParams(location.search).get("game");
+if(startGame&&GAMES[startGame])state.game=startGame;
+$("[data-atlas-game]").forEach(b=>{b.classList.toggle("selected",b.dataset.atlasGame===state.game);b.setAttribute("aria-pressed",String(b.dataset.atlasGame===state.game))});
 renderPanel();init();loadOrganizations();loadLive();
 const direct=new URLSearchParams(location.search);
 if(direct.get("country")&&/^[A-Z]{2}$/.test(direct.get("country").toUpperCase())){const cc=direct.get("country").toUpperCase();setTimeout(()=>selectCountry(cc),750)}
