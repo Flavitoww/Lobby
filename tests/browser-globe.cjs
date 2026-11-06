@@ -10,6 +10,7 @@ async function checkRotation(page, selector, label){
  const box=await page.locator('#globe3d canvas').boundingBox();
  assert.ok(box&&box.width>150&&box.height>150,label+': 3D canvas missing');
  const current=async()=>stage.getAttribute('data-camera');
+ await page.waitForFunction(()=>!!document.querySelector('#globeStage')?.dataset.camera,null,{timeout:12000});
  const before=await current();
  await sleep(600);
  const idle=await current();
