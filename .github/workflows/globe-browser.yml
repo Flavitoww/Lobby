@@ -1,0 +1,32 @@
+name: Lobby WebGL browser test
+on:
+  push:
+    branches: [feat/meridian-unified-desk-atlas]
+    paths:
+      - '.github/workflows/globe-browser.yml'
+      - 'tests/browser-globe.cjs'
+jobs:
+  webgl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser test dependencies
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install chromium --with-deps
+      - name: Verify actual 3D rotation (Atlas + embedded home)
+        env:
+          LOBBY_PREVIEW_URL: https://lobby-esport-git-feat-meridian-unified-desk-atlas-spike2-3cd9.vercel.app
+        run: node tests/browser-globe.cjs
+      - name: Save test screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lobby-webgl-desktop-mobile
+          path: /tmp/lobby-*.png
+          if-no-files-found: ignore
+          retention-days: 2
