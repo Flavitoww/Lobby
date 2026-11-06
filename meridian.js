@@ -295,7 +295,7 @@ const storedTheme=(()=>{try{return localStorage.getItem("lobby-theme")}catch{ret
 function setTheme(value){document.body.dataset.theme=value;document.documentElement.style.colorScheme=value;$("#themeToggle").setAttribute("aria-label",value==="dark"?"Activer le thème clair":"Activer le thème sombre");try{localStorage.setItem("lobby-theme",value)}catch(e){};frame.contentWindow?.postMessage({type:"lobby:theme",theme:value},location.origin)}
 setTheme(storedTheme==="light"?"light":"dark");
 $("#themeToggle").addEventListener("click",()=>setTheme(document.body.dataset.theme==="dark"?"light":"dark"));
-window.addEventListener("message",e=>{if(e.origin!==location.origin)return;if(e.data?.type==="lobby:atlas-close")hideAtlas();if(e.data?.type==="lobby:open-search")openSearch();if(e.data?.type==="lobby:org-summary")renderOrgs(e.data)});
+window.addEventListener("message",e=>{if(e.origin!==location.origin)return;if(e.data?.type==="lobby:atlas-close")hideAtlas();if(e.data?.type==="lobby:open-search")openSearch();if(e.data?.type==="lobby:atlas-expand")showAtlas(e.data.country||"");if(e.data?.type==="lobby:org-summary")renderOrgs(e.data)});
 if(location.hash==="#atlas")showAtlas();
 renderMatches();loadMatches();loadNews();loadStreams();
 if(new URLSearchParams(location.search).has("search"))openSearch();
