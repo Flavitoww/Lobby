@@ -184,7 +184,7 @@ function onWorld(geo){const el=$("#globe3d");if(!window.Globe){fail("Globe stati
   .onPointClick(p=>selectCountry(p.cc)).onZoom(pov=>window.LobbyEarth?.update(pov));
  state.globe=globe;
  try{globe.renderer().setPixelRatio(Math.min(window.devicePixelRatio||1,1.5))}catch(e){}
- const controls=globe.controls();controls.autoRotate=true;controls.autoRotateSpeed=.3;controls.enablePan=false;controls.minDistance=113;controls.maxDistance=500;
+ const controls=globe.controls();controls.enabled=true;controls.enableRotate=true;controls.enableZoom=true;controls.enableDamping=true;controls.dampingFactor=.07;controls.autoRotate=true;controls.autoRotateSpeed=.3;controls.enablePan=false;controls.minDistance=113;controls.maxDistance=500;
  controls.addEventListener("start",()=>{controls.autoRotate=false});
  globe.pointOfView({lat:28,lng:15,altitude:embedded?2.25:1.9},0);
  updatePoints();resize();window.LobbyEarth?.init(globe);
