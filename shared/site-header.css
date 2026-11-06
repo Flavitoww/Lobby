@@ -1,0 +1,31 @@
+/* Shared shell: same navigation, spacing and controls as Lobby Desk */
+.header .topnav a.nav-active{color:var(--accent);background:var(--accent-soft);border-radius:9px}
+.header .search-trigger{display:flex;align-items:center;justify-content:flex-start;gap:11px;min-width:130px;flex:1}
+.header .search-trigger svg{flex:none}
+.header .search-trigger kbd{margin-left:auto}
+.lobby-site-gamebar{position:relative;z-index:2;max-width:none;overflow-x:auto;scrollbar-width:none}
+.lobby-site-gamebar::-webkit-scrollbar{display:none}
+.lobby-site-gamebar .game{flex:none}
+.header .topnav{min-width:0}
+@media(max-width:1160px){
+ .header{gap:10px}
+ .header .topnav a{padding:0 8px;font-size:12px}
+ .header .search-trigger{max-width:260px}
+}
+@media(max-width:910px){
+ .header{flex-wrap:nowrap}
+ .header .topnav{overflow-x:auto;scrollbar-width:none;max-width:60vw}
+ .header .topnav::-webkit-scrollbar{display:none}
+ .header .topnav a{white-space:nowrap;flex:none}
+ .header .search-trigger{min-width:42px;max-width:44px;flex:none;padding:0;justify-content:center}
+ .header .search-trigger span,.header .search-trigger kbd{display:none}
+}
+@media(max-width:600px){
+ .header .brand{font-size:23px}
+ .header .topnav{max-width:55vw}
+ .header .topnav a{font-size:11px;padding:0 8px}
+ .header .header-actions{margin-left:auto}
+ .header .search-trigger{max-width:37px;min-width:37px;height:37px}
+ .lobby-site-gamebar{padding:8px 12px}
+ .lobby-site-gamebar .game{min-height:35px;font-size:11px;padding:8px 10px}
+}
