@@ -162,8 +162,8 @@ function create(container,{embedded=false,onPick=()=>{}}={}){
  observer?.observe(container);
  const api={
   isCanvasFallback:true,
-  pointOfView:pov,width(v){if(v!==undefined)queue();return width},
-  height(v){if(v!==undefined)queue();return height},
+  pointOfView:pov,width(v){if(v!==undefined){queue();return api}return width},
+  height(v){if(v!==undefined){queue();return api}return height},
   globeOffset(v){if(v){offset=v;queue();return api}return offset},
   pointsData(v){if(v){markers=v.map(p=>({...p}));queue();return api}return markers},
   pauseAnimation(){paused=true},resumeAnimation(){paused=false;queue()},
