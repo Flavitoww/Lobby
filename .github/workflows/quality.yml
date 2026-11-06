@@ -17,6 +17,7 @@ jobs:
           node --check atlas/app.js
           node --check atlas/meridian-atlas.js
           node --check atlas/earth.js
+          node --check atlas/canvas-globe.js
           node --check api/lib.js
           node --check api/live.js
           node --check api/explore.js
