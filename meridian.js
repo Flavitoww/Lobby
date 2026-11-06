@@ -134,7 +134,8 @@ async function loadNews(){
  finally{clearTimeout(t)}
 }
 $$("[data-game]").forEach(b=>b.addEventListener("click",()=>{
- S.game=b.dataset.game;$$("[data-game]").forEach(x=>{x.classList.toggle("active",x===b);x.setAttribute("aria-pressed",String(x===b))});renderMatches();
+ S.game=b.dataset.game;$("[data-game]").forEach(x=>{x.classList.toggle("active",x===b);x.setAttribute("aria-pressed",String(x===b))});renderMatches();
+ $("#atlasFrame")?.contentWindow?.postMessage({type:"lobby:game",game:S.game},location.origin);
 }));
 $$("[data-view]").forEach(b=>b.addEventListener("click",()=>{S.view=b.dataset.view;$$("[data-view]").forEach(x=>{x.classList.toggle("selected",x===b);x.setAttribute("aria-selected",String(x===b))});renderMatches()}));
 $("#refresh").addEventListener("click",()=>{loadMatches();loadNews();loadStreams()});
@@ -156,7 +157,7 @@ function hideAtlas(){viewChange(()=>atlasMode(false,""))}
 $$("[data-atlas]").forEach(b=>b.addEventListener("click",()=>showAtlas()));
 $("#atlasClose").addEventListener("click",hideAtlas);
 // The mobile preview is a real draggable 3D canvas. Fullscreen opens only via explicit controls.
-frame.addEventListener("load",()=>{frameLoaded=true;frame.classList.add("frame-ready");frame.contentWindow?.postMessage({type:"lobby:theme",theme:document.body.dataset.theme},location.origin);frame.contentWindow?.postMessage({type:"lobby:atlas-mode",expanded:open},location.origin);if(S.matches?.length)frame.contentWindow?.postMessage({type:"lobby:match-data",matches:S.matches.filter(m=>m.status==="running").slice(0,100)},location.origin)});
+frame.addEventListener("load",()=>{frameLoaded=true;frame.classList.add("frame-ready");frame.contentWindow?.postMessage({type:"lobby:theme",theme:document.body.dataset.theme},location.origin);frame.contentWindow?.postMessage({type:"lobby:atlas-mode",expanded:open},location.origin);frame.contentWindow?.postMessage({type:"lobby:game",game:S.game},location.origin);if(S.matches?.length)frame.contentWindow?.postMessage({type:"lobby:match-data",matches:S.matches.filter(m=>m.status==="running").slice(0,100)},location.origin)});
 if("IntersectionObserver" in window){
  const visibility=new IntersectionObserver(entries=>{const visible=entries.some(x=>x.isIntersecting)||open;frame.contentWindow?.postMessage({type:"lobby:visibility",visible},location.origin)},{threshold:[0,.12,.5]});
  visibility.observe(host);
