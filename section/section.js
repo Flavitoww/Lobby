@@ -33,6 +33,7 @@ function renderMatches(){
   if(choice==="major")return isMajor(m)&&m.status!=="finished";
   return true;
  });
+ const game=params.get("game")||"all";if(game!=="all")filtered=filtered.filter(m=>m.game===game);
  if(params.get("q")){const q=params.get("q").toLowerCase();filtered=filtered.filter(m=>(m.an+" "+m.bn+" "+m.comp).toLowerCase().includes(q))}
  filtered.sort((a,b)=>choice==="results"?b.ts-a.ts:choice==="upcoming"?a.ts-b.ts:important(b)-important(a)||a.ts-b.ts);
  const target=$("#sectionResults");
