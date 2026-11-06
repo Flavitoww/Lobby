@@ -57,7 +57,7 @@ function initial(){
   if(map.size)show([...map.values()].slice(0,45),type);else browseFallback();
  }).catch(()=>browseFallback());
 }
-$("#theme").addEventListener("click",()=>{document.body.dataset.theme=document.body.dataset.theme==="dark"?"light":"dark";localStorage.setItem("lobby-theme",document.body.dataset.theme)});
+// Theme action is shared with all Meridian pages via site-header.js.
 const saved=(()=>{try{return localStorage.getItem("lobby-theme")}catch{return null}})();if(saved==="light")document.body.dataset.theme="light";
 $("#openSearch").addEventListener("click",()=>{q.focus();q.scrollIntoView({block:"center",behavior:"smooth"})});
 document.addEventListener("keydown",e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){e.preventDefault();q.focus()}});
