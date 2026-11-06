@@ -53,7 +53,7 @@ const GAME_SLUGS={
  kog:"hok","honor-of-kings":"hok",fifa:"fc","starcraft-2":"sc"
 };
 const GAMES={all:"Tous",lol:"League of Legends",cs2:"Counter-Strike 2",val:"VALORANT",rl:"Rocket League",
- dota:"Dota 2",r6:"Rainbow Six",ow:"Overwatch",cod:"Call of Duty",mlbb:"Mobile Legends",hok:"Honor of Kings"};
+ dota:"Dota 2",r6:"Rainbow Six",ow:"Overwatch",cod:"Call of Duty",mlbb:"Mobile Legends",hok:"Honor of Kings",apex:"Apex Legends",fn:"Fortnite",pubg:"PUBG",tft:"TFT",fc:"EA Sports FC",sc:"StarCraft II"};
 const orgGames=o=>Object.keys(o.g||{}).filter(g=>state.game==="all"||g===state.game);
 const visibleOrgs=()=>state.orgs.filter(o=>state.game==="all"||Object.hasOwn(o.g||{},state.game));
 const catalogueKey=(type,game,country)=>[type,game,country||""].join("|");
