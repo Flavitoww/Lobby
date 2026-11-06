@@ -20,7 +20,8 @@ const isMajor=m=>{
 const important=m=>Number(m.tier==="s")*1100+Number(m.tier==="a")*650+(m.imp||0)+Number(/\b(T1|KC|Karmine|G2|Vitality|Fnatic|NAVI|FaZe|Gen\.?G|Sentinels)\b/i.test([m.an,m.bn].join(" ")))*350;
 function matchCard(m,feature=false){
  const live=m.status==="running",when=live?'<span class="badge-live-text">● LIVE</span>':esc(date(m.ts));
- const url=valid(m.watch);
+ const url=valid(m.watch),left=valid(m.al),right=valid(m.bl);
+ const teamLogo=u=>u?'<img class="match-team-logo" src="'+esc(u)+'" loading="lazy" alt="">':'';
  return '<article class="section-item'+(feature?" match-feature":"")+'"><div class="eyebrow">'+esc(games[m.game]||m.game)+" · "+esc(m.comp||m.serie||"Compétition")+'</div><div class="versus"><span>'+esc(m.an||"À définir")+'</span><em>'+esc(live?m.sa+" : "+m.sb:"VS")+'</em><span>'+esc(m.bn||"À définir")+'</span></div><p>'+when+' · '+esc(m.tournament||m.serie||"Match esport")+'</p>'+(url?'<a class="card-link" target="_blank" rel="noopener noreferrer" href="'+esc(url)+'">Regarder le match ↗</a>':'<a class="card-link" href="/discover/?type=teams&q='+encodeURIComponent(m.an||"")+'">Explorer les équipes ↗</a>')+'</article>';
 }
 function renderMatches(){
