@@ -5,7 +5,7 @@ const channels=[
  {login:"gotaga",name:"Gotaga",focus:["VALORANT","Esport"]},
  {login:"squeezie",name:"Squeezie",focus:["Esport","Événements"]},
  {login:"etoiles",name:"Étoiles",focus:["Esport","Communauté"]},
- {login:"etostark",name:"EtoStarK",focus:["Rocket League","Esport"]},
+ {login:"etostark__",name:"EtoStarK",focus:["Esport","League of Legends"]},
  {login:"otplol_",name:"OTP LoL",focus:["League of Legends"]},
  {login:"rocketbaguette",name:"Rocket Baguette",focus:["Rocket League"]},
  {login:"zerator",name:"ZeratoR",focus:["Événements esport"]}
