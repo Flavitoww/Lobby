@@ -43,7 +43,7 @@ function initial(){
  if(type==="countries"){const primary=["FR","KR","CN","US","DE","GB","BR","JP","ES","SA","SE","DK","PL","CA","AU","TR","ID","VN"];const names=new Intl.DisplayNames(["fr"],{type:"region"});show(primary.map(cc=>({id:cc,cc,name:names.of(cc)})),"countries");return}
  if(type==="sponsors"||type==="transfers"){
   $("#searchHelp").textContent="Actualités et annonces sourcées. Aucun contrat n'est supposé.";
-  fetch("/api/news").then(r=>r.json()).then(d=>{window._news=(d.items||[]).filter(x=>(type==="sponsors"?/sponsor|partenariat|partnership|brand|marque/i:/transfert|mercato|recrute|sign|join|roster/i).test(x.title));articles(window._news)}).catch(()=>{results.innerHTML='<p class="directory-empty">Flux d’actualités indisponible.</p>'});return;
+  fetch("/api/news").then(r=>r.json()).then(d=>{window._news=(d.items||[]).filter(x=>(type==="sponsors"?/sponsor|partenariat|partnership|brand|marque/i:/transfert|mercato|recrute|sign|join|roster/i).test(x.title));articles(q.value.trim()?window._news.filter(x=>(x.title+" "+x.source).toLowerCase().includes(q.value.trim().toLowerCase())):window._news)}).catch(()=>{results.innerHTML='<p class="directory-empty">Flux d’actualités indisponible.</p>'});return;
  }
  if(type==="teams"||type==="players"){
   fetch("/api/orgs",{signal:AbortSignal.timeout(13000)}).then(r=>{if(!r.ok)throw Error("catalog");return r.json()}).then(d=>{
@@ -61,5 +61,6 @@ $("#theme").addEventListener("click",()=>{document.body.dataset.theme=document.b
 const saved=(()=>{try{return localStorage.getItem("lobby-theme")}catch{return null}})();if(saved==="light")document.body.dataset.theme="light";
 $("#openSearch").addEventListener("click",()=>{q.focus();q.scrollIntoView({block:"center",behavior:"smooth"})});
 document.addEventListener("keydown",e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){e.preventDefault();q.focus()}});
-if(params.get("q")){q.value=params.get("q");search()}else initial();
+if(params.get("q"))q.value=params.get("q");
+if(params.get("q")&&!["sponsors","transfers"].includes(type))search();else initial();
 })();
