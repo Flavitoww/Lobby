@@ -71,10 +71,11 @@ module.exports = async (req, res) => {
   const q = string(req.query && req.query.q,80);
   const game = string(req.query && req.query.game,12);
   const id = string(req.query && req.query.id,20);
+  const browse = String(req.query?.browse||"")==="1";
   if (id && !/^\d+$/.test(id)) return res.status(400).json({error:"invalid_id"});
   if (id && type === "all") return res.status(400).json({error:"invalid_type"});
   if (!TYPES[type] && type !== "all") return res.status(400).json({error:"invalid_type", items:[]});
-  if (!id && q.length < 2) return res.status(200).json({items:[],source:"PandaScore",message:"Saisis au moins deux caractères"});
+  if (!id && q.length < 2 && !(browse && type!=="all")) return res.status(200).json({items:[],source:"PandaScore",message:"Saisis au moins deux caractères"});
   if (game && !GAME[game]) return res.status(400).json({error:"invalid_game"});
   const key = [type,q.toLowerCase(),game,id].join("|");
   const hit = memory.get(key);
@@ -98,7 +99,7 @@ module.exports = async (req, res) => {
         items:[], unavailable, source:"PandaScore"
       });
     }
-    if(type==="all"||type==="players"){items.push(...await verifiedFeatured(q,token));}
+    if(q.length>=2&&(type==="all"||type==="players")){items.push(...await verifiedFeatured(q,token));}
     const unique = new Map();items.forEach(item=>unique.set(item.type+":"+item.id,item));items.length=0;items.push(...unique.values());
     const norm = s => String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
     const needle=norm(q);
@@ -113,7 +114,7 @@ module.exports = async (req, res) => {
       if(item.type==="teams"&&item.players?.length)base+=65;
       return base;
     };
-    items.sort((a,b)=>score(b)-score(a)||a.name.localeCompare(b.name));
+    if(q.length>=2)items.sort((a,b)=>score(b)-score(a)||a.name.localeCompare(b.name));
     const data = {items:items.slice(0,72), unavailable, source:"PandaScore", updated:Date.now()};
     // Garde-fou mémoire (fonctions serverless chaudes seulement).
     if (memory.size > 150) memory.clear();
