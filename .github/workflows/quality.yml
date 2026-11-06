@@ -21,9 +21,14 @@ jobs:
           node --check api/live.js
           node --check api/explore.js
           node --check api/news.js
+          node --check api/twitch.js
+          node --check discover/discover.js
+          node --check profile/profile.js
+          node --check section/section.js
           node --check api/orgs.js
           node --check api/team.js
           node --check tests/api.test.cjs
           node --check tests/earth.test.cjs
+          node --check tests/navigation.test.cjs
       - name: Run API regression tests
         run: node --test tests/*.test.cjs
