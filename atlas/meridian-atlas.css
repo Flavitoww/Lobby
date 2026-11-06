@@ -210,3 +210,24 @@ body{font-size:15px;line-height:1.55}
  .panel-tabs{padding-inline:17px}
  .map-head{display:none}
 }
+
+/* Visual QA adjustments from real Chromium screenshots */
+.map-head{display:none}
+.globe-stage[data-sky="day"]{--sky-top:#84bee8;--sky-bottom:#d4e6f4}
+.globe-stage[data-sky="twilight"]{--sky-top:#244b80;--sky-bottom:#8a8ca8}
+.globe-status{font-size:11px;letter-spacing:.01em;bottom:54px}
+#globe3d{overflow:hidden}
+.globe-stage.dragging,#globe3d.dragging{cursor:grabbing}
+.country-marker{background:rgba(5,25,51,.88);font-size:11px;box-shadow:0 3px 10px rgba(0,16,35,.3)}
+@media(max-width:900px){
+ .globe-status{bottom:48px}
+ .panel-content{overflow-y:auto;min-height:0}
+}
+@media(max-width:560px){
+ .sky-sun{right:10%;width:48px;height:48px}
+ .sky-moon{right:11%;width:36px;height:36px}
+ .globe-status{max-width:250px;font-size:10px;bottom:48px}
+ .globe-stage .country-marker{display:none}
+ .panel-content{overflow-y:auto;min-height:0}
+ .stage-caption .caption-secondary{display:none}
+}
