@@ -31,7 +31,8 @@ function pick(m) {
   const a = o[0], b = o[1];
   const ba = bigness(a), bb = bigness(b), big = Math.max(ba, bb);
   const imp = (GW[game] || 0) + (TW[tier] || 5) + (fr ? 40 : 0) + (big === 2 ? 90 : big === 1 ? 45 : 0) + (ba && bb ? 30 : 0);
-  const k = tier === 's' || tier === 'a' || fr || big > 0 ? 1 : 0;
+  // Important = une org connue, la scène FR, ou un tier S sur un jeu majeur (LoL, CS2, Valorant). Le reste = mineur.
+  const k = big > 0 || fr || (tier === 's' && (GW[game] || 0) >= 20) ? 1 : 0;
   const short = (t) => (t.acronym || t.name || '?').toString();
   const ts = Date.parse(m.begin_at || m.scheduled_at || m.modified_at || 0) || 0;
   return {
