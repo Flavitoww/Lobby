@@ -70,9 +70,13 @@ import { createGlobe } from '/atlas/globe.js';
 const $ = (i) => document.getElementById(i);
 let g;
 try { g = createGlobe($('globe'), { view: { lat: 35, lon: 5, dist: 3.2 } }); }
-catch (e) { $('loading').textContent = "La 3D n'est pas disponible sur cet appareil."; throw e; }
+catch (e) {
+  $('loading').innerHTML = '<div style="max-width:420px;text-align:center;line-height:1.5"><b style="color:#fff;font-size:15px">La 3D (WebGL) est désactivée dans ce navigateur.</b><br>Sur Chrome : Réglages → Système → active « Utiliser l\'accélération graphique si disponible », puis relance Chrome. Vérifie sur <span style="font-family:var(--mono)">chrome://gpu</span> que WebGL est « Hardware accelerated ».</div>';
+  info && document.querySelectorAll('.ov.br,.ov.bl').forEach((x) => x.remove()); throw e;
+}
 g.ready.then(() => { $('loading').style.opacity = 0; setTimeout(() => $('loading').remove(), 700); });
 function info() {
+  if (!g) return;
   const s = g.sun, off = +$('t').value;
   $('sub').textContent = `${s.lat.toFixed(1)}° ${s.lat >= 0 ? 'N' : 'S'} · ${Math.abs(s.lon).toFixed(1)}° ${s.lon >= 0 ? 'E' : 'O'}`;
   const d = new Date(Date.now() + off * 60000);
