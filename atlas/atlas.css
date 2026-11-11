@@ -73,14 +73,16 @@
 .atl .pin .pc{font:700 10px var(--mono);color:#fff;line-height:1}
 .atl .pin.live .pd::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--or);animation:atring 1.8s infinite}
 @keyframes atring{from{opacity:.9;transform:scale(.7)}to{opacity:0;transform:scale(1.5)}}
-.atl .pin:hover,.atl .pin.sel{z-index:5}.atl .pin:hover .pd,.atl .pin.sel .pd{transform:scale(1.18)}
+.atl .pin:hover,.atl .pin.sel{z-index:5}.atl .pin:hover .pd,.atl .pin.sel .pd{transform:scale(1.1)}
 .atl .pin.sel .pd{background:#111214}
-.atl .pin .pl{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.95);color:var(--ink);box-shadow:0 6px 20px rgba(0,0,0,.25);white-space:nowrap;opacity:0;transform:translateX(-4px);transition:opacity .2s,transform .2s;pointer-events:none}
+.atl .pin .pl{position:absolute;left:50%;bottom:calc(100% + 10px);display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.96);color:var(--ink);box-shadow:0 6px 20px rgba(0,0,0,.25);white-space:nowrap;opacity:0;transform:translate(-50%,4px);transition:opacity .18s .06s,transform .18s .06s var(--ease);pointer-events:none}
+/* zone de survol plus large que la pastille : plus de clignotement */
+.atl .pin .pd::before{content:"";position:absolute;inset:-10px;border-radius:50%}
 .atl .pin .pl b{margin-right:3px}.atl .pin .pl em{font-style:normal;font-size:11px;color:var(--or-ink);margin-left:3px}
-.atl .pin:hover .pl,.atl .pin.sel .pl,.atl .pin.lab .pl{opacity:1;transform:none}
+.atl .pin:hover .pl,.atl .pin.sel .pl,.atl .pin.lab .pl{opacity:1;transform:translate(-50%,0);transition-delay:0s}
 .atl .pin.hid{opacity:0;pointer-events:none}
 /* Pays sélectionné : l'étiquette passe sous l'anneau de logos (sinon elle en cache un) */
-.atl .pin.sel .pl{position:absolute;left:50%;top:calc(50% + var(--rr,44px) + 26px);transform:translate(-50%,0)}
+.atl .pin.sel .pl{bottom:auto;top:calc(50% + var(--rr,44px) + 26px)}
 .atl .pin.sel .pl .mini{display:none}
 .atl .mini{width:20px;height:20px;border-radius:6px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;font:700 7px var(--ui);color:var(--mut);flex:none}
 .atl .mini img{width:80%;height:80%;object-fit:contain}
