@@ -732,9 +732,9 @@ Ne=e.features.filter(function(e){return e.properties.name===t})[0]||null,Fe()},s
 lightPos:Tt&&[Tt.position.x,Tt.position.y,Tt.position.z]}}}}
 (function () {
   var s = document.createElement('script');
-  s.src = 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js';
+  s.src = '/lib/topojson-client.min.js';
   s.onload = function () {
-    fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json').then(function (r) { return r.json(); }).then(function (w) {
+    fetch('/lib/countries-110m.json').then(function (r) { return r.json(); }).then(function (w) {
       var f = topojson.feature(w, w.objects.countries).features.filter(function (x) { return x.properties.name !== 'Antarctica'; });
       boot({ type: 'FeatureCollection', features: f });
     });

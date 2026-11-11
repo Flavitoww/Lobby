@@ -86,6 +86,7 @@ h1 span{color:var(--faint)}
 .row .vsx{text-align:center;color:var(--faint)}
 .row .cp{color:var(--faint);font-size:12px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row .lose{color:var(--faint);font-weight:500}
+.tog{border:0;background:var(--soft);color:var(--mut);padding:6px 12px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer}.tog:hover{background:var(--tile);color:var(--ink)}
 .empty{padding:28px 16px;color:var(--mut);text-align:center}
 
 /* Compétitions */
@@ -144,7 +145,7 @@ h1 span{color:var(--faint)}
     </section>
 
     <section class="card s2 rv" style="--i:5" id="competitions" aria-labelledby="hComp">
-      <div class="ch"><h2 id="hComp">Compétitions en cours</h2><span class="x">d'après les matchs du jour</span></div>
+      <div class="ch"><h2 id="hComp">Compétitions en cours</h2><span class="x">tier S/A et scène FR</span></div>
       <div class="comps" id="comps"></div>
     </section>
 
@@ -161,7 +162,7 @@ h1 span{color:var(--faint)}
 (function(){
 var GAMES=[["all","Tous"],["lol","LoL"],["cs2","CS2"],["val","Valorant"],["rl","Rocket League"],["dota","Dota 2"],["r6","R6"],["ow","Overwatch"],["mlbb","MLBB"]];
 var GN={lol:"League of Legends",cs2:"Counter-Strike 2",val:"Valorant",rl:"Rocket League",dota:"Dota 2",r6:"Rainbow Six",ow:"Overwatch",cod:"Call of Duty",fc:"EA FC",sc:"StarCraft",mlbb:"Mobile Legends",hok:"Honor of Kings",aoe:"Age of Empires"};
-var S={g:"all",q:"",data:null};
+var S={g:"all",q:"",data:null,all:false,featId:null};
 var $=function(id){return document.getElementById(id)};
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
 function ini(s){return esc(String(s||"?").replace(/[^A-Za-z0-9]/g,"").slice(0,3).toUpperCase()||"?")}
@@ -174,12 +175,19 @@ function ok(m){if(S.g!=="all"&&m.game!==S.g)return false;if(!S.q)return true;var
 $("date").textContent=new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
 $("games").innerHTML=GAMES.map(function(g){return '<button type="button" data-g="'+g[0]+'" aria-pressed="'+(g[0]==="all")+'">'+g[1]+'</button>'}).join("");
 $("games").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;S.g=b.dataset.g;[].forEach.call(this.children,function(x){x.setAttribute("aria-pressed",x===b)});draw()});
+$("nToday").addEventListener("click",function(e){if(e.target.id==="tog"){S.all=!S.all;draw()}});
 $("q").addEventListener("input",function(){S.q=this.value.trim().toLowerCase();draw()});
 document.addEventListener("keydown",function(e){if(e.key==="/"&&document.activeElement.tagName!=="INPUT"){e.preventDefault();$("q").focus()}});
 
 function feat(list){
-  var live=list.filter(function(m){return m.status==="running"}).sort(function(a,b){return b.imp-a.imp});
-  var m=live[0]||list.filter(function(m){return m.status==="not_started"}).sort(function(a,b){return (b.imp-a.imp)||(a.ts-b.ts)})[0];
+  var now=Date.now(),H=3600000;
+  function sc(m){return (m.imp||0)+(m.big===2?60:0)+(m.k?50:0)}
+  var live=list.filter(function(m){return m.status==="running"&&m.k}).sort(function(a,b){return sc(b)-sc(a)});
+  var soon=list.filter(function(m){return m.status==="not_started"&&m.k&&m.ts-now<24*H}).sort(function(a,b){return (sc(b)-sc(a))||(a.ts-b.ts)});
+  /* un gros match qui commence bientôt passe devant un live mineur */
+  var m=live[0];if(soon[0]&&(!m||sc(soon[0])>sc(m)+40&&soon[0].ts-now<3*H))m=soon[0];
+  m=m||soon[0]||list.filter(function(m){return m.status==="running"}).sort(function(a,b){return sc(b)-sc(a)})[0]||list.filter(function(m){return m.status==="not_started"}).sort(function(a,b){return a.ts-b.ts})[0];
+  S.featId=m&&m.id;
   var el=$("feat");
   if(!m){el.classList.remove("impact");el.innerHTML='<div class="empty">Aucun match pour ce filtre.</div>';return}
   el.classList.add("impact");
@@ -188,7 +196,7 @@ function feat(list){
   el.innerHTML='<div class="imp">'+
    '<div class="fh"><span class="tag">'+logo(m.ll,m.comp)+'<span>'+esc(m.comp)+' · '+esc(GN[m.game]||"")+'</span></span>'+(isLive?'<span class="pill live"><i></i>En direct</span>':'<span class="when">'+esc(when(m.ts))+'</span>')+'</div>'+
    '<div class="mid"><div class="teams">'+team(m.al,m.as,m.an,aL)+team(m.bl,m.bs,m.bn,bL)+'</div>'+
-   (isLive?'<div class="big">'+m.sa+':'+m.sb+'<small>EN COURS</small></div>':'<div class="big vs">VS<small>'+esc(when(m.ts))+'</small></div>')+'</div>'+
+   (isLive?'<div class="big">'+m.sa+':'+m.sb+'<small>EN COURS</small></div>':'<div class="big vs">VS</div>')+'</div>'+
    '<div class="fa">'+(m.watch?'<a class="btn pri" href="'+esc(m.watch)+'" target="_blank" rel="noopener">Regarder le stream</a>':'<span class="btn pri" aria-disabled="true" style="opacity:.6">Stream bientôt annoncé</span>')+'<a class="btn sec" href="/atlas">Voir sur l\'Atlas</a></div></div>';
 }
 function row(m,fin){
@@ -206,11 +214,14 @@ function draw(){
   var nLive=(d.matches||[]).filter(function(m){return m.status==="running"}).length;
   $("hello").innerHTML="L'esport, en direct. <span>"+(nLive?nLive+" match"+(nLive>1?"s":"")+" en cours.":"Aucun match en cours.")+"</span>";
   feat(all);
-  var up=all.slice().sort(function(a,b){var x=a.status==="running"?0:1,y=b.status==="running"?0:1;return (x-y)||(a.ts-b.ts)}).slice(0,7);
-  $("today").innerHTML=up.length?up.map(function(m){return row(m,false)}).join(""):'<div class="empty">Aucun match pour ce filtre.</div>';
-  $("nToday").textContent=all.length?all.length+" matchs":"";
-  $("recent").innerHTML=rec.length?rec.slice().sort(function(a,b){return b.ts-a.ts}).slice(0,5).map(function(m){return row(m,true)}).join(""):'<div class="empty">Pas de résultat récent pour ce filtre.</div>';
-  var C={};all.concat(rec).forEach(function(m){var k=m.comp||"?";var c=C[k]=C[k]||{n:k,ll:m.ll,g:m.game,s:m.serie,cnt:0,live:0,imp:0};c.cnt++;if(m.status==="running")c.live++;c.imp=Math.max(c.imp,m.imp||0);if(!c.ll&&m.ll)c.ll=m.ll});
+  var key=all.filter(function(m){return m.k&&m.id!==S.featId}),minor=all.length-all.filter(function(m){return m.k}).length;
+  var pool=S.all?all.filter(function(m){return m.id!==S.featId}):(key.length?key:all.filter(function(m){return m.id!==S.featId}));
+  var up=pool.slice().sort(function(a,b){var x=a.status==="running"?0:1,y=b.status==="running"?0:1;return (x-y)||(a.ts-b.ts)}).slice(0,S.all?20:7);
+  $("today").innerHTML=up.length?up.map(function(m){return row(m,false)}).join(""):'<div class="empty">Aucun match important pour ce filtre.</div>';
+  $("nToday").innerHTML=minor>0?'<button type="button" class="tog" id="tog">'+(S.all?'Essentiel seulement':'+ '+minor+' match'+(minor>1?'s mineurs':' mineur'))+'</button>':'';
+  var rk=rec.filter(function(m){return m.k});var rr=(rk.length>=3?rk:rec).slice().sort(function(a,b){return b.ts-a.ts}).slice(0,5);
+  $("recent").innerHTML=rr.length?rr.map(function(m){return row(m,true)}).join(""):'<div class="empty">Pas de résultat récent pour ce filtre.</div>';
+  var C={};all.concat(rec).filter(function(m){return m.k}).forEach(function(m){var k=m.comp||"?";var c=C[k]=C[k]||{n:k,ll:m.ll,g:m.game,s:m.serie,cnt:0,live:0,imp:0};c.cnt++;if(m.status==="running")c.live++;c.imp=Math.max(c.imp,m.imp||0);if(!c.ll&&m.ll)c.ll=m.ll});
   var cs=Object.keys(C).map(function(k){return C[k]}).sort(function(a,b){return (b.live-a.live)||(b.imp-a.imp)||(b.cnt-a.cnt)}).slice(0,6);
   $("comps").innerHTML=cs.length?cs.map(function(c){return '<div class="cpc">'+logo(c.ll,c.n,40)+'<div style="min-width:0"><b>'+esc(c.n)+'</b><small>'+esc(GN[c.g]||"")+'</small></div><span class="n'+(c.live?' lv':'')+'">'+(c.live?c.live+' live':c.cnt+' match'+(c.cnt>1?'s':''))+'</span></div>'}).join(""):'<div class="empty" style="grid-column:1/-1">Aucune compétition pour ce filtre.</div>';
 }
