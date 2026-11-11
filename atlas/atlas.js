@@ -123,7 +123,7 @@ export function mountAtlas(o) {
   function matchRow(m) {
     const lv = m.status === 'running', fin = m.status === 'finished';
     const d = new Date(m.ts), t = lv ? '<span class="lv">LIVE</span>' : d.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '') + '<br>' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    return `<a class="mrow" ${m.watch ? `href="${esc(m.watch)}" target="_blank" rel="noopener"` : ''}><span class="mt">${t}</span><span class="mm">${logo(m.al, m.as)}<b>${esc(m.as || m.an)}</b><span class="ms">${lv || fin ? `${m.sa}:${m.sb}` : 'vs'}</span><b>${esc(m.bs || m.bn)}</b>${logo(m.bl, m.bs)}</span><span class="mc">${esc(m.comp)}</span></a>`;
+    return `<a class="mrow" ${m.watch ? `href="${esc(m.watch)}" target="_blank" rel="noopener"` : ''}><span class="mt">${t}</span><span class="mm">${logo(m.al, m.as)}<b>${esc(m.as || m.an)}</b><span class="ms">${lv || fin ? (m.sa == null ? '–' : `${m.sa}:${m.sb}`) : 'vs'}</span><b>${esc(m.bs || m.bn)}</b>${logo(m.bl, m.bs)}</span><span class="mc">${esc(m.comp)}</span></a>`;
   }
   function home() {
     S.sel = null; S.team = null;

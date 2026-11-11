@@ -101,6 +101,14 @@ module.exports = async (req, res) => {
     // Tri : on garde d'abord ce qui compte (tier S/A, scène FR, grosses orgs), puis un peu de mineur pour ne jamais être vide.
     const imp = (arr, n) => { const k = arr.filter((m) => m.k), o = arr.filter((m) => !m.k); return k.concat(o).slice(0, n); };
     live.sort((a, b) => (b.k - a.k) || (b.imp - a.imp));
+    // Matchs sourcés à la main : « en direct » pendant ~1h15 après l'heure annoncée (Bo5), sans score inventé.
+    (CFG.MANUAL || []).forEach((x) => {
+      const ts = Date.parse(x.at); if (now > ts + 75 * 60000) return;
+      const m = { imp: 160, k: 1, big: 2, tier: 'b', id: x.id, status: now >= ts ? 'running' : 'not_started', ts, game: x.game, comp: x.comp, serie: '2026', ll: null,
+        an: x.a[0], as: x.a[1], al: null, sa: null, bn: x.b[0], bs: x.b[1], bl: null, sb: null, watch: x.watch, src: x.source, manual: 1 };
+      (m.status === 'running' ? live : next).push(m);
+    });
+    live.sort((a, b) => (b.k - a.k) || (b.imp - a.imp)); next.sort((a, b) => a.ts - b.ts);
     const matches = live.concat(imp(next, 90)).slice(0, 110);
     recent = imp(recent, 30).sort((a, b) => (b.k - a.k) || (b.ts - a.ts));
 

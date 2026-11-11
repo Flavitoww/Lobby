@@ -21,6 +21,12 @@ module.exports = {
       watch: 'https://www.twitch.tv/slash_ftv',
       source: 'https://www.francetvpro.fr/contenu-de-presse/79193261' }
   ],
+  // Matchs ajoutés à la main (source obligatoire). Heures UTC. Pas de score tant qu'il n'est pas sourcé.
+  MANUAL: [
+    { id: 'cdf26-d6-1', game: 'rl', comp: 'Coupe de France Slash', at: '2026-11-11T18:30:00Z', a: ['DUMORNAY GOAT', 'DUM'], b: ['Team Vitality', 'VIT'], watch: 'https://www.twitch.tv/slash_ftv', source: 'https://www.esportnews.fr/rl/tournois/coupe-de-france-slash-2026-174741' },
+    { id: 'cdf26-d6-2', game: 'rl', comp: 'Coupe de France Slash', at: '2026-11-11T19:15:00Z', a: ['Ikkaku', 'IKKA'], b: ['Karmine Corp', 'KC'], watch: 'https://www.twitch.tv/slash_ftv', source: 'https://www.esportnews.fr/rl/tournois/coupe-de-france-slash-2026-174741' },
+    { id: 'cdf26-d6-3', game: 'rl', comp: 'Coupe de France Slash', at: '2026-11-11T20:00:00Z', a: ['Geekay Esports', 'GK'], b: ['Team Vitality', 'VIT'], watch: 'https://www.twitch.tv/slash_ftv', source: 'https://www.esportnews.fr/rl/tournois/coupe-de-france-slash-2026-174741' }
+  ],
   // Sources de données (connectées ou prévues), affichées sur /gestion.
   SOURCES: [
     { id: 'pandascore', name: 'PandaScore', role: 'Matchs, équipes, joueurs, logos', status: 'connected' },

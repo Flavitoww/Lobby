@@ -231,7 +231,7 @@ function feat(list){
   el.innerHTML='<div class="imp">'+
    '<div class="fh"><span class="tag">'+logo(m.ll,m.comp)+'<span>'+esc(m.comp)+' · '+esc(GN[m.game]||"")+'</span></span>'+(isLive?'<span class="pill live"><i></i>En direct</span>':'<span class="when">'+esc(when(m.ts))+'</span>')+'</div>'+
    '<div class="mid"><div class="teams">'+team(m.al,m.as,m.an,aL)+team(m.bl,m.bs,m.bn,bL)+'</div>'+
-   (isLive?'<div class="big">'+m.sa+':'+m.sb+'<small>EN COURS</small></div>':'<div class="big vs">VS</div>')+'</div>'+
+   (isLive?'<div class="big">'+(m.sa==null?'LIVE':m.sa+':'+m.sb)+'<small>EN COURS</small></div>':'<div class="big vs">VS</div>')+'</div>'+
    '<div class="fa">'+(m.watch?'<a class="btn pri" href="'+esc(m.watch)+'" target="_blank" rel="noopener">Regarder le stream</a>':'<span class="btn pri" aria-disabled="true" style="opacity:.6">Stream bientôt annoncé</span>')+'<a class="btn sec" href="/atlas">Voir sur l\'Atlas</a></div></div>';
 }
 function row(m,fin){
@@ -239,7 +239,7 @@ function row(m,fin){
   return '<a class="row'+(lv?' on':'')+'" href="'+(m.watch?esc(m.watch):'#')+'"'+(m.watch?' target="_blank" rel="noopener"':'')+'>'+
    '<span class="t'+(lv?' lv':'')+'">'+(lv?'LIVE':fin?esc(ago(m.ts)):esc(when(m.ts)))+'</span>'+
    '<span class="tm r"><span class="'+(aL?'lose':'')+'">'+esc(m.as||m.an)+'</span>'+logo(m.al,m.as)+'</span>'+
-   (sc?'<span class="sc">'+m.sa+':'+m.sb+'</span>':'<span class="vsx">vs</span>')+
+   (sc?'<span class="sc">'+(m.sa==null?'–':m.sa+':'+m.sb)+'</span>':'<span class="vsx">vs</span>')+
    '<span class="tm">'+logo(m.bl,m.bs)+'<span class="'+(bL?'lose':'')+'">'+esc(m.bs||m.bn)+'</span></span>'+
    '<span class="cp">'+esc(m.comp)+'</span></a>';
 }
