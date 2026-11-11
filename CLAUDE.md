@@ -19,7 +19,8 @@ api/orgs.js       # PandaScore : orgs + pays (cc).
 api/team.js       # PandaScore : détails d'une équipe.
 api/_config.js    # Config centrale : tiers de jeux, poids, orgs inactives, sources (lue par l'API et /gestion).
 api/status.js     # État en direct (PandaScore, /api/live, /api/orgs, relais, version) pour /gestion.
-gestion.html      # /gestion : tableau de bord de gestion (outil interne, noindex).
+api/gestion.js    # /gestion (rewrite) : portail par code puis tableau de bord (api/_gestion.html). Code = env ADMIN_CODE, session signée ADMIN_SECRET (api/_auth.js, api/auth.js).
+api/track.js      # Audience maison (POST public, GET admin) : visiteurs en direct, pages, pays, recherches (en mémoire).
 search.js         # Recherche globale tolérante aux fautes (accueil + Atlas).
 api/lib.js        # Relais /lib/* : three.module, three.core, OrbitControls (importmap "three").
 ```
