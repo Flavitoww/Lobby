@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500;600&family=Archivo:wdth,wght@100..125,800..900&display=swap">
 <link rel="stylesheet" href="/lobby.css">
+<script type="importmap">{"imports":{"three":"/lib/three.module.min.js"}}</script>
 <style>
 .top{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin:44px 0 24px;flex-wrap:wrap}
 .date{color:var(--mut);font-size:13px;margin-bottom:6px}.date::first-letter{text-transform:uppercase}
@@ -233,39 +234,28 @@ function fail(){
 function load(){fetch("/api/live").then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(d){S.data=d;draw();$("upd").textContent="Mis à jour à "+hm(d.updated||Date.now())+" · PandaScore"}).catch(function(){if(!S.data)fail()})}
 load();setInterval(load,90000);
 
-/* ---- Le vrai globe 3D (globe.gl), chargé après l'affichage pour garder la page rapide ---- */
+/* ---- Le globe 3D (atlas/globe.js), chargé après l'affichage pour garder la page rapide ---- */
 var CC={FR:[46.6,2.4],DE:[51.2,10.4],GB:[54,-2],ES:[40.4,-3.7],IT:[42.8,12.5],PL:[52,19.4],SE:[62,15],DK:[56,9.5],NO:[61,9],FI:[64,26],NL:[52.2,5.5],BE:[50.6,4.6],PT:[39.6,-8],RU:[56,38],UA:[49,32],TR:[39,35],US:[39.5,-98.5],CA:[56,-106],BR:[-14,-51],AR:[-34,-64],CL:[-33,-71],MX:[23,-102],PE:[-9,-75],CO:[4.5,-74],KR:[36.5,127.8],CN:[35,104],JP:[36.2,138.2],TW:[23.7,121],HK:[22.3,114.2],VN:[16,107.8],TH:[15.8,101],PH:[12.9,121.8],ID:[-2.5,118],MY:[4.2,102],SG:[1.35,103.8],AU:[-25.3,133.8],NZ:[-41,174],IN:[21,78],SA:[24,45],AE:[24,54],KZ:[48,67],MN:[46.9,103.8],CZ:[49.8,15.5],SK:[48.7,19.7],RS:[44,21],BG:[42.7,25.5],RO:[45.9,25],HU:[47.2,19.5],AT:[47.5,14.5],CH:[46.8,8.2],IL:[31,35],EE:[58.6,25],LV:[56.9,24.6],LT:[55.2,23.9],BY:[53.7,28],ZA:[-30.6,22.9],EG:[26.8,30.8],MA:[31.8,-7.1],IE:[53.4,-8.2],GR:[39,22],HR:[45.1,15.2],SI:[46.1,14.9],BA:[44,17.8],MK:[41.6,21.7],UZ:[41.4,64.6],GE:[42.3,43.4],AM:[40.1,45],AZ:[40.1,47.6],PK:[30.4,69.3],BD:[23.7,90.4]};
 var G=null,PTS=null;
 function loadOrgs(){
     fetch("/api/orgs").then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(d){
       var by={},orgs=d.orgs||[];orgs.forEach(function(o){var k=(o.cc||"").toUpperCase();if(CC[k]){by[k]=(by[k]||0)+1}});
       var pts=Object.keys(by).map(function(k){return {lat:CC[k][0],lng:CC[k][1],n:by[k],cc:k}});
-      PTS=pts;if(G){G.pointsData(pts);G.ringsData(pts.slice().sort(function(a,b){return b.n-a.n}).slice(0,6))}
+      PTS=pts;
       $("nTeams").textContent=orgs.length;$("nCountries").textContent=Object.keys(by).length;
     }).catch(function(){var g=document.querySelector(".gstat");if(g)g.style.display="none"});
 }
 loadOrgs();
 function startGlobe(){
-  var el=$("g3d"),card=$("globeCard");
-  function size(){if(G){G.width(card.clientWidth).height(card.clientHeight)}}
-  try{
-    G=Globe({animateIn:true})(el)
-      .backgroundColor("rgba(0,0,0,0)")
-      .globeImageUrl("/lib/earth-night.jpg")
-      .showAtmosphere(true).atmosphereColor("#ff6a33").atmosphereAltitude(.16)
-      .pointLat(function(d){return d.lat}).pointLng(function(d){return d.lng})
-      .pointColor(function(){return "#ff5a1f"}).pointRadius(function(d){return .35+Math.min(d.n,12)*.06})
-      .pointAltitude(function(d){return .01+Math.min(d.n,12)*.012}).pointsMerge(true)
-      .ringLat(function(d){return d.lat}).ringLng(function(d){return d.lng}).ringColor(function(){return function(t){return "rgba(255,90,31,"+(1-t)+")"}})
-      .ringMaxRadius(4).ringPropagationSpeed(2).ringRepeatPeriod(1600);
-    G.pointOfView({lat:28,lng:12,altitude:2.15},0);
-    var c=G.controls();c.autoRotate=true;c.autoRotateSpeed=.55;c.enableZoom=false;c.enablePan=false;c.enableRotate=false;
-    size();new ResizeObserver(size).observe(card);
-    $("gfb").style.display="none";if(PTS){G.pointsData(PTS);G.ringsData(PTS.slice().sort(function(a,b){return b.n-a.n}).slice(0,6))}
-
-  }catch(e){G=null;$("gfb").style.display=""}
+  /* même moteur que l'Atlas : Terre photoréaliste, vraie lumière du Soleil */
+  import("/atlas/globe.js").then(function(mod){
+    try{
+      G=mod.createGlobe($("g3d"),{interactive:false,stars:false,hd:false,view:{lat:28,lon:8,dist:3.6}});
+      G.ready.then(function(){$("gfb").style.display="none"});
+    }catch(e){G=null}
+  }).catch(function(){});
 }
-function loadGlobe(){var s=document.createElement("script");s.src="/lib/globe.gl.min.js";s.onload=function(){if(window.Globe)startGlobe()};document.head.appendChild(s)}
+function loadGlobe(){startGlobe()}
 if("IntersectionObserver" in window){var io=new IntersectionObserver(function(es){if(es[0].isIntersecting){io.disconnect();(window.requestIdleCallback||setTimeout)(loadGlobe)}});io.observe($("globeCard"))}else loadGlobe();
 })();
 </script>

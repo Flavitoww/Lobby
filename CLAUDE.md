@@ -8,15 +8,17 @@ Déployé sur **lobby-esport.vercel.app** (Vercel, team `spike2-3cd9`, projet `l
 
 ## Structure
 ```
-index.html        # Desk (accueil). Bouton/nav "Atlas" -> /atlas. CSS+JS inline. Données via /api/live (+ repli snapshot).
-atlas/index.html  # Globe (front). CSS inline. Charge /atlas/app.js.
-atlas/app.js      # Globe (globe.gl + three). Appelle /api/live, /api/orgs, /api/team, /lib/*, /jerseys.json.
-api/live.js       # PandaScore : matchs running/upcoming/past -> {updated, matches, recent}. Partagé desk + globe.
-api/orgs.js       # PandaScore : équipes actives par jeu + pays (pins du globe).
-api/team.js       # PandaScore : détails d'une équipe (?n=NOM).
-api/lib.js        # Proxy : sert three/globe.gl/earth-night.jpg depuis le CDN jsdelivr (via /lib/:file).
-vercel.json       # cleanUrls, functions maxDuration 60, rewrite /lib/:file -> /api/lib?file=:file
+lobby.css         # Design system « Bento clair » (charte v2) — toutes les pages le chargent.
+index.html        # Accueil : match vedette, listes triées (champ k), carte globe -> /atlas.
+atlas/index.html  # Atlas : nouveau globe photoréaliste + panneau (données en phase 4).
+atlas/globe.js    # Moteur 3D (three.js pur) : Soleil réel, nuages, atmosphère, étoiles. Partagé accueil + atlas.
+assets/earth/     # Textures NASA en WebP (2K puis 4K).
+api/live.js       # PandaScore : matchs + tri d'importance (k, imp, big).
+api/orgs.js       # PandaScore : orgs + pays (cc).
+api/team.js       # PandaScore : détails d'une équipe.
+api/lib.js        # Relais /lib/* : three.module, three.core, OrbitControls (importmap "three").
 ```
+L'ancienne app globe (atlas/app.js, globe.gl) est SUPPRIMÉE : ne pas la réintroduire.
 
 ## Données
 - Toutes les fonctions `api/` utilisent `process.env.PANDASCORE_TOKEN` (déjà configuré sur le projet Vercel).
@@ -24,10 +26,7 @@ vercel.json       # cleanUrls, functions maxDuration 60, rewrite /lib/:file -> /
 
 ## Déploiement
 - Dépôt Git : `Flavitoww/Lobby`. Pousser sur `main` déploie sur Vercel (projet `lobby-esport`, prod).
-- L'ancien globe seul reste figé à `lobby-esport-14ouw13ax-spike2-3cd9.vercel.app` (référence).
+- Le déploiement auto sur push est cassé : redéployer à la main (Vercel, depuis main, target production).
 
 ## À faire ensuite
-- **Unifier la DA** desk (orange #ff5a1f, Schibsted Grotesk) et globe (rouge #ff3b3b, Barlow Condensed) : choisir UNE identité (voir charte.md).
-- Transition soignée desk <-> atlas (cohérente avec l'intro de marque du desk).
-- Fiches réelles cliquables (équipe / joueur / compétition / business), transferts & news de premier plan.
-- `/jerseys.json` : optionnel (maillots), actuellement 404 géré proprement.
+- Atlas phase 3-6 : UI, données sur le globe (1 pin/pays, logos en couronne au zoom), transition accueil → Atlas, recette.
