@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lobby — prototype du globe</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="/lobby.css">
+<link rel="preload" href="/assets/earth/day-2k.webp" as="image" type="image/webp">
+<script type="importmap">{"imports":{"three":"/lib/three.module.min.js"}}</script>
+<style>
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin:36px 0 20px;flex-wrap:wrap}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+h1{margin:0;font-weight:600;font-size:clamp(30px,4vw,46px);letter-spacing:-.04em;line-height:1.05}
+h1 b{color:var(--or)}
+.sub{color:var(--mut);margin-top:6px}
+.lay{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:var(--gap)}
+.stage{position:relative;height:min(74vh,760px);min-height:460px;border-radius:var(--r);overflow:hidden;background:radial-gradient(120% 90% at 50% 40%,#0d1420 0%,#06080c 70%)}
+#globe{position:absolute;inset:0}
+.ov{position:absolute;display:flex;gap:8px;z-index:2}
+.ov.tl{top:18px;left:18px}.ov.br{right:18px;bottom:18px}.ov.bl{left:18px;bottom:18px}
+.glass{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:13px;font-weight:500;backdrop-filter:blur(10px)}
+.glass button{all:unset;cursor:pointer;width:30px;height:30px;display:grid;place-items:center;border-radius:8px;font-size:17px}
+.glass button:hover{background:rgba(255,255,255,.12)}
+.glass .dot{width:7px;height:7px;border-radius:50%;background:var(--or)}
+.side{padding:24px;display:flex;flex-direction:column;gap:18px}
+.side h2{margin:0;font-size:22px;font-weight:600;letter-spacing:-.02em}
+.kv{display:flex;justify-content:space-between;padding:12px 14px;border-radius:14px;background:var(--soft);font-size:13px}
+.kv b{font-family:var(--mono);font-weight:600}
+input[type=range]{width:100%;accent-color:var(--or)}
+.note{font-size:12px;color:var(--faint)}
+.loading{position:absolute;inset:0;display:grid;place-items:center;color:rgba(255,255,255,.6);font-size:13px;z-index:1;transition:opacity .6s}
+@media (max-width:600px){.ov.bl{display:none}}
+@media (max-width:900px){.lay{grid-template-columns:1fr}.stage{height:62vh;min-height:380px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="nav" aria-label="Navigation principale">
+    <a class="logo" href="/">Lobby<b>.</b></a>
+    <a class="nl keep" href="/">Accueil</a>
+    <a class="nl on keep" href="/atlas" aria-current="page">Atlas</a>
+  </nav>
+  <div class="head">
+    <div><div class="eyebrow">Prototype · phase 2</div><h1>L'Atlas esport<b>.</b></h1><div class="sub">Rendu du globe seul, avant les données.</div></div>
+  </div>
+  <div class="lay">
+    <div class="stage" id="stage">
+      <div id="globe"></div>
+      <div class="loading" id="loading">Chargement de la Terre…</div>
+      <div class="ov tl"><span class="glass"><span class="dot"></span>Lumière réelle · <span id="clock">--:-- UTC</span></span></div>
+      <div class="ov bl"><span class="glass" style="font-size:12px;color:rgba(255,255,255,.75)">Glisse pour tourner · molette ou pincer pour zoomer</span></div>
+      <div class="ov br"><span class="glass" style="padding:0 4px"><button type="button" id="zin" aria-label="Zoomer">+</button><button type="button" id="zout" aria-label="Dézoomer">−</button><button type="button" id="home" aria-label="Recentrer">◎</button></span></div>
+    </div>
+    <aside class="card side">
+      <div><div class="eyebrow">Test du rendu</div><h2>Jour, nuit et Soleil.</h2></div>
+      <div class="kv"><span>Soleil au zénith</span><b id="sub">—</b></div>
+      <div class="kv"><span>Heure simulée</span><b id="sim">maintenant</b></div>
+      <label class="note" for="t">Décale l'heure pour vérifier le terminateur (−12 h → +12 h)</label>
+      <input id="t" type="range" min="-720" max="720" step="10" value="0">
+      <button class="btn sec" type="button" id="now">Revenir à maintenant</button>
+      <p class="note">Textures : NASA Blue Marble / Black Marble (domaine public). Les données esport arrivent en phase 4.</p>
+    </aside>
+  </div>
+</div>
+<script type="module">
+import { createGlobe } from '/atlas/globe.js';
+const $ = (i) => document.getElementById(i);
+let g;
+try { g = createGlobe($('globe'), { view: { lat: 35, lon: 5, dist: 3.2 } }); }
+catch (e) { $('loading').textContent = "La 3D n'est pas disponible sur cet appareil."; throw e; }
+g.ready.then(() => { $('loading').style.opacity = 0; setTimeout(() => $('loading').remove(), 700); });
+function info() {
+  const s = g.sun, off = +$('t').value;
+  $('sub').textContent = `${s.lat.toFixed(1)}° ${s.lat >= 0 ? 'N' : 'S'} · ${Math.abs(s.lon).toFixed(1)}° ${s.lon >= 0 ? 'E' : 'O'}`;
+  const d = new Date(Date.now() + off * 60000);
+  $('clock').textContent = d.toISOString().slice(11, 16) + ' UTC';
+  $('sim').textContent = off ? (off > 0 ? '+' : '−') + Math.abs(off / 60).toFixed(1).replace('.0', '') + ' h' : 'maintenant';
+}
+$('t').addEventListener('input', (e) => { g.setTimeOffset(+e.target.value * 60000); info(); });
+$('now').addEventListener('click', () => { $('t').value = 0; g.setTimeOffset(0); info(); });
+$('zin').onclick = () => { const d = g.camera.position.length(); g.camera.position.setLength(Math.max(1.2, d * 0.75)); };
+$('zout').onclick = () => { const d = g.camera.position.length(); g.camera.position.setLength(Math.min(7, d / 0.75)); };
+$('home').onclick = () => g.flyTo(35, 5, 3.2);
+info(); setInterval(info, 15000);
+</script>
+</body>
+</html>
