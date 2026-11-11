@@ -58,7 +58,7 @@ h1 span{color:var(--faint)}
 @media (max-width:680px){.imp .mid{grid-template-columns:1fr}.imp .big{text-align:left}}
 
 /* Le globe : seule zone sombre, mise en avant */
-.globe{grid-row:span 2;background:var(--night);color:#fff;border:0;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;min-height:640px;cursor:pointer;isolation:isolate}
+.globe{grid-row:span 2;view-transition-name:atlas-globe;background:var(--night);color:#fff;border:0;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;min-height:640px;cursor:pointer;isolation:isolate}
 .globe #g3d{position:absolute;inset:0;z-index:0}
 .globe #g3d canvas{display:block}
 .globe .gfb{position:absolute;inset:0;display:grid;place-items:center;z-index:0}
@@ -70,6 +70,9 @@ h1 span{color:var(--faint)}
 .globe p{margin:8px 0 0;color:rgba(255,255,255,.62);max-width:300px}
 .globe .btn{background:#fff;color:var(--ink);pointer-events:auto;flex:none}
 .globe .btn:hover{background:var(--or);color:#fff}
+.globe.diving{position:fixed;z-index:200;margin:0;transition:left .75s var(--ease),top .75s var(--ease),width .75s var(--ease),height .75s var(--ease),border-radius .75s var(--ease)}
+.globe.diving .gt,.globe.diving .gb{opacity:0;transition:opacity .25s}
+body.diving .wrap>*:not(main){opacity:.0;transition:opacity .4s}
 .gstat{display:flex;gap:18px;font-family:var(--mono);font-size:12px;color:rgba(255,255,255,.7)}
 .gstat b{display:block;font-size:20px;color:#fff;font-weight:600}
 
@@ -250,12 +253,25 @@ function startGlobe(){
   /* même moteur que l'Atlas : Terre photoréaliste, vraie lumière du Soleil */
   import("/atlas/globe.js").then(function(mod){
     try{
-      G=mod.createGlobe($("g3d"),{interactive:false,stars:false,hd:false,view:{lat:28,lon:8,dist:3.6}});
+      var sk=mod.skyFor();$("globeCard").style.background=sk.bg;G=mod.createGlobe($("g3d"),{interactive:false,stars:true,starsOpacity:sk.stars,hd:false,view:{lat:28,lon:8,dist:3.6}});
       G.ready.then(function(){$("gfb").style.display="none"});
     }catch(e){G=null}
   }).catch(function(){});
 }
 function loadGlobe(){startGlobe()}
+/* Plongée vers l'Atlas : la carte s'agrandit plein écran pendant que la caméra se rapproche, puis on passe sur /atlas
+   (fondu de page « atlas-globe » entre les deux, même angle de vue transmis à l'Atlas) */
+$("globeCard").addEventListener("click",function(e){
+  if(e.metaKey||e.ctrlKey||e.shiftKey||matchMedia("(prefers-reduced-motion: reduce)").matches||!G)return;
+  e.preventDefault();var card=this,r=card.getBoundingClientRect(),ph=document.createElement("div");
+  ph.style.cssText="grid-row:span 2;grid-column:span 2;min-height:"+r.height+"px";card.parentNode.insertBefore(ph,card);
+  card.style.left=r.left+"px";card.style.top=r.top+"px";card.style.width=r.width+"px";card.style.height=r.height+"px";
+  card.classList.add("diving");document.body.classList.add("diving");
+  requestAnimationFrame(function(){requestAnimationFrame(function(){card.style.left="0px";card.style.top="0px";card.style.width=innerWidth+"px";card.style.height=innerHeight+"px";card.style.borderRadius="0px"})});
+  G.controls.autoRotate=false;G.zoomTo(2.7,900);
+  setTimeout(function(){try{var v=G.view;sessionStorage.setItem("lobbyFly",JSON.stringify({lat:v.lat,lon:v.lon,dist:v.dist,t:Date.now()}))}catch(_){}location.href="/atlas"},820);
+});
+addEventListener("pageshow",function(e){if(e.persisted)location.reload()});
 if("IntersectionObserver" in window){var io=new IntersectionObserver(function(es){if(es[0].isIntersecting){io.disconnect();(window.requestIdleCallback||setTimeout)(loadGlobe)}});io.observe($("globeCard"))}else loadGlobe();
 })();
 </script>

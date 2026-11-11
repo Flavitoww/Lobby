@@ -56,7 +56,7 @@ void main(){
   // reflet du Soleil sur les océans uniquement
   float water = texture2D(waterMap, vUv).r;
   vec3 V = normalize(camPos - vW); vec3 H = normalize(sunDir + V);
-  col += vec3(1.0, 0.92, 0.78) * pow(max(dot(N, H), 0.), 220.) * water * 0.35 * day;
+  col += vec3(1.0, 0.92, 0.78) * pow(max(dot(N, H), 0.), 220.) * water * 0.2 * day;
   // bord atmosphérique bleuté côté jour
   float rim = pow(1. - max(dot(N, V), 0.), 3.);
   col += vec3(0.30, 0.55, 1.0) * rim * 0.45 * smoothstep(-0.25, 0.4, dot(N, sunDir));
@@ -119,9 +119,10 @@ export function createGlobe(el, opts = {}) {
   const atmo = new THREE.Mesh(new THREE.SphereGeometry(1.13, 96, 48), new THREE.ShaderMaterial({ uniforms: { sunDir: { value: sun } }, vertexShader: ATMO_VS, fragmentShader: ATMO_FS, side: THREE.BackSide, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
   scene.add(atmo);
 
-  let stars = null;
+  let stars = null, starsOpacity = opts.starsOpacity ?? 1;
+  const realSun = opts.realSun === true; // par défaut : lumière qui suit la caméra -> toute la face visible est éclairée
   if (opts.stars !== false) {
-    tex('stars.webp', true).then((t) => { if (!t) return; stars = new THREE.Mesh(new THREE.SphereGeometry(90, 32, 16), new THREE.MeshBasicMaterial({ map: t, side: THREE.BackSide, color: 0x6a6f7a })); scene.add(stars); });
+    tex('stars.webp', true).then((t) => { if (!t) return; stars = new THREE.Mesh(new THREE.SphereGeometry(90, 32, 16), new THREE.MeshBasicMaterial({ map: t, side: THREE.BackSide, color: 0x8a8f9a, transparent: true, opacity: starsOpacity })); scene.add(stars); });
   }
 
   // Chargement progressif : 2K d'abord, 4K ensuite sur machine capable
@@ -154,7 +155,11 @@ export function createGlobe(el, opts = {}) {
     if (!visible || document.hidden) return;
     raf = requestAnimationFrame(loop);
     const dt = Math.min(0.05, (t - last) / 1000 || 0); last = t;
-    if (t % 1000 < 20) sunInfo = updateSun();
+    if (realSun) { if (t % 1000 < 20) sunInfo = updateSun(); }
+    else { // « lampe frontale » douce, légèrement en haut à gauche de la caméra
+      const c = camera.position.clone().normalize(), up = camera.up.clone().projectOnPlane(c).normalize(), right = new THREE.Vector3().crossVectors(c, up);
+      sun.copy(c).addScaledVector(up, 0.35).addScaledVector(right, -0.3).normalize();
+    }
     clouds.rotation.y += dt * 0.004;
     const dist = camera.position.length();
     controls.rotateSpeed = 0.12 + 0.33 * Math.min(1, (dist - 1.1) / 2.5); // plus précis de près
@@ -185,6 +190,9 @@ export function createGlobe(el, opts = {}) {
     THREE, scene, camera, controls, renderer, earth, ready, flyTo,
     get sun() { return sunInfo; },
     setTimeOffset(ms) { timeOffset = ms; sunInfo = updateSun(); },
+    setStars(o) { starsOpacity = o; if (stars) stars.material.opacity = o; },
+    get view() { const ll = v2ll(camera.position); return { lat: ll.lat, lon: ll.lon, dist: camera.position.length() }; },
+    zoomTo(dist, ms = 600) { const d0 = camera.position.length(), t0 = performance.now(); controls.autoRotate = false; return new Promise((done) => { (function st() { const k = Math.min(1, (performance.now() - t0) / ms), e = 1 - Math.pow(1 - k, 3); camera.position.setLength(d0 + (dist - d0) * e); if (k < 1) requestAnimationFrame(st); else done(); })(); }); },
     onFrame(cb) { frameCb = cb; },
     project(lat, lon) { // position écran + visibilité (face cachée)
       const p = ll2v(lat, lon, 1.01), camDir = camera.position.clone().normalize();
@@ -199,4 +207,13 @@ export function createGlobe(el, opts = {}) {
     },
     dispose() { cancelAnimationFrame(raf); ro.disconnect(); io.disconnect(); renderer.dispose(); el.removeChild(renderer.domElement); }
   };
+}
+
+// Fond selon l'heure locale du visiteur : la Terre reste entièrement visible, seul le décor change.
+export function skyFor(date = new Date()) {
+  const h = date.getHours() + date.getMinutes() / 60;
+  if (h >= 6 && h < 8.5) return { name: 'aube', stars: 0.35, bg: 'radial-gradient(120% 95% at 50% 115%, #5b3a3a 0%, #2b2440 32%, #0c1426 62%, #070a12 100%)' };
+  if (h >= 8.5 && h < 17) return { name: 'jour', stars: 0.12, bg: 'radial-gradient(120% 95% at 50% 110%, #2c5d9c 0%, #173a6b 30%, #0b1e3c 60%, #070d1b 100%)' };
+  if (h >= 17 && h < 19.5) return { name: 'crépuscule', stars: 0.4, bg: 'radial-gradient(120% 95% at 50% 115%, #8a4a2a 0%, #3b2440 30%, #121733 60%, #06080f 100%)' };
+  return { name: 'nuit', stars: 1, bg: 'radial-gradient(120% 90% at 50% 40%, #0d1420 0%, #06080c 70%)' };
 }
