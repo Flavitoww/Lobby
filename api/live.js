@@ -8,7 +8,9 @@ const GAME = {
 };
 const BASE = 'https://api.pandascore.co';
 const FRL = /\b(LFL|LDLC|Ligue Fran|French|France|Gamers Origin|Elite Series)\b/i;
-const GW = { lol: 20, cs2: 20, val: 20, dota: 10, rl: 10, r6: 10 };
+// Tiers de jeux (choix de Flavien) : T1 LoL, CS2, Valorant, Rocket League ; T2 R6, Dota 2, Overwatch, CoD, EA FC ; T3 (MLBB, HoK, StarCraft, AoE) exclu.
+const GW = { lol: 20, cs2: 20, val: 20, rl: 20, r6: 10, dota: 8, ow: 8, cod: 8, fc: 6 };
+const T3 = new Set(['mlbb', 'hok', 'sc', 'aoe']);
 const TW = { s: 100, a: 60, b: 20, c: 10, d: 5 };
 // Orgs « connues » : un match qui en contient une est toujours jugé important (bonus d'importance).
 // FR d'abord (public de Lobby), puis les grosses orgs internationales.
@@ -21,7 +23,7 @@ function pick(m) {
   const o = (m.opponents || []).map((x) => x.opponent).filter(Boolean);
   if (o.length < 2) return null;
   const game = GAME[m.videogame && m.videogame.slug];
-  if (!game) return null;
+  if (!game || T3.has(game)) return null;
   const score = (id) => { const r = (m.results || []).find((x) => x.team_id === id); return r ? r.score : 0; };
   const stream = (m.streams_list || []).find((s) => s.main && s.raw_url) || (m.streams_list || []).find((s) => s.official && s.raw_url) || (m.streams_list || [])[0];
   const tier = (m.tournament && m.tournament.tier) || 'b';

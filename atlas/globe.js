@@ -82,7 +82,7 @@ export function createGlobe(el, opts = {}) {
   let dirty = true;
   const dpr = devicePixelRatio || 1;
   const renderer = new THREE.WebGLRenderer({ antialias: !low && dpr < 2, alpha: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(dpr, low ? 1.25 : 1.6));
+  renderer.setPixelRatio(low ? Math.min(dpr, 1.25) : (dpr >= 2 ? 1.3 : Math.min(dpr, 1.5)));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   el.appendChild(renderer.domElement);
   Object.assign(renderer.domElement.style, { display: 'block', width: '100%', height: '100%', touchAction: 'none' });
@@ -93,10 +93,15 @@ export function createGlobe(el, opts = {}) {
   camera.position.copy(ll2v(start.lat, start.lon, start.dist));
 
   const controls = new OrbitControls(camera, renderer.domElement);
-  Object.assign(controls, { enableDamping: true, dampingFactor: 0.07, enablePan: false, minDistance: 1.4, maxDistance: 7, rotateSpeed: 0.45, zoomSpeed: 0.8 });
+  Object.assign(controls, { enableDamping: true, dampingFactor: 0.12, enablePan: false, minDistance: 1.4, maxDistance: 7, rotateSpeed: 0.45, zoomSpeed: 0.8 });
   controls.autoRotate = opts.autoRotate !== false; controls.autoRotateSpeed = 0.35;
   if (opts.interactive === false) { controls.enableRotate = controls.enableZoom = false; }
   controls.addEventListener('start', () => { controls.autoRotate = false; });
+  // Anti « clic collé » : si le relâchement du clic se produit hors du globe (sur un pin, un panneau,
+  // hors de la fenêtre…), on le renvoie au globe pour terminer proprement la rotation.
+  const cvs = renderer.domElement;
+  const release = (e) => { if (e && e.target === cvs) return; if (!(controls._pointers && controls._pointers.length)) return; try { cvs.dispatchEvent(new PointerEvent('pointerup', { pointerId: (e && e.pointerId) || 1, pointerType: (e && e.pointerType) || 'mouse', isPrimary: true })); } catch (_) {} };
+  addEventListener('pointerup', release, true); addEventListener('pointercancel', release, true); addEventListener('blur', () => release(null));
 
   const loader = new THREE.TextureLoader();
   const tex = (f, srgb) => new Promise((ok) => loader.load(A + f, (t) => { if (srgb) t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); ok(t); }, undefined, () => ok(null)));

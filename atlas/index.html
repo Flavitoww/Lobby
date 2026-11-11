@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>L'Atlas esport — Lobby</title>
+<title>L'Atlas — Lobby</title>
 <meta name="description" content="La scène esport mondiale sur un globe 3D : équipes, joueurs et matchs, pays par pays.">
 <meta name="theme-color" content="#f3f3f1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23111214'/%3E%3Cpath d='M11 8h3.5v12.5H22V24H11z' fill='%23fff'/%3E%3Ccircle cx='23' cy='10' r='2.6' fill='%23ff5a1f'/%3E%3C/svg%3E">
@@ -24,7 +24,7 @@ h1 b{color:var(--or)}
 #mk{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden}
 .ov{position:absolute;display:flex;gap:8px;z-index:3}
 .ov.tl{top:18px;left:18px}.ov.br{right:18px;bottom:18px}.ov.bl{left:18px;bottom:18px}
-.glass{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-radius:12px;background:rgba(10,14,22,.45);border:1px solid rgba(255,255,255,.14);color:#fff;font-size:13px;font-weight:500;backdrop-filter:blur(12px)}
+.glass{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-radius:12px;background:rgba(12,18,30,.72);border:1px solid rgba(255,255,255,.14);color:#fff;font-size:13px;font-weight:500}
 .glass button{all:unset;cursor:pointer;width:32px;height:32px;display:grid;place-items:center;border-radius:8px;font-size:17px}
 .glass button:hover{background:rgba(255,255,255,.14)}
 .glass .dot{width:7px;height:7px;border-radius:50%;background:var(--or)}
@@ -41,15 +41,14 @@ h1 b{color:var(--or)}
 .pin .pl{display:flex;align-items:center;gap:5px;padding:4px 10px 4px 10px;border-radius:999px;background:rgba(255,255,255,.94);color:var(--ink);box-shadow:0 6px 20px rgba(0,0,0,.25);white-space:nowrap;opacity:0;transform:translateX(-4px);transition:opacity .2s,transform .2s;pointer-events:none}
 .pin .pl b{margin-right:3px}
 .pin .pl em{font-style:normal;font-size:11px;color:var(--or-ink);margin-left:3px}
-.pin:hover .pl,.pin.sel .pl,#mk.close .pin .pl{opacity:1;transform:none}
-#mk.close .pin:not(:hover):not(.sel) .pl .mini{display:none}
+.pin:hover .pl,.pin.sel .pl,.pin.lab .pl{opacity:1;transform:none}
 .pin.hid{opacity:0;pointer-events:none}
 .mini{width:20px;height:20px;border-radius:6px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;font:700 7px var(--ui);color:var(--mut);flex:none}
 .mini img{width:80%;height:80%;object-fit:contain}
-.tlogo{position:absolute;left:-19px;top:-19px;width:38px;height:38px;border-radius:12px;border:0;padding:0;background:#fff;box-shadow:0 6px 16px rgba(0,0,0,.3);display:grid;place-items:center;cursor:pointer;pointer-events:none;opacity:0;scale:.6;transition:opacity .25s,scale .25s var(--ease);will-change:transform}
+.tlogo{position:absolute;left:-19px;top:-19px;width:38px;height:38px;border-radius:12px;border:1px solid rgba(255,255,255,.18);padding:0;background:#151a24;box-shadow:0 6px 16px rgba(0,0,0,.3);display:grid;place-items:center;cursor:pointer;pointer-events:none;opacity:0;scale:.6;transition:opacity .25s,scale .25s var(--ease);will-change:transform}
 .tlogo.show{opacity:1;scale:1;pointer-events:auto}
 .tlogo:hover{scale:1.12;z-index:2}
-.tlg{width:100%;height:100%;display:grid;place-items:center;font:700 9px var(--ui);color:var(--mut);overflow:hidden;border-radius:12px}
+.tlg{width:100%;height:100%;display:grid;place-items:center;font:700 9px var(--ui);color:#cfd5df;overflow:hidden;border-radius:12px}
 .tlg img{width:76%;height:76%;object-fit:contain}
 #stat b{font-family:var(--mono);font-weight:600}
 .lvd{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--or);animation:pulse 1.4s infinite;margin-right:2px}
@@ -71,7 +70,7 @@ h1 b{color:var(--or)}
 .crow,.trow{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:12px;min-height:48px;padding:8px 14px;border-radius:14px;cursor:pointer;transition:background .15s}
 .crow:hover,.trow:hover{background:var(--soft)}
 .crow>span:first-child{font-weight:600;flex:1}.stack{display:flex}.stack .mini{margin-left:-6px;box-shadow:0 0 0 2px #fff}.lvt{font-style:normal;font-size:11px;color:var(--or-ink);font-weight:600;margin-left:4px}
-.tgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.tcell{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border-radius:14px;background:var(--soft);transition:background .15s,transform .15s}.tcell:hover{background:var(--tile);transform:translateY(-2px)}.tcell .lg{--s:36px;background:#fff}.tcell span:last-child{font-size:11px;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.crow i,.trow i{font-style:normal;color:var(--faint);font-size:12px}
+.tgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.tcell{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border-radius:14px;background:var(--soft);transition:background .15s,transform .15s}.tcell:hover{background:var(--tile);transform:translateY(-2px)}.tcell .lg{--s:36px;background:#fff;border:1px solid var(--line)}.tcell span:last-child{font-size:11px;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.crow i,.trow i{font-style:normal;color:var(--faint);font-size:12px}
 .trow .lg{--s:34px}.trow>span:not(.lg){flex:1;min-width:0}.trow b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.trow small{color:var(--faint);font-size:12px}
 .mrow{display:grid;grid-template-columns:44px 1fr;gap:2px 8px;padding:10px 12px;border-radius:14px;background:var(--soft);margin-bottom:6px;font-size:13px}
 .mrow .mt{grid-row:span 2;font:600 12px var(--mono);color:var(--mut);align-self:center}.mrow .lv{color:var(--or-ink)}
@@ -85,7 +84,7 @@ h1 b{color:var(--or)}
 .gtabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
 .gtabs button{border:0;background:var(--soft);color:var(--mut);height:30px;padding:0 12px;border-radius:999px;font:600 12px var(--ui);cursor:pointer}
 .gtabs button[aria-pressed="true"]{background:var(--ink);color:#fff}
-.prow{display:flex;align-items:center;gap:12px;padding:8px 6px;border-bottom:1px solid var(--line)}
+.prow.hl{background:var(--or-soft);border-radius:12px}.prow{display:flex;align-items:center;gap:12px;padding:8px 6px;border-bottom:1px solid var(--line)}
 .prow img,.pav{width:38px;height:38px;border-radius:12px;object-fit:cover;background:var(--soft);display:grid;place-items:center;font:700 11px var(--ui);color:var(--mut);flex:none}
 .prow span{flex:1;min-width:0}.prow b{display:block}.prow small{color:var(--faint);font-size:12px}.prow i{font:600 11px var(--mono);color:var(--faint);font-style:normal}
 .empty{color:var(--mut);font-size:13px;padding:8px 0}
@@ -101,7 +100,7 @@ h1 b{color:var(--or)}
 
 /* Entrée progressive (après la plongée depuis l'accueil) */
 .enter-fly .nav,.enter-fly .head,.enter-fly .side,.enter-fly .ov{animation:rise .7s var(--ease) both}
-.enter-fly .head{animation-delay:.35s}.enter-fly .side{animation-delay:.55s}.enter-fly .ov{animation-delay:.8s}.enter-fly .nav{animation-delay:.2s}
+.enter-fly .head{animation-delay:.9s}.enter-fly .side{animation-delay:1.05s}.enter-fly .ov{animation-delay:1.25s}.enter-fly .nav{animation-delay:.8s}
 .enter .head,.enter .side{animation:rise .6s var(--ease) both}.enter .side{animation-delay:.12s}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}}
 
@@ -116,10 +115,10 @@ h1 b{color:var(--or)}
     <a class="logo" href="/">Lobby<b>.</b></a>
     <a class="nl keep" href="/">Accueil</a>
     <a class="nl on keep" href="/atlas" aria-current="page">Atlas</a>
-    <div class="sbox"><label class="search" style="margin:0"><span class="sr">Rechercher une équipe, un joueur ou un pays</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg><input id="q" type="search" placeholder="Équipe, joueur, pays…" autocomplete="off"><kbd>/</kbd></label><ul id="results" hidden></ul></div>
+    <div class="sbox"><label class="search" style="margin:0"><span class="sr">Rechercher une équipe, un joueur ou un pays</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg><input id="q" type="search" placeholder="Joueur, équipe, pays…" autocomplete="off" spellcheck="false"><kbd>/</kbd></label></div>
   </nav>
   <div class="head">
-    <div><div class="eyebrow">Exploration mondiale</div><h1>L'Atlas esport<b>.</b></h1><div class="sub">Un monde à explorer, les informations au même endroit.</div></div>
+    <div><div class="eyebrow">Exploration mondiale</div><h1>L'Atlas Lobby<b>.</b></h1><div class="sub">Un monde à explorer, les informations au même endroit.</div></div>
     <div class="seg" id="games" role="group" aria-label="Filtrer par jeu"></div>
   </div>
   <div class="lay">

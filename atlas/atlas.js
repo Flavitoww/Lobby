@@ -1,10 +1,12 @@
 // LOBBY — Atlas : globe + données esport (orgs par pays, équipes, joueurs, matchs). Aucune donnée inventée.
 import { createGlobe, skyFor } from '/atlas/globe.js';
+import { buildIndex, attachSearch } from '/search.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const GN = { lol: 'LoL', cs2: 'CS2', val: 'Valorant', rl: 'Rocket League', dota: 'Dota 2', r6: 'R6', ow: 'Overwatch', cod: 'CoD', fc: 'EA FC', mlbb: 'MLBB', hok: 'HoK', sc: 'StarCraft' };
-const GAMES = ['all', 'lol', 'cs2', 'val', 'rl', 'r6', 'dota'];
+const GAMES = ['all', 'lol', 'cs2', 'val', 'rl', 'r6', 'dota', 'ow'];
+const T2 = new Set(['r6', 'dota', 'ow', 'cod', 'fc']);
 const REG = (() => { try { return new Intl.DisplayNames(['fr'], { type: 'region' }); } catch { return null; } })();
 const country = (cc) => (REG && cc ? REG.of(cc) : cc) || cc;
 // Centre approximatif de chaque pays : la donnée source ne donne que le PAYS d'une org (pas la ville).
@@ -27,13 +29,27 @@ try {
 }
 if (g) {
   g.ready.then(() => { $('loading').style.opacity = 0; setTimeout(() => $('loading').remove(), 700); });
-  if (fly) g.zoomTo(3.1, 1400).then(() => { g.controls.autoRotate = true; });
+  if (fly) setTimeout(() => g.zoomTo(3.3, 1300).then(() => { g.controls.autoRotate = true; }), 350);
   $('zin').onclick = () => g.zoomTo(Math.max(1.45, g.camera.position.length() * 0.75), 450);
   $('zout').onclick = () => g.zoomTo(Math.min(7, g.camera.position.length() / 0.72), 450);
   $('home').onclick = () => { select(null); g.flyTo(38, 8, 3.3); };
   g.onFrame(placeMarkers);
 }
 document.body.classList.add(fly ? 'enter-fly' : 'enter');
+// Plongée : l'Atlas s'ouvre en plein écran (là où l'accueil s'est arrêté), puis le globe se range dans sa place.
+if (fly && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  const slot = stage.getBoundingClientRect();
+  const ph = document.createElement('div'); ph.style.height = slot.height + 'px'; ph.className = 'stage-ph';
+  stage.parentNode.insertBefore(ph, stage);
+  Object.assign(stage.style, { position: 'fixed', zIndex: 200, left: 0, top: 0, width: innerWidth + 'px', height: innerHeight + 'px', borderRadius: '0px', margin: 0 });
+  const settle = () => {
+    const r = ph.getBoundingClientRect();
+    stage.style.transition = 'left .9s var(--ease), top .9s var(--ease), width .9s var(--ease), height .9s var(--ease), border-radius .9s var(--ease)';
+    Object.assign(stage.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px', borderRadius: '24px' });
+    setTimeout(() => { ph.remove(); stage.removeAttribute('style'); stage.style.background = sky.bg; if (g) g.redraw(); }, 950);
+  };
+  (g ? Promise.race([g.ready, new Promise((r) => setTimeout(r, 1500))]) : Promise.resolve()).then(() => setTimeout(settle, 250));
+}
 
 /* ---------- Marqueurs (HTML, projetés à chaque image) ---------- */
 const layer = $('mk');
@@ -61,7 +77,7 @@ function buildPins() {
     const ring = list.slice().sort((a, b) => act(b) - act(a)).slice(0, 8).map((o, i, arr) => {
       const r = document.createElement('button');
       r.type = 'button'; r.className = 'tlogo'; r.title = o.n; r.setAttribute('aria-label', o.n);
-      r.innerHTML = logo(o.lg || o.ld, o.s || o.n, 'tlg');
+      r.innerHTML = logo(o.ld || o.lg, o.s || o.n, 'tlg');
       r.dataset.a = (i / arr.length) * Math.PI * 2 - Math.PI / 2;
       r.onclick = (e) => { e.stopPropagation(); openTeam(o); };
       layer.appendChild(r); return r;
@@ -80,6 +96,9 @@ function placeMarkers(cam, dist) {
   const far = dist > 3.6, close = dist < 2.2;
   layer.classList.toggle('far', far); layer.classList.toggle('close', close);
   const placed = [];
+  // pays le plus proche du centre de l'écran : seul à afficher son étiquette au zoom (lisibilité)
+  let focusCC = null, fd = 1e9; const W = stage.clientWidth / 2, H = stage.clientHeight / 2;
+  if (close) for (const cc of order) { const q = g.project(CC[cc][0], CC[cc][1]); if (!q.front) continue; const dd = Math.hypot(q.x - W, q.y - H); if (dd < fd) { fd = dd; focusCC = cc; } }
   for (const cc of order) {
     const p = pins[cc], [la, lo] = CC[cc], s = g.project(la, lo);
     let on = s.front;
@@ -89,13 +108,15 @@ function placeMarkers(cam, dist) {
     p.el.style.transform = `translate(${s.x}px,${s.y}px)`;
     p.el.classList.toggle('hid', !on);
     p.el.classList.toggle('sel', S.sel === cc);
-    const showRing = on && (S.sel === cc || (close && s.facing > 0.82));
+    const showRing = on && S.sel === cc;
+    p.el.classList.toggle('lab', on && (S.sel === cc || (close && cc === focusCC)));
     const R = 30 + Math.min(14, p.ring.length * 2);
-    p.ring.forEach((r) => {
+    if (showRing || p.shown) p.ring.forEach((r) => {
       const a = +r.dataset.a;
-      r.style.transform = `translate(${s.x + Math.cos(a) * R}px,${s.y + Math.sin(a) * R}px)`;
+      if (showRing) r.style.transform = `translate(${s.x + Math.cos(a) * R}px,${s.y + Math.sin(a) * R}px)`;
       r.classList.toggle('show', showRing);
     });
+    p.shown = showRing;
   }
 }
 
@@ -132,14 +153,14 @@ function openCountry(cc) {
     ${ms.length ? `<div class="sec"><h3>Leurs matchs</h3>${ms.slice(0, 5).map(matchRow).join('')}</div>` : ''}
     <div class="sec"><h3>Équipes</h3>${list.map((o) => `<button type="button" class="trow" data-id="${esc(o.id)}">${logo(o.lg || o.ld, o.s || o.n)}<span><b>${esc(o.n)}</b><small>${Object.keys(o.g || {}).map((k) => GN[k] || k).join(' · ')}</small></span><i>›</i></button>`).join('') || '<p class="empty">Aucune équipe pour ce filtre.</p>'}</div>`);
 }
-function openTeam(o) {
+function openTeam(o, forceGame, hlPlayer) {
   S.team = o; S.sel = o.cc;
   const games = Object.keys(o.g || {});
-  const gk = S.game !== 'all' && o.g[S.game] ? S.game : games[0];
+  const gk = forceGame && o.g[forceGame] ? forceGame : (S.game !== 'all' && o.g[S.game] ? S.game : games[0]);
   const ms = matchesOf(o);
   const roster = (k) => {
     const pl = (o.g[k] && o.g[k].pl) || [];
-    return pl.length ? pl.map((p) => `<div class="prow">${p.im ? `<img src="${esc(p.im)}" alt="" loading="lazy">` : `<span class="pav">${esc((p.n || '?').slice(0, 2).toUpperCase())}</span>`}<span><b>${esc(p.n)}</b><small>${esc([p.fn, p.ln].filter(Boolean).join(' '))}${p.r ? ' · ' + esc(p.r) : ''}</small></span>${p.cc ? `<i>${esc(p.cc)}</i>` : ''}</div>`).join('') : '<p class="empty">Roster non disponible.</p>';
+    return pl.length ? pl.map((p) => `<div class="prow${hlPlayer && p.id == hlPlayer ? ' hl' : ''}">${p.im ? `<img src="${esc(p.im)}" alt="" loading="lazy">` : `<span class="pav">${esc((p.n || '?').slice(0, 2).toUpperCase())}</span>`}<span><b>${esc(p.n)}</b><small>${esc([p.fn, p.ln].filter(Boolean).join(' '))}${p.r ? ' · ' + esc(p.r) : ''}</small></span>${p.cc ? `<i>${esc(p.cc)}</i>` : ''}</div>`).join('') : '<p class="empty">Roster non disponible.</p>';
   };
   setPanel(`
     <button type="button" class="back" data-cc-back="${esc(o.cc)}">← ${esc(country(o.cc))}</button>
@@ -165,33 +186,22 @@ panel.addEventListener('click', (e) => {
 });
 
 /* ---------- Filtres jeux ---------- */
-$('games').innerHTML = GAMES.map((k) => `<button type="button" data-g="${k}" aria-pressed="${k === 'all'}">${k === 'all' ? 'Tous' : GN[k]}</button>`).join('');
+$('games').innerHTML = GAMES.map((k, i) => `${T2.has(k) && !T2.has(GAMES[i - 1]) ? '<span class="segsep" aria-hidden="true"></span>' : ''}<button type="button" data-g="${k}" aria-pressed="${k === 'all'}"${T2.has(k) ? ' class="t2"' : ''}>${k === 'all' ? 'Tous' : GN[k]}</button>`).join('');
 $('games').addEventListener('click', (e) => {
   const b = e.target.closest('button'); if (!b) return;
   S.game = b.dataset.g; $('games').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
   buildPins(); if (S.team) openTeam(S.team); else if (S.sel) openCountry(S.sel); else home();
 });
 
-/* ---------- Recherche ---------- */
-const q = $('q'), res = $('results');
-function search(v) {
-  v = v.trim().toLowerCase(); if (v.length < 2) { res.hidden = true; return; }
-  const teams = S.orgs.filter((o) => o.n.toLowerCase().includes(v) || (o.s || '').toLowerCase() === v).slice(0, 6);
-  const ccs = Object.keys(S.byCC).filter((cc) => country(cc).toLowerCase().includes(v)).slice(0, 3);
-  const pls = []; S.orgs.forEach((o) => Object.keys(o.g || {}).forEach((k) => (o.g[k].pl || []).forEach((p) => { if (pls.length < 4 && (p.n || '').toLowerCase().includes(v)) pls.push({ p, o }); })));
-  const items = [...ccs.map((cc) => `<li><button type="button" data-rcc="${cc}"><span class="ri">⌖</span><b>${esc(country(cc))}</b><i>Pays</i></button></li>`),
-    ...teams.map((o) => `<li><button type="button" data-rid="${esc(o.id)}">${logo(o.lg || o.ld, o.s || o.n)}<b>${esc(o.n)}</b><i>Équipe</i></button></li>`),
-    ...pls.map(({ p, o }) => `<li><button type="button" data-rid="${esc(o.id)}"><span class="ri">${esc((p.n || '?').slice(0, 2))}</span><b>${esc(p.n)}</b><i>${esc(o.n)}</i></button></li>`)];
-  res.innerHTML = items.length ? items.join('') : '<li class="rnone">Aucun résultat</li>'; res.hidden = false;
-}
-q.addEventListener('input', () => search(q.value));
-q.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const f = res.querySelector('button'); if (f) f.click(); } if (e.key === 'Escape') { res.hidden = true; q.blur(); } });
-res.addEventListener('click', (e) => {
-  const b = e.target.closest('button'); if (!b) return; res.hidden = true; q.value = '';
-  if (b.dataset.rcc) select(b.dataset.rcc); else { const o = S.orgs.find((x) => x.id === b.dataset.rid); if (o) openTeam(o); }
-});
-document.addEventListener('click', (e) => { if (!e.target.closest('.sbox')) res.hidden = true; });
-document.addEventListener('keydown', (e) => { if (e.key === '/' && document.activeElement !== q) { e.preventDefault(); q.focus(); } });
+/* ---------- Recherche (globale, partagée avec l'accueil) ---------- */
+let IDX = null, IDXK = '';
+const items = () => { const k = S.orgs.length + ':' + S.live.length; if (!IDX || IDXK !== k) { IDXK = k; IDX = buildIndex(S.orgs, S.live); } return S.orgs.length ? IDX : []; };
+attachSearch($('q'), { getItems: items, onPick: (it) => {
+  if (it.t === 'team') openTeam(it.o);
+  else if (it.t === 'player') openTeam(it.o, it.game, it.p.id);
+  else if (it.t === 'country') select(it.cc);
+  else if (it.t === 'comp' || it.t === 'match') { const m = it.m || S.live.find((x) => x.comp === it.comp); if (m && m.watch && it.t === 'match') window.open(m.watch, '_blank', 'noopener'); else home(); }
+} });
 
 /* ---------- Données ---------- */
 home();
@@ -200,7 +210,14 @@ function setOrgs(d) {
   if (!d || !d.orgs || !d.orgs.length) return false;
   S.orgs = d.orgs; S.byCC = {};
   S.orgs.forEach((o) => { const cc = (o.cc || '').toUpperCase(); o.cc = cc; (S.byCC[cc] = S.byCC[cc] || []).push(o); });
-  computeLive(); buildPins(); if (S.team) openTeam(S.orgs.find((x) => x.id === S.team.id) || S.team); else if (S.sel) openCountry(S.sel); else home();
+  computeLive(); buildPins();
+  const u = new URLSearchParams(location.search);
+  if (!S.urlDone && (u.get('team') || u.get('cc'))) {
+    S.urlDone = true;
+    const o = S.orgs.find((x) => x.id === u.get('team'));
+    if (o) openTeam(o, u.get('g'), u.get('p')); else if (u.get('cc')) select(u.get('cc').toUpperCase());
+    history.replaceState(null, '', '/atlas');
+  } else if (S.team) openTeam(S.orgs.find((x) => x.id === S.team.id) || S.team); else if (S.sel) openCountry(S.sel); else home();
   if (g) g.redraw(); return true;
 }
 function computeLive() {
@@ -209,4 +226,4 @@ function computeLive() {
 }
 // 1) copie locale immédiate (vraies données, mise à jour régulièrement) 2) API live ensuite
 fetch('/assets/orgs.json').then((r) => r.ok ? r.json() : null).then((d) => { if (!S.orgs.length) setOrgs(d); }).catch(() => {});
-fetch('/api/orgs').then((r) => { if (!r.ok) throw 0; return r.json(); }).then(setOrgs).catch(() => { if (!S.orgs.length) $('stat').textContent = 'Équipes indisponibles pour le moment'; });
+fetch('/api/orgs?v=3').then((r) => { if (!r.ok) throw 0; return r.json(); }).then(setOrgs).catch(() => { if (!S.orgs.length) $('stat').textContent = 'Équipes indisponibles pour le moment'; });

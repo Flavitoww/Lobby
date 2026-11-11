@@ -2,11 +2,13 @@
 const BASE = 'https://api.pandascore.co';
 const GAMES = {
   lol: { ps: 'lol', n: 40 }, cs2: { ps: 'csgo', n: 40 }, val: { ps: 'valorant', n: 40 }, rl: { ps: 'rl', n: 24 }, dota: { ps: 'dota2', n: 30 },
-  r6: { ps: 'r6siege', n: 24 }, ow: { ps: 'ow', n: 16 }, cod: { ps: 'codmw', n: 14 }, fc: { ps: 'fifa', n: 8 },
-  mlbb: { ps: 'mlbb', n: 14 }, hok: { ps: 'kog', n: 12 }, sc: { ps: 'starcraft-2', n: 8 }
+  r6: { ps: 'r6siege', n: 24 }, ow: { ps: 'ow', n: 16 }, cod: { ps: 'codmw', n: 14 }, fc: { ps: 'fifa', n: 8 }
 };
 const TIER = { s: 10, a: 4, b: 1.5, c: 0.5, d: 0.2 };
-const JUNIOR = /\b(academy|youth|junior|juniors|female|women|fe|rising|reserve|reserves|challengers?|next|prospects?)\b|\.a$| a$/i;
+const JUNIOR = /\b(academy|youth|junior|juniors|female|women|fe|rising|reserve|reserves|challengers?|next|prospects?)\b|\.a$| a$|\.bee$|^karmine corp blue/i;
+// Une org n'est retenue que si elle a joué un tournoi récent (évite les équipes dissoutes ou plus actives).
+const RECENT = 200 * 86400000;
+const fresh = (tn) => { const d = Date.parse(tn.end_at || tn.begin_at || 0); return d && Date.now() - d < RECENT; };
 const CITY = /\b(paris|new york|las vegas|vegas|minnesota|texas|toronto|boston|carolina|miami|london|vancouver|atlanta|seattle)\b/ig;
 const FRL = /\b(LFL|LDLC|Ligue Fran|French|France|Gamers Origin|ESL Pro League France|Elite Series|Prime League FR)\b/i;
 // Corrections de pays verifiees a la main : PandaScore localise parfois mal une org (une fiche par jeu, pays incoherent).
@@ -54,8 +56,8 @@ module.exports = async (req, res) => {
       const cnt = {};
       paths.forEach((x, i) => {
         if (x[0] !== g) return;
-        if (x[2] === 'T') { (res1[i] || []).forEach((tn) => { const w = TIER[tn.tier] || 1; (tn.teams || []).forEach((t) => { if (!t || !t.id) return; const c = cnt[t.id] = cnt[t.id] || { id: t.id, f: 0 }; c.f += w; }); }); return; }
-        if (x[2] === 'TF') { (res1[i] || []).forEach((tn) => { const lg = (tn.league && tn.league.name) || (tn.name || ''); if (!FRL.test(lg)) return; (tn.teams || []).forEach((t) => { if (!t || !t.id) return; const c = cnt[t.id] = cnt[t.id] || { id: t.id, f: 0 }; c.f += 60; }); }); return; }
+        if (x[2] === 'T') { (res1[i] || []).filter(fresh).forEach((tn) => { const w = TIER[tn.tier] || 1; (tn.teams || []).forEach((t) => { if (!t || !t.id) return; const c = cnt[t.id] = cnt[t.id] || { id: t.id, f: 0 }; c.f += w; }); }); return; }
+        if (x[2] === 'TF') { (res1[i] || []).filter(fresh).forEach((tn) => { const lg = (tn.league && tn.league.name) || (tn.name || ''); if (!FRL.test(lg)) return; (tn.teams || []).forEach((t) => { if (!t || !t.id) return; const c = cnt[t.id] = cnt[t.id] || { id: t.id, f: 0 }; c.f += 60; }); }); return; }
         (res1[i] || []).forEach((m) => {
           const tr = (m.tournament && m.tournament.tier) || (m.serie && m.serie.tier) || 'c';
           const lname = (m.league && m.league.name) || '';
