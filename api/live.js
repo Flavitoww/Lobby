@@ -13,8 +13,9 @@ const TW = { s: 100, a: 60, b: 20, c: 10, d: 5 };
 // Orgs « connues » : un match qui en contient une est toujours jugé important (bonus d'importance).
 // FR d'abord (public de Lobby), puis les grosses orgs internationales.
 const BIG_FR = /^(karmine corp|kc|team vitality|vitality|vit|gentle mates|m8|team bds|bds|solary|sly|gamers ?origin|go|team heretics|heretics|th|aegis|ldlc|mandatory|mdy|joblife|team go|bk rog|zerance|vitality\.bee|kcb|karmine corp blue)$/i;
-const BIG_INT = /^(g2|g2 esports|fnatic|fnc|natus vincere|navi|t1|gen\.?g|faze|faze clan|mouz|team liquid|liquid|tl|sentinels|sen|furia|fur|team spirit|spirit|ts|hanwha life esports|hle|bilibili gaming|blg|top esports|tes|jd gaming|jdg|weibo gaming|wbg|cloud9|c9|100 thieves|100t|nrg|paper rex|prx|edward gaming|edg|drx|fut esports|fut|astralis|ast|heroic|virtus\.pro|vp|the mongolz|mongolz|eternal fire|ef|team falcons|falcons|falcons esports|complexity|col|gaimin gladiators|gg|team secret|secret|og|tundra esports|tundra|xtreme gaming|xg|parivision|betboom team|bb|dplus|dk|kt rolls?ter|kt|leviatan|lev|kru esports|kru|loud|mibr|evil geniuses|eg)$/i;
-function bigness(t) { const n = String(t.name || ''), a = String(t.acronym || ''); return BIG_FR.test(n) || BIG_FR.test(a) ? 2 : (BIG_INT.test(n) || BIG_INT.test(a) ? 1 : 0); }
+const BIG_INT = /^(g2|g2 esports|fnatic|fnc|natus vincere|navi|t1|gen\.?g|faze|faze clan|mouz|team liquid|liquid|tl|sentinels|sen|furia|fur|team spirit|spirit|ts|hanwha life esports|hle|bilibili gaming|blg|top esports|tes|jd gaming|jdg|weibo gaming|wbg|cloud9|c9|100 thieves|100t|nrg|paper rex|prx|edward gaming|edg|drx|fut esports|fut|astralis|ast|heroic|virtus\.pro|vp|the mongolz|mongolz|eternal fire|ef|team falcons|falcons|falcons esports|complexity|col|gaimin gladiators|team secret|secret|og|tundra esports|tundra|xtreme gaming|xg|parivision|betboom team|bb|dplus|dk|kt rolls?ter|kt|leviatan|lev|kru esports|kru|loud|mibr|evil geniuses|eg)$/i;
+// Nom complet uniquement : les sigles courts (GG, TS, TL…) sont partagés par trop de petites équipes.
+function bigness(t) { const n = String(t.name || '').trim(); return BIG_FR.test(n) ? 2 : (BIG_INT.test(n) ? 1 : 0); }
 
 function pick(m) {
   const o = (m.opponents || []).map((x) => x.opponent).filter(Boolean);
