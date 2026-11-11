@@ -17,6 +17,10 @@ assets/earth/     # Textures NASA en WebP (2K puis 4K).
 api/live.js       # PandaScore : matchs + tri d'importance (k, imp, big).
 api/orgs.js       # PandaScore : orgs + pays (cc).
 api/team.js       # PandaScore : détails d'une équipe.
+api/_config.js    # Config centrale : tiers de jeux, poids, orgs inactives, sources (lue par l'API et /gestion).
+api/status.js     # État en direct (PandaScore, /api/live, /api/orgs, relais, version) pour /gestion.
+gestion.html      # /gestion : tableau de bord de gestion (outil interne, noindex).
+search.js         # Recherche globale tolérante aux fautes (accueil + Atlas).
 api/lib.js        # Relais /lib/* : three.module, three.core, OrbitControls (importmap "three").
 ```
 L'ancienne app globe (atlas/app.js, globe.gl) est SUPPRIMÉE : ne pas la réintroduire.

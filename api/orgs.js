@@ -7,9 +7,10 @@ const GAMES = {
 const TIER = { s: 10, a: 4, b: 1.5, c: 0.5, d: 0.2 };
 const JUNIOR = /\b(academy|youth|junior|juniors|female|women|fe|rising|reserve|reserves|challengers?|next|prospects?)\b|\.a$| a$|\.bee$|^karmine corp blue/i;
 // Orgs signalées inactives par Flavien (liste manuelle, à compléter).
-const RETIRED = /^(ici japon corp)/i;
+const CFG = require('./_config');
+const RETIRED = new RegExp('^(' + CFG.RETIRED.map((x) => x.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'i');
 // Une org n'est retenue que si elle a joué un tournoi récent (évite les équipes dissoutes ou plus actives).
-const RECENT = 200 * 86400000;
+const RECENT = (require('./_config').RECENT_DAYS || 200) * 86400000;
 const fresh = (tn) => { const d = Date.parse(tn.end_at || tn.begin_at || 0); return d && Date.now() - d < RECENT; };
 const CITY = /\b(paris|new york|las vegas|vegas|minnesota|texas|toronto|boston|carolina|miami|london|vancouver|atlanta|seattle)\b/ig;
 const FRL = /\b(LFL|LDLC|Ligue Fran|French|France|Gamers Origin|ESL Pro League France|Elite Series|Prime League FR)\b/i;

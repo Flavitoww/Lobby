@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gestion — Lobby</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23111214'/%3E%3Cpath d='M11 8h3.5v12.5H22V24H11z' fill='%23fff'/%3E%3Ccircle cx='23' cy='10' r='2.6' fill='%23ff5a1f'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="/lobby.css">
+<style>
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin:28px 0 18px;flex-wrap:wrap}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+h1{margin:0;font-weight:600;font-size:clamp(28px,3.2vw,44px);letter-spacing:-.04em;line-height:1.05}h1 b{color:var(--or)}
+.sub{color:var(--mut);margin-top:6px}
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.state{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-radius:999px;font-weight:600;font-size:13px;background:var(--card);border:1px solid var(--line)}
+.state i{width:9px;height:9px;border-radius:50%;background:var(--faint)}
+.ok i{background:#1d8a54;box-shadow:0 0 0 4px rgba(29,138,84,.15)}.warn i{background:#d18b00;box-shadow:0 0 0 4px rgba(209,139,0,.15)}.ko i{background:#d33;box-shadow:0 0 0 4px rgba(221,51,51,.15)}
+.muted{color:var(--faint);font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gap)}
+.s2{grid-column:span 2}.s4{grid-column:span 4}
+.kpi{padding:20px 22px}
+.kpi .l{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--mut);font-weight:500}
+.kpi .v{font:600 32px var(--mono);letter-spacing:-.04em;margin:10px 0 2px}
+.kpi .d{font-size:12px;color:var(--faint)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--faint);display:inline-block}.dot.ok{background:#1d8a54}.dot.warn{background:#d18b00}.dot.ko{background:#d33}
+.body{padding:0 22px 20px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{padding:11px 0;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+tr:last-child td{border-bottom:0}
+td.r{text-align:right;font-family:var(--mono);white-space:nowrap}
+.pill{font-size:11px;padding:3px 9px}.pill.ok{background:rgba(29,138,84,.12);color:#1d8a54}.pill.plan{background:var(--tile);color:var(--mut)}.pill.ko{background:rgba(221,51,51,.12);color:#c22}.pill.warn{background:rgba(209,139,0,.14);color:#9a6508}
+.gbar{display:grid;grid-template-columns:130px 1fr 40px;align-items:center;gap:10px;margin:8px 0;font-size:13px}
+.gbar span:nth-child(2){height:8px;border-radius:4px;background:var(--tile);overflow:hidden;position:relative}
+.gbar span:nth-child(2) i{position:absolute;inset:0 auto 0 0;background:var(--or);border-radius:4px}
+.gbar b{font-family:var(--mono);font-weight:600;text-align:right}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 12px}
+.chip{font-size:12px;font-weight:600;padding:5px 10px;border-radius:999px;background:var(--soft)}
+.chip.t1{background:var(--ink);color:#fff}.chip.t3{text-decoration:line-through;color:var(--faint)}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:8px 14px;font-size:13px}.kv dt{color:var(--mut)}.kv dd{margin:0;font-family:var(--mono);word-break:break-all}
+ul.todo{margin:0;padding:0 0 0 18px;font-size:13px;line-height:1.8}
+code{font-family:var(--mono);font-size:12px;background:var(--soft);padding:1px 6px;border-radius:6px}
+@media (max-width:1020px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.s4{grid-column:span 2}}
+@media (max-width:640px){.grid{grid-template-columns:1fr}.s2,.s4{grid-column:auto}.kv{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="nav" aria-label="Navigation principale">
+    <a class="logo" href="/">Lobby<b>.</b></a>
+    <a class="nl keep" href="/">Accueil</a>
+    <a class="nl keep" href="/atlas">Atlas</a>
+    <a class="nl on keep" href="/gestion" aria-current="page">Gestion</a>
+  </nav>
+
+  <div class="head">
+    <div><div class="eyebrow">Outil interne</div><h1>Gestion<b>.</b></h1><div class="sub">Ce qui tourne, ce qui est connecté, ce qu'on récupère — vérifié en direct.</div></div>
+    <div class="bar"><span class="state" id="global"><i></i><span>Vérification…</span></span><button class="btn sec" id="refresh" type="button" style="height:38px">Revérifier</button><span class="muted" id="checked"></span></div>
+  </div>
+
+  <main class="grid">
+    <section class="card kpi"><div class="l">Site <span class="dot" id="k1d"></span></div><div class="v" id="k1">—</div><div class="d" id="k1s">lobby-esport.vercel.app</div></section>
+    <section class="card kpi"><div class="l">PandaScore <span class="dot" id="k2d"></span></div><div class="v" id="k2">—</div><div class="d" id="k2s">requêtes restantes (heure)</div></section>
+    <section class="card kpi"><div class="l">Matchs suivis <span class="dot" id="k3d"></span></div><div class="v" id="k3">—</div><div class="d" id="k3s"></div></section>
+    <section class="card kpi"><div class="l">Équipes <span class="dot" id="k4d"></span></div><div class="v" id="k4">—</div><div class="d" id="k4s"></div></section>
+
+    <section class="card s2"><div class="ch"><h2>Sources de données</h2><span class="x">connectées et prévues</span></div><div class="body"><table><thead><tr><th>Source</th><th>Rôle</th><th>État</th></tr></thead><tbody id="sources"></tbody></table></div></section>
+
+    <section class="card s2"><div class="ch"><h2>Données récupérées</h2><span class="x" id="dupd"></span></div><div class="body" id="data"></div></section>
+
+    <section class="card s2"><div class="ch"><h2>Hébergement &amp; version</h2><span class="x">Vercel · GitHub</span></div><div class="body"><dl class="kv" id="deploy"></dl></div></section>
+
+    <section class="card s2"><div class="ch"><h2>Configuration</h2><span class="x">api/_config.js</span></div><div class="body" id="config"></div></section>
+
+    <section class="card s4"><div class="ch"><h2>Sur quoi tourne le site</h2><span class="x">architecture</span></div><div class="body"><table><thead><tr><th>Brique</th><th>Rôle</th><th>Techno</th><th>État</th></tr></thead><tbody id="archi"></tbody></table></div></section>
+
+    <section class="card s4"><div class="ch"><h2>Problèmes connus &amp; prochaines étapes</h2></div><div class="body"><ul class="todo">
+      <li><b>Mise en ligne auto cassée</b> : un envoi sur GitHub ne met plus le site à jour. Je redéploie à la main via Vercel à chaque changement.</li>
+      <li><b>Aucune source d'actus</b> : les équipes dissoutes ne disparaissent pas toutes seules → brancher Liquipedia (transferts) puis Dexerto (titres).</li>
+      <li><b>Copie locale des équipes</b> (<code>/assets/orgs.json</code>) : à rafraîchir régulièrement (automatisation à prévoir).</li>
+      <li><b>Licence de la texture des nuages</b> à vérifier avant d'en faire un usage public.</li>
+      <li>À venir : Mes équipes suivies, pages match / équipe / compétition.</li>
+    </ul></div></section>
+  </main>
+  <footer class="foot" style="display:flex;justify-content:space-between;margin-top:32px;color:var(--faint);font-size:12px"><span>Lobby. — gestion</span><span>Actualisation automatique toutes les 60 s</span></footer>
+</div>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function ago(ts){if(!ts)return"—";var s=Math.round((Date.now()-ts)/1000);if(s<60)return"il y a "+s+" s";if(s<3600)return"il y a "+Math.round(s/60)+" min";if(s<86400)return"il y a "+Math.round(s/3600)+" h";return"il y a "+Math.round(s/86400)+" j"}
+function dot(id,st){$(id).className="dot "+st}
+var ARCHI=[
+ ["Accueil","Match vedette, matchs triés, carte globe","index.html · lobby.css","page"],
+ ["Atlas","Globe 3D, pins pays, panneau équipes/roster","atlas/index.html · atlas.js · globe.js","page"],
+ ["Recherche","Joueurs, équipes, pays, compétitions, matchs","search.js (tolérante aux fautes)","page"],
+ ["/api/live","Matchs live / à venir / récents + tri d'importance","Fonction Vercel → PandaScore (cache 2 min)","live"],
+ ["/api/orgs","Équipes par pays + rosters","Fonction Vercel → PandaScore (cache CDN 1 h)","orgs"],
+ ["/api/team","Détail d'une équipe","Fonction Vercel → PandaScore","pandascore"],
+ ["/lib/*","Librairie 3D (three.js) servie par le site","Relais → jsDelivr","lib"],
+ ["Textures Terre","Images satellite jour, relief, nuages, étoiles","NASA (domaine public), WebP sur le site","static"],
+ ["Copie des équipes","Affichage immédiat avant l'API","/assets/orgs.json","snapshot"],
+ ["Polices","Geist, Geist Mono, Archivo","Google Fonts","static"],
+ ["Logos & photos","Logos d'équipes, photos de joueurs","CDN PandaScore","pandascore"],
+ ["Hébergement","Pages + fonctions serveur","Vercel (projet lobby-esport)","site"],
+ ["Code","Historique et sauvegarde","GitHub Flavitoww/Lobby (branche main)","static"]
+];
+function load(){
+  $("global").className="state";$("global").querySelector("span").textContent="Vérification…";
+  fetch("/api/status",{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(render).catch(function(){
+    $("global").className="state ko";$("global").querySelector("span").textContent="Impossible de joindre le serveur";dot("k1d","ko");$("k1").textContent="Hors ligne";
+  });
+}
+function render(d){
+  var c=d.checks,cfg=d.config,bad=0,warn=0;
+  // KPIs
+  dot("k1d","ok");$("k1").textContent="En ligne";$("k1s").textContent=(d.deployment.env==="production"?"Production":"Prévisualisation")+(d.deployment.region?" · "+d.deployment.region:"");
+  if(c.pandascore.ok){var q=c.pandascore.quotaRemaining;$("k2").textContent=q!=null?q:"OK";$("k2s").textContent="requêtes restantes"+(c.pandascore.quotaLimit?" / "+c.pandascore.quotaLimit:"")+" · "+c.pandascore.ms+" ms";dot("k2d",q!=null&&+q<50?"warn":"ok");if(q!=null&&+q<50)warn++}
+  else{$("k2").textContent="Erreur";$("k2s").textContent=c.pandascore.error;dot("k2d","ko");bad++}
+  if(c.live.ok){$("k3").textContent=c.live.live+" / "+c.live.upcoming;$("k3s").textContent="en direct / à venir · dont "+c.live.liveImportant+" + "+c.live.upcomingImportant+" importants";dot("k3d","ok")}
+  else{$("k3").textContent="—";$("k3s").textContent=c.live.error;dot("k3d","ko");bad++}
+  var teams=c.orgs.ok?c.orgs:null,snap=c.snapshot.ok?c.snapshot:null;
+  if(teams&&snap&&teams.teams<snap.teams*0.8){warn++;dot("k4d","warn");$("k4").textContent=snap.teams;$("k4s").textContent="copie locale utilisée (API incomplète : "+teams.teams+")"}
+  else if(teams){dot("k4d","ok");$("k4").textContent=teams.teams;$("k4s").textContent=teams.countries+" pays · "+teams.players+" joueurs"}
+  else if(snap){warn++;dot("k4d","warn");$("k4").textContent=snap.teams;$("k4s").textContent="copie locale (API : "+(c.orgs.error||"erreur")+")"}
+  else{bad++;dot("k4d","ko");$("k4").textContent="—"}
+  // Sources
+  $("sources").innerHTML=cfg.SOURCES.map(function(s){var st=s.status==="connected"?(s.id==="pandascore"?(c.pandascore.ok?'<span class="pill ok">Connectée</span>':'<span class="pill ko">En erreur</span>'):'<span class="pill ok">Connectée</span>'):'<span class="pill plan">Prévue</span>';return "<tr><td><b>"+esc(s.name)+"</b></td><td>"+esc(s.role)+"</td><td>"+st+"</td></tr>"}).join("")+
+   '<tr><td><b>jsDelivr</b> (relais /lib)</td><td>Librairie 3D</td><td>'+(c.lib.ok?'<span class="pill ok">OK · '+c.lib.ms+' ms</span>':'<span class="pill ko">En erreur</span>')+'</td></tr>';
+  if(!c.lib.ok)bad++;
+  // Données
+  var h="";
+  if(c.live.ok){var bg=c.live.byGame,mx=Math.max.apply(null,Object.values(bg).concat([1]));
+    h+='<p class="muted" style="margin:0 0 6px">Matchs par jeu (live + à venir + récents)</p>'+Object.keys(bg).sort(function(a,b){return bg[b]-bg[a]}).map(function(k){return '<div class="gbar"><span>'+esc(cfg.GAME_NAMES[k]||k)+'</span><span><i style="width:'+(bg[k]/mx*100)+'%"></i></span><b>'+bg[k]+'</b></div>'}).join("");
+    h+='<table style="margin-top:12px"><tr><td>Matchs (PandaScore)</td><td class="r">mis à jour '+ago(c.live.updated)+'</td></tr>';}
+  else h+='<table>';
+  h+='<tr><td>Équipes (API)</td><td class="r">'+(teams?teams.teams+" · "+ago(teams.updated):esc(c.orgs.error||"—"))+'</td></tr>';
+  h+='<tr><td>Copie locale des équipes</td><td class="r">'+(snap?snap.teams+" · "+ago(snap.updated):"—")+'</td></tr>';
+  h+='<tr><td>Résultats récents</td><td class="r">'+(c.live.ok?c.live.recent:"—")+'</td></tr></table>';
+  $("data").innerHTML=h;$("dupd").textContent=c.live.ok?"live "+ago(c.live.updated):"";
+  // Déploiement
+  var dp=d.deployment;
+  $("deploy").innerHTML=[["Environnement",dp.env],["Région",dp.region],["Version (commit)",dp.commit],["Dernier changement",dp.message],["Branche",dp.branch],["Adresse du déploiement",dp.url],["Moteur serveur","Node "+dp.node],["Dépôt","GitHub · Flavitoww/Lobby"]].map(function(x){return "<dt>"+x[0]+"</dt><dd>"+esc(x[1]||"—")+"</dd>"}).join("");
+  // Config
+  var t=cfg.TIERS,gn=cfg.GAME_NAMES;
+  $("config").innerHTML='<p class="muted" style="margin:0">Jeux T1</p><div class="chips">'+t.T1.map(function(k){return '<span class="chip t1">'+esc(gn[k])+'</span>'}).join("")+'</div>'+
+   '<p class="muted" style="margin:0">Jeux T2</p><div class="chips">'+t.T2.map(function(k){return '<span class="chip">'+esc(gn[k])+'</span>'}).join("")+'</div>'+
+   '<p class="muted" style="margin:0">Jeux T3 (exclus)</p><div class="chips">'+t.T3.map(function(k){return '<span class="chip t3">'+esc(gn[k])+'</span>'}).join("")+'</div>'+
+   '<table><tr><td>Match « important »</td><td>org connue, scène FR, ou tier S d\'un jeu T1</td></tr><tr><td>Équipe retenue si</td><td>tournoi joué il y a moins de '+cfg.RECENT_DAYS+' jours, hors académies</td></tr><tr><td>Orgs inactives (manuel)</td><td>'+cfg.RETIRED.map(esc).join(", ")+'</td></tr></table>';
+  // Archi
+  var stOf={live:c.live.ok,orgs:c.orgs.ok||c.snapshot.ok,pandascore:c.pandascore.ok,lib:c.lib.ok,snapshot:c.snapshot.ok,site:true,static:true,page:true};
+  $("archi").innerHTML=ARCHI.map(function(a){var ok=stOf[a[3]];return "<tr><td><b>"+esc(a[0])+"</b></td><td>"+esc(a[1])+"</td><td>"+esc(a[2])+'</td><td>'+(ok?'<span class="pill ok">OK</span>':'<span class="pill ko">Problème</span>')+"</td></tr>"}).join("");
+  // Global
+  var g=$("global");g.className="state "+(bad?"ko":warn?"warn":"ok");g.querySelector("span").textContent=bad?bad+" problème"+(bad>1?"s":"")+" détecté"+(bad>1?"s":""):warn?"En ligne · "+warn+" point"+(warn>1?"s":"")+" à surveiller":"Tout fonctionne";
+  $("checked").textContent="Vérifié à "+new Date(d.now).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+}
+$("refresh").onclick=load;load();setInterval(load,60000);
+})();
+</script>
+</body>
+</html>
