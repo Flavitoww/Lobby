@@ -7,7 +7,9 @@ const GAME = {
   'starcraft-2': 'sc', 'starcraft-brood-war': 'sc', 'mobile-legends': 'mlbb', 'mlbb': 'mlbb', 'kog': 'hok', 'honor-of-kings': 'hok', 'age-of-empires': 'aoe'
 };
 const BASE = 'https://api.pandascore.co';
-const FRL = /\b(LFL|LDLC|Ligue Fran|French|France|Gamers Origin|Elite Series)\b/i;
+const FRL = /\b(LFL|LDLC|Ligue Fran|French|France|Gamers Origin|Elite Series|Coupe de France|Slash|Rising League|Nexus League)\b/i;
+// Grands événements internationaux : un tier S y est toujours important, même sans org « connue ».
+const INTL = /\b(world|worlds|msi|major|masters|champions|first stand|esports world cup|ewc|rlcs|nations cup|enc|iem|blast premier|pgl)\b/i;
 // Tiers de jeux (choix de Flavien) : T1 LoL, CS2, Valorant, Rocket League ; T2 R6, Dota 2, Overwatch, CoD, EA FC ; T3 (MLBB, HoK, StarCraft, AoE) exclu.
 const CFG = require('./_config');
 const GW = CFG.GAME_WEIGHT;
@@ -35,7 +37,8 @@ function pick(m) {
   const ba = bigness(a), bb = bigness(b), big = Math.max(ba, bb);
   const imp = (GW[game] || 0) + (TW[tier] || 5) + (fr ? 40 : 0) + (big === 2 ? 90 : big === 1 ? 45 : 0) + (ba && bb ? 30 : 0);
   // Important = une org connue, la scène FR, ou un tier S sur un jeu majeur (LoL, CS2, Valorant). Le reste = mineur.
-  const k = big > 0 || fr || (tier === 's' && (GW[game] || 0) >= 20) ? 1 : 0;
+  // Important = org connue, scène FR, ou tier S d'un GRAND événement international sur un jeu T1 (pas une ligue régionale lambda).
+  const k = big > 0 || fr || (tier === 's' && (GW[game] || 0) >= 20 && INTL.test(league + ' ' + serie)) ? 1 : 0;
   const short = (t) => (t.acronym || t.name || '?').toString();
   const ts = Date.parse(m.begin_at || m.scheduled_at || m.modified_at || 0) || 0;
   return {
@@ -65,26 +68,31 @@ module.exports = async (req, res) => {
   if (!token) { res.status(500).json({ error: 'no_token', matches: [], recent: [] }); return; }
 
   const now = Date.now();
-  if (CACHE.body && now - CACHE.at < 120000) {
+  if (CACHE.body && now - CACHE.at < 240000) {
     res.setHeader('Cache-Control', 'public, max-age=60');
     res.status(200).json(CACHE.body);
     return;
   }
 
   try {
-    const [running, upcoming, past, upcoming2] = await Promise.all([
+    const [running, upcoming, past, perGame] = await Promise.all([
       fetchList('/matches/running?per_page=50', token),
       fetchList('/matches/upcoming?sort=begin_at&per_page=100&page=1', token),
       fetchList('/matches/past?sort=-begin_at&per_page=100', token),
-      fetchList('/matches/upcoming?sort=begin_at&per_page=100&page=2', token).catch(() => [])
+      // Passe dédiée aux jeux T1 : sinon un jeu moins couvert (Rocket League…) disparaît derrière le volume CS2/Dota.
+      Promise.all(['lol', 'csgo', 'valorant', 'rl'].map((g) => Promise.all([
+        fetchList('/' + g + '/matches/upcoming?sort=begin_at&per_page=40', token).catch(() => []),
+        fetchList('/' + g + '/matches/past?sort=-begin_at&per_page=25', token).catch(() => [])
+      ]))).catch(() => [])
     ]);
 
     const seen = new Set();
     const take = (arr) => (arr || []).map(pick).filter((x) => x && !seen.has(x.id) && seen.add(x.id));
 
     let live = take(running).filter((m) => m.status === 'running');
-    let next = take((upcoming || []).concat(upcoming2 || [])).filter((m) => m.status === 'not_started');
-    let recent = take(past).filter((m) => m.status === 'finished' && (m.sa || m.sb));
+    const pgUp = [], pgPast = []; (perGame || []).forEach((x) => { pgUp.push(...(x[0] || [])); pgPast.push(...(x[1] || [])); });
+    let next = take((upcoming || []).concat(pgUp)).filter((m) => m.status === 'not_started');
+    let recent = take((past || []).concat(pgPast)).filter((m) => m.status === 'finished' && (m.sa || m.sb));
 
     live.sort((a, b) => b.imp - a.imp);
     next.sort((a, b) => a.ts - b.ts);
@@ -93,8 +101,8 @@ module.exports = async (req, res) => {
     // Tri : on garde d'abord ce qui compte (tier S/A, scène FR, grosses orgs), puis un peu de mineur pour ne jamais être vide.
     const imp = (arr, n) => { const k = arr.filter((m) => m.k), o = arr.filter((m) => !m.k); return k.concat(o).slice(0, n); };
     live.sort((a, b) => (b.k - a.k) || (b.imp - a.imp));
-    const matches = live.concat(imp(next, 60)).slice(0, 80);
-    recent = imp(recent, 20).sort((a, b) => (b.k - a.k) || (b.ts - a.ts));
+    const matches = live.concat(imp(next, 90)).slice(0, 110);
+    recent = imp(recent, 30).sort((a, b) => (b.k - a.k) || (b.ts - a.ts));
 
     const body = { updated: now, matches, recent };
     CACHE = { at: now, body };

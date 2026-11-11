@@ -5,135 +5,26 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>L'Atlas — Lobby</title>
 <meta name="description" content="La scène esport mondiale sur un globe 3D : équipes, joueurs et matchs, pays par pays.">
-<meta name="theme-color" content="#f3f3f1">
+<meta name="theme-color" content="#0d1420">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23111214'/%3E%3Cpath d='M11 8h3.5v12.5H22V24H11z' fill='%23fff'/%3E%3Ccircle cx='23' cy='10' r='2.6' fill='%23ff5a1f'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500;600&display=swap">
 <link rel="stylesheet" href="/lobby.css">
-<link rel="preload" href="/assets/earth/day-2k.webp" as="image" type="image/webp">
+<link rel="stylesheet" href="/atlas/atlas.css">
 <script type="importmap">{"imports":{"three":"/lib/three.module.min.js"}}</script>
 <style>
-.head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin:32px 0 18px;flex-wrap:wrap}
-.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
-h1{margin:0;font-weight:600;font-size:clamp(30px,4vw,46px);letter-spacing:-.04em;line-height:1.05}
-h1 b{color:var(--or)}
-.sub{color:var(--mut);margin-top:6px}
-.lay{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:var(--gap);align-items:stretch}
-.stage{position:relative;height:min(76vh,780px);min-height:480px;border-radius:var(--r);overflow:hidden;view-transition-name:atlas-globe;transition:background 1.2s}
-#globe{position:absolute;inset:0}
-#mk{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden}
-.ov{position:absolute;display:flex;gap:8px;z-index:3}
-.ov.tl{top:18px;left:18px}.ov.br{right:18px;bottom:18px}.ov.bl{left:18px;bottom:18px}
-.glass{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-radius:12px;background:rgba(12,18,30,.72);border:1px solid rgba(255,255,255,.14);color:#fff;font-size:13px;font-weight:500}
-.glass button{all:unset;cursor:pointer;width:32px;height:32px;display:grid;place-items:center;border-radius:8px;font-size:17px}
-.glass button:hover{background:rgba(255,255,255,.14)}
-.glass .dot{width:7px;height:7px;border-radius:50%;background:var(--or)}
-.loading{position:absolute;inset:0;display:grid;place-items:center;color:rgba(255,255,255,.65);font-size:13px;z-index:1;transition:opacity .6s;padding:20px}
-
-/* Pins pays */
-.pin{position:absolute;left:0;top:0;pointer-events:auto;border:0;background:none;padding:0;cursor:pointer;color:#fff;font:600 12px var(--ui);display:flex;align-items:center;gap:8px;margin:calc(var(--sz)/-2) 0 0 calc(var(--sz)/-2);transition:opacity .25s;will-change:transform}
-.pin .pd{position:relative;width:var(--sz);height:var(--sz);border-radius:50%;background:var(--or);border:2px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.35);display:grid;place-items:center;flex:none;transition:transform .2s var(--ease)}
-.pin .pc{font:700 10px var(--mono);color:#fff;line-height:1}
-.pin.live .pd::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--or);animation:ring 1.8s infinite}
-@keyframes ring{from{opacity:.9;transform:scale(.7)}to{opacity:0;transform:scale(1.5)}}
-.pin:hover,.pin.sel{z-index:5}.pin:hover .pd,.pin.sel .pd{transform:scale(1.18)}
-.pin.sel .pd{background:#111214}
-.pin .pl{display:flex;align-items:center;gap:5px;padding:4px 10px 4px 10px;border-radius:999px;background:rgba(255,255,255,.94);color:var(--ink);box-shadow:0 6px 20px rgba(0,0,0,.25);white-space:nowrap;opacity:0;transform:translateX(-4px);transition:opacity .2s,transform .2s;pointer-events:none}
-.pin .pl b{margin-right:3px}
-.pin .pl em{font-style:normal;font-size:11px;color:var(--or-ink);margin-left:3px}
-.pin:hover .pl,.pin.sel .pl,.pin.lab .pl{opacity:1;transform:none}
-.pin.hid{opacity:0;pointer-events:none}
-.mini{width:20px;height:20px;border-radius:6px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;font:700 7px var(--ui);color:var(--mut);flex:none}
-.mini img{width:80%;height:80%;object-fit:contain}
-.tlogo{position:absolute;left:-19px;top:-19px;width:38px;height:38px;border-radius:12px;border:1px solid rgba(255,255,255,.18);padding:0;background:#151a24;box-shadow:0 6px 16px rgba(0,0,0,.3);display:grid;place-items:center;cursor:pointer;pointer-events:none;opacity:0;scale:.6;transition:opacity .25s,scale .25s var(--ease);will-change:transform}
-.tlogo.show{opacity:1;scale:1;pointer-events:auto}
-.tlogo:hover{scale:1.12;z-index:2}
-.tlg{width:100%;height:100%;display:grid;place-items:center;font:700 9px var(--ui);color:#cfd5df;overflow:hidden;border-radius:12px}
-.tlg img{width:76%;height:76%;object-fit:contain}
-#stat b{font-family:var(--mono);font-weight:600}
-.lvd{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--or);animation:pulse 1.4s infinite;margin-right:2px}
-
-/* Panneau */
-.side{display:flex;flex-direction:column;max-height:min(76vh,780px);min-height:480px;overflow:hidden}
-#panel{padding:22px;overflow:auto;flex:1;scrollbar-width:thin}
-#panel.swap{animation:sw .35s var(--ease)}
-@keyframes sw{from{opacity:0;transform:translateY(6px)}}
-#panel h2{margin:0;font-size:24px;font-weight:600;letter-spacing:-.025em;line-height:1.15}
-.lead{margin:8px 0 0;color:var(--mut);font-size:14px}
-.ph{margin-bottom:18px}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
-.stats div{background:var(--soft);border-radius:14px;padding:12px}
-.stats b{display:block;font:600 22px var(--mono);letter-spacing:-.03em}
-.stats span{font-size:12px;color:var(--mut)}
-.sec{margin-bottom:18px}
-.sec h3{margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
-.crow,.trow{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:12px;min-height:48px;padding:8px 14px;border-radius:14px;cursor:pointer;transition:background .15s}
-.crow:hover,.trow:hover{background:var(--soft)}
-.crow>span:first-child{font-weight:600;flex:1}.stack{display:flex}.stack .mini{margin-left:-6px;box-shadow:0 0 0 2px #fff}.lvt{font-style:normal;font-size:11px;color:var(--or-ink);font-weight:600;margin-left:4px}
-.tgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.tcell{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border-radius:14px;background:var(--soft);transition:background .15s,transform .15s}.tcell:hover{background:var(--tile);transform:translateY(-2px)}.tcell .lg{--s:36px;background:#fff;border:1px solid var(--line)}.tcell span:last-child{font-size:11px;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.crow i,.trow i{font-style:normal;color:var(--faint);font-size:12px}
-.trow .lg{--s:34px}.trow>span:not(.lg){flex:1;min-width:0}.trow b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.trow small{color:var(--faint);font-size:12px}
-.mrow{display:grid;grid-template-columns:44px 1fr;gap:2px 8px;padding:10px 12px;border-radius:14px;background:var(--soft);margin-bottom:6px;font-size:13px}
-.mrow .mt{grid-row:span 2;font:600 12px var(--mono);color:var(--mut);align-self:center}.mrow .lv{color:var(--or-ink)}
-.mrow .mm{display:flex;align-items:center;gap:6px;min-width:0}.mrow .mm .lg{--s:20px}.mrow .mm b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mrow .ms{font:600 12px var(--mono);color:var(--mut);padding:0 2px}
-.mrow .mc{color:var(--faint);font-size:12px;grid-column:2}
-.back{all:unset;cursor:pointer;font-size:13px;font-weight:600;color:var(--mut);padding:6px 10px;margin:-6px 0 12px -10px;border-radius:10px}
-.back:hover{background:var(--soft);color:var(--ink)}
-.team{display:flex;gap:14px;align-items:center;margin-bottom:18px}
-.lg.big{--s:64px;border-radius:20px;background:var(--soft);border:1px solid var(--line)}
-.gtabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
-.gtabs button{border:0;background:var(--soft);color:var(--mut);height:30px;padding:0 12px;border-radius:999px;font:600 12px var(--ui);cursor:pointer}
-.gtabs button[aria-pressed="true"]{background:var(--ink);color:#fff}
-.prow.hl{background:var(--or-soft);border-radius:12px}.prow{display:flex;align-items:center;gap:12px;padding:8px 6px;border-bottom:1px solid var(--line)}
-.prow img,.pav{width:38px;height:38px;border-radius:12px;object-fit:cover;background:var(--soft);display:grid;place-items:center;font:700 11px var(--ui);color:var(--mut);flex:none}
-.prow span{flex:1;min-width:0}.prow b{display:block}.prow small{color:var(--faint);font-size:12px}.prow i{font:600 11px var(--mono);color:var(--faint);font-style:normal}
-.empty{color:var(--mut);font-size:13px;padding:8px 0}
-.note{font-size:12px;color:var(--faint);margin:0}
-/* Recherche */
-.sbox{position:relative;margin-left:auto}
-#results{position:absolute;top:46px;left:0;right:0;margin:0;padding:6px;list-style:none;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 40px rgba(17,18,20,.14);z-index:60;max-height:60vh;overflow:auto}
-#results button{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;color:var(--ink)}
-#results button:hover,#results button:focus{background:var(--soft)}
-#results b{flex:1;font-weight:600;font-size:13px}#results i{font-style:normal;color:var(--faint);font-size:12px}
-#results .lg{--s:26px}.ri{width:26px;height:26px;border-radius:8px;background:var(--soft);display:grid;place-items:center;font:600 11px var(--ui);color:var(--mut)}
-.rnone{padding:10px;color:var(--mut);font-size:13px}
-
-/* Entrée progressive (après la plongée depuis l'accueil) */
-.enter-fly .nav,.enter-fly .head,.enter-fly .side,.enter-fly .ov{animation:rise .7s var(--ease) both}
-.enter-fly .head{animation-delay:.9s}.enter-fly .side{animation-delay:1.05s}.enter-fly .ov{animation-delay:1.25s}.enter-fly .nav{animation-delay:.8s}
-.enter .head,.enter .side{animation:rise .6s var(--ease) both}.enter .side{animation-delay:.12s}
-@keyframes rise{from{opacity:0;transform:translateY(10px)}}
-
-@media (max-width:980px){.lay{grid-template-columns:1fr}.stage{height:64vh;min-height:400px}.side{max-height:none;min-height:0}}
-@media (max-width:600px){.ov.bl{display:none}.stage{height:58vh;min-height:360px}}
-@media (prefers-reduced-motion:reduce){.enter-fly *,.enter *{animation:none!important}}
+html,body{height:100%;overflow:hidden}
+#stage{position:fixed;inset:0;background:#0d1420;transition:background 1s}
+#gl{position:absolute;inset:0}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <nav class="nav" aria-label="Navigation principale">
-    <a class="logo" href="/">Lobby<b>.</b></a>
-    <a class="nl keep" href="/">Accueil</a>
-    <a class="nl on keep" href="/atlas" aria-current="page">Atlas</a>
-    <div class="sbox"><label class="search" style="margin:0"><span class="sr">Rechercher une équipe, un joueur ou un pays</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg><input id="q" type="search" placeholder="Joueur, équipe, pays…" autocomplete="off" spellcheck="false"><kbd>/</kbd></label></div>
-  </nav>
-  <div class="head">
-    <div><div class="eyebrow">Exploration mondiale</div><h1>L'Atlas Lobby<b>.</b></h1><div class="sub">Un monde à explorer, les informations au même endroit.</div></div>
-    <div class="seg" id="games" role="group" aria-label="Filtrer par jeu"></div>
-  </div>
-  <div class="lay">
-    <div class="stage" id="stage">
-      <div id="globe"></div>
-      <div id="mk"></div>
-      <div class="loading" id="loading">Chargement de la Terre…</div>
-      <div class="ov tl"><span class="glass" id="stat">Chargement des équipes…</span></div>
-      <div class="ov bl"><span class="glass" style="font-size:12px;color:rgba(255,255,255,.85)">Glisse pour tourner · zoome pour voir les logos des équipes</span></div>
-      <div class="ov br"><span class="glass" style="padding:0 4px"><button type="button" id="zin" aria-label="Zoomer">+</button><button type="button" id="zout" aria-label="Dézoomer">−</button><button type="button" id="home" aria-label="Vue monde">◎</button></span></div>
-    </div>
-    <aside class="card side" aria-label="Informations"><div id="panel" aria-live="polite"></div></aside>
-  </div>
-</div>
-<script type="module" src="/atlas/atlas.js"></script>
+<div id="stage"><div id="gl"></div></div>
+<script type="module">
+import { mountAtlas } from '/atlas/atlas.js';
+const u = new URLSearchParams(location.search);
+mountAtlas({ stage: document.getElementById('stage'), glEl: document.getElementById('gl'), params: u, onParamsUsed: () => history.replaceState(null, '', '/atlas') });
+</script>
 <script>/* mesure d'audience Lobby : sans cookie, sans IP stockée */(function(){try{var k="lobbySid",s=sessionStorage.getItem(k);if(!s){s=Math.random().toString(36).slice(2)+Date.now().toString(36);sessionStorage.setItem(k,s)}
 function send(t,x){var b=JSON.stringify(Object.assign({t:t,sid:s,page:location.pathname,ref:document.referrer,w:screen.width,h:screen.height,lang:navigator.language,tz:Intl.DateTimeFormat().resolvedOptions().timeZone},x||{}));if(navigator.sendBeacon)navigator.sendBeacon("/api/track",new Blob([b],{type:"application/json"}));else fetch("/api/track",{method:"POST",headers:{"Content-Type":"application/json"},body:b,keepalive:true})}
 window.lobbyTrack=send;send("view");setInterval(function(){if(!document.hidden)send("ping")},30000);addEventListener("pagehide",function(){send("leave")})}catch(e){}})();</script>

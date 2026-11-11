@@ -72,7 +72,9 @@ h1 span{color:var(--faint)}
 .globe .btn:hover{background:var(--or);color:#fff}
 .globe.diving{position:fixed;z-index:200;margin:0;transition:left .75s var(--ease),top .75s var(--ease),width .75s var(--ease),height .75s var(--ease),border-radius .75s var(--ease)}
 .globe.diving .gt,.globe.diving .gb{opacity:0;transition:opacity .25s}
-body.diving .wrap>*:not(main){opacity:.0;transition:opacity .4s}
+body.diving{overflow:hidden}
+body.diving .wrap>*:not(main),body.diving main>*:not(.globe){opacity:0;transition:opacity .4s}
+#gdots{transition:opacity .4s}
 .gdots{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}.gd{position:absolute;left:-5px;top:-5px;width:10px;height:10px;border-radius:50%;background:var(--or);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);transition:opacity .3s}.gd.hid{opacity:0}
 .glive{display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;font-weight:600;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.14)}.glive i{width:7px;height:7px;border-radius:50%;background:var(--or);animation:pulse 1.4s infinite}
 .gstat{display:flex;gap:18px;font-family:var(--mono);font-size:12px;color:rgba(255,255,255,.7)}
@@ -136,7 +138,7 @@ body.diving .wrap>*:not(main){opacity:.0;transition:opacity .4s}
   <main class="bento">
     <article class="card s2 rv" style="--i:2" id="feat" aria-live="polite"><div class="feat"><div class="sk"></div><div class="sk" style="height:140px"></div></div></article>
 
-    <a class="card s2 globe rv" style="--i:3" href="/atlas" id="globeCard" aria-label="Ouvrir l'Atlas : la scène esport sur un globe 3D">
+    <a class="card s2 globe rv" style="--i:3" href="/atlas" id="globeCard" draggable="false" aria-label="Ouvrir l'Atlas : la scène esport sur un globe 3D">
       <div class="gfb" id="gfb" aria-hidden="true"><svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="90" fill="#151922"/><g fill="none" stroke="rgba(255,255,255,.09)"><circle cx="100" cy="100" r="90"/><ellipse cx="100" cy="100" rx="35" ry="90"/><ellipse cx="100" cy="100" rx="70" ry="90"/><ellipse cx="100" cy="100" rx="90" ry="32"/><ellipse cx="100" cy="100" rx="90" ry="64"/></g></svg></div>
       <div id="g3d" aria-hidden="true"></div><div class="gdots" id="gdots" aria-hidden="true"></div>
       <div class="gt"><span class="cap">Atlas · 3D</span><div class="gstat"><div><b id="nTeams">—</b>équipes</div><div><b id="nCountries">—</b>pays</div></div></div>
@@ -255,6 +257,7 @@ load();setInterval(load,90000);
 /* ---- Le globe 3D (atlas/globe.js), chargé après l'affichage pour garder la page rapide ---- */
 var CC={FR:[46.6,2.4],DE:[51.2,10.4],GB:[54,-2],ES:[40.4,-3.7],IT:[42.8,12.5],PL:[52,19.4],SE:[62,15],DK:[56,9.5],NO:[61,9],FI:[64,26],NL:[52.2,5.5],BE:[50.6,4.6],PT:[39.6,-8],RU:[56,38],UA:[49,32],TR:[39,35],US:[39.5,-98.5],CA:[56,-106],BR:[-14,-51],AR:[-34,-64],CL:[-33,-71],MX:[23,-102],PE:[-9,-75],CO:[4.5,-74],KR:[36.5,127.8],CN:[35,104],JP:[36.2,138.2],TW:[23.7,121],HK:[22.3,114.2],VN:[16,107.8],TH:[15.8,101],PH:[12.9,121.8],ID:[-2.5,118],MY:[4.2,102],SG:[1.35,103.8],AU:[-25.3,133.8],NZ:[-41,174],IN:[21,78],SA:[24,45],AE:[24,54],KZ:[48,67],MN:[46.9,103.8],CZ:[49.8,15.5],SK:[48.7,19.7],RS:[44,21],BG:[42.7,25.5],RO:[45.9,25],HU:[47.2,19.5],AT:[47.5,14.5],CH:[46.8,8.2],IL:[31,35],EE:[58.6,25],LV:[56.9,24.6],LT:[55.2,23.9],BY:[53.7,28],ZA:[-30.6,22.9],EG:[26.8,30.8],MA:[31.8,-7.1],IE:[53.4,-8.2],GR:[39,22],HR:[45.1,15.2],SI:[46.1,14.9],BA:[44,17.8],MK:[41.6,21.7],UZ:[41.4,64.6],GE:[42.3,43.4],AM:[40.1,45],AZ:[40.1,47.6],PK:[30.4,69.3],BD:[23.7,90.4]};
 var G=null,PTS=null,DOTS=[];
+function homeFrame(){if(!DOTS.length)return;DOTS.forEach(function(d){var p=G.project(d.lat,d.lng);d.el.style.transform="translate("+p.x+"px,"+p.y+"px)";d.el.classList.toggle("hid",!p.front)})}
 function makeDots(){var L=$("gdots");L.innerHTML="";DOTS=(PTS||[]).map(function(p){var el=document.createElement("span");el.className="gd";var sz=8+Math.min(10,Math.sqrt(p.n)*2.2);el.style.width=el.style.height=sz+"px";el.style.left=el.style.top=(-sz/2)+"px";L.appendChild(el);return {lat:p.lat,lng:p.lng,el:el}});if(G)G.redraw()}
 function loadOrgs(){
   fetch("/assets/orgs.json").then(function(r){return r.ok?r.json():null}).then(function(d){if(d&&!PTS)useOrgs(d)}).catch(function(){});
@@ -264,16 +267,16 @@ function useOrgs(d){
   if(!d||!d.orgs)return;if(ORGS.length&&d.orgs.length<ORGS.length*0.8)return;
   var by={},orgs=d.orgs.filter(function(o){return !/^(ici japon corp)/i.test(o.n)});orgs.forEach(function(o){var k=(o.cc||"").toUpperCase();if(CC[k]){by[k]=(by[k]||0)+1}});
   var pts=Object.keys(by).map(function(k){return {lat:CC[k][0],lng:CC[k][1],n:by[k],cc:k}});
-  ORGS=orgs;PTS=pts;makeDots();$("nTeams").textContent=orgs.length;$("nCountries").textContent=Object.keys(by).length;
+  ORGS=orgs;ORGSD=d;PTS=pts;makeDots();$("nTeams").textContent=orgs.length;$("nCountries").textContent=Object.keys(by).length;
 }
 loadOrgs();
 function startGlobe(){
   /* même moteur que l'Atlas : Terre photoréaliste, vraie lumière du Soleil */
   import("/atlas/globe.js").then(function(mod){
     try{
-      var sk=mod.skyFor();$("globeCard").style.background=sk.bg;G=mod.createGlobe($("g3d"),{interactive:false,stars:true,starsOpacity:sk.stars,hd:false,view:{lat:28,lon:8,dist:3.6}});
+      var sk=mod.skyFor();window.__SKY=sk.bg;$("globeCard").style.background=sk.bg;G=mod.createGlobe($("g3d"),{interactive:false,stars:true,starsOpacity:sk.stars,hd:false,view:{lat:28,lon:8,dist:3.6}});
       G.ready.then(function(){$("gfb").style.display="none"});
-      G.onFrame(function(){if(!DOTS.length)return;DOTS.forEach(function(d){var p=G.project(d.lat,d.lng);d.el.style.transform="translate("+p.x+"px,"+p.y+"px)";d.el.classList.toggle("hid",!p.front)})});
+      G.onFrame(homeFrame);
       if(PTS)makeDots();
     }catch(e){G=null}
   }).catch(function(){});
@@ -281,19 +284,41 @@ function startGlobe(){
 function loadGlobe(){startGlobe()}
 /* Plongée vers l'Atlas : la carte s'agrandit plein écran pendant que la caméra se rapproche, puis on passe sur /atlas
    (fondu de page « atlas-globe » entre les deux, même angle de vue transmis à l'Atlas) */
-function dive(e){
-  if(e.metaKey||e.ctrlKey||e.shiftKey||matchMedia("(prefers-reduced-motion: reduce)").matches||!G)return;
-  e.preventDefault();var card=$("globeCard"),r=card.getBoundingClientRect();
-  if(r.bottom<0||r.top>innerHeight){card.scrollIntoView({block:"center"});r=card.getBoundingClientRect()}
-  var ph=document.createElement("div");ph.style.cssText="grid-column:span 2;min-height:"+r.height+"px";card.parentNode.insertBefore(ph,card);
+/* ---- Atlas DANS l'accueil : même globe, pas de changement de page ---- */
+var ATL=null,ATLMOD=null,ATLOPEN=false,PH=null,ORGSD=null,BUSY=false;
+function prefetchAtlas(){if(ATLMOD)return ATLMOD;if(!document.getElementById("atlcss")){var l=document.createElement("link");l.id="atlcss";l.rel="stylesheet";l.href="/atlas/atlas.css";document.head.appendChild(l)}ATLMOD=import("/atlas/atlas.js");return ATLMOD}
+$("globeCard").addEventListener("pointerenter",prefetchAtlas,{once:true});
+function openAtlas(e,push){
+  if(e){if(e.metaKey||e.ctrlKey||e.shiftKey||e.button===1)return;e.preventDefault()}
+  if(ATLOPEN||BUSY)return;
+  if(!G){location.href="/atlas";return}
+  BUSY=true;ATLOPEN=true;var reduce=matchMedia("(prefers-reduced-motion: reduce)").matches,card=$("globeCard"),r=card.getBoundingClientRect();
+  PH=document.createElement("div");PH.style.cssText="grid-column:span 2;min-height:"+r.height+"px";card.parentNode.insertBefore(PH,card);
   card.style.left=r.left+"px";card.style.top=r.top+"px";card.style.width=r.width+"px";card.style.height=r.height+"px";
   card.classList.add("diving");document.body.classList.add("diving");
   requestAnimationFrame(function(){requestAnimationFrame(function(){card.style.left="0px";card.style.top="0px";card.style.width=innerWidth+"px";card.style.height=innerHeight+"px";card.style.borderRadius="0px"})});
-  G.controls.autoRotate=false;G.zoomTo(2.25,1000);
-  setTimeout(function(){try{var v=G.view;sessionStorage.setItem("lobbyFly",JSON.stringify({lat:v.lat,lon:v.lon,dist:v.dist,t:Date.now()}))}catch(_){}location.href="/atlas"},950);
+  G.controls.autoRotate=false;G.zoomTo(3.05,reduce?0:1000);$("gdots").style.opacity=0;
+  if(push!==false)history.pushState({atlas:1},"","/atlas");document.title="L'Atlas — Lobby";
+  Promise.all([prefetchAtlas(),new Promise(function(r){setTimeout(r,reduce?0:650)})]).then(function(res){
+    var lay=document.createElement("div");lay.id="atlLayer";lay.style.cssText="position:fixed;inset:0;z-index:210";document.body.appendChild(lay);
+    ATL=res[0].mountAtlas({stage:lay,globe:G,onClose:function(){history.back()},preload:{orgs:ORGSD,live:S.data}});
+    BUSY=false;
+  }).catch(function(){location.href="/atlas"});
 }
-$("globeCard").addEventListener("click",dive);
-document.addEventListener("click",function(e){var a=e.target.closest("[data-dive]");if(a)dive(e)});
+function closeAtlas(){
+  if(!ATLOPEN||BUSY)return;BUSY=true;var card=$("globeCard"),lay=document.getElementById("atlLayer");
+  (ATL?ATL.unmount(350):Promise.resolve()).then(function(){
+    if(lay)lay.remove();ATL=null;G.setInteractive(false);G.onFrame(homeFrame);
+    var r=PH.getBoundingClientRect();card.style.left=r.left+"px";card.style.top=r.top+"px";card.style.width=r.width+"px";card.style.height=r.height+"px";card.style.borderRadius="";
+    G.zoomTo(3.6,800).then(function(){G.controls.autoRotate=true});$("gdots").style.opacity=1;
+    setTimeout(function(){card.classList.remove("diving");card.removeAttribute("style");var sk=window.__SKY;if(sk)card.style.background=sk;PH.remove();PH=null;document.body.classList.remove("diving");document.title="Lobby — l'esport en un coup d'œil";ATLOPEN=false;BUSY=false;G.redraw()},780);
+  });
+}
+$("globeCard").addEventListener("click",function(e){openAtlas(e)});
+$("globeCard").addEventListener("dragstart",function(e){e.preventDefault()});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&ATLOPEN&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName))history.back()});
+document.addEventListener("click",function(e){var a=e.target.closest("[data-dive]");if(a)openAtlas(e)});
+addEventListener("popstate",function(){if(location.pathname==="/atlas"&&!ATLOPEN)openAtlas(null,false);else if(location.pathname!=="/atlas"&&ATLOPEN)closeAtlas()});
 addEventListener("pageshow",function(e){if(e.persisted)location.reload()});
 if("IntersectionObserver" in window){var io=new IntersectionObserver(function(es){if(es[0].isIntersecting){io.disconnect();(window.requestIdleCallback||setTimeout)(loadGlobe)}});io.observe($("globeCard"))}else loadGlobe();
 })();

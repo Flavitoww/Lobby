@@ -79,7 +79,7 @@ function isLowEnd() {
 
 export function createGlobe(el, opts = {}) {
   const low = isLowEnd();
-  let dirty = true;
+  let dirty = true, offX = 0, offY = 0;
   const dpr = devicePixelRatio || 1;
   const renderer = new THREE.WebGLRenderer({ antialias: !low && dpr < 2, alpha: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(low ? Math.min(dpr, 1.25) : (dpr >= 2 ? 1.3 : Math.min(dpr, 1.5)));
@@ -142,7 +142,9 @@ export function createGlobe(el, opts = {}) {
 
   function resize() { dirty = true; const w = el.clientWidth || 1, h = el.clientHeight || 1; renderer.setSize(w, h, false); camera.aspect = w / h;
     // écran étroit (téléphone) : on élargit le champ pour que la Terre tienne en entier
-    camera.fov = camera.aspect < 1 ? Math.min(70, 2 * Math.atan(Math.tan(19 * DEG) / camera.aspect) / DEG) : 38; camera.updateProjectionMatrix(); }
+    camera.fov = camera.aspect < 1 ? Math.min(70, 2 * Math.atan(Math.tan(19 * DEG) / camera.aspect) / DEG) : 38;
+    if (offX || offY) camera.setViewOffset(w, h, offX, offY, w, h); else camera.clearViewOffset();
+    camera.updateProjectionMatrix(); }
   const ro = new ResizeObserver(resize); ro.observe(el); resize();
 
   // Rendu uniquement quand c'est utile (onglet visible, globe à l'écran)
@@ -197,6 +199,11 @@ export function createGlobe(el, opts = {}) {
     setTimeOffset(ms) { timeOffset = ms; sunInfo = updateSun(); },
     setStars(o) { starsOpacity = o; if (stars) stars.material.opacity = o; dirty = true; },
     redraw() { dirty = true; },
+    setInteractive(on) { controls.enableRotate = controls.enableZoom = !!on; dirty = true; },
+    // décale le centre du globe (px) pour laisser la place à un panneau ; animé
+    setOffset(x, y = 0, ms = 700) { const x0 = offX, y0 = offY, t0 = performance.now(); return new Promise((done) => { (function st() { const k = Math.min(1, (performance.now() - t0) / ms), e = 1 - Math.pow(1 - k, 3); offX = x0 + (x - x0) * e; offY = y0 + (y - y0) * e; resize(); if (k < 1) requestAnimationFrame(st); else done(); })(); }); },
+    get dom() { return renderer.domElement; },
+    snapshot(q = 0.82) { try { renderer.render(scene, camera); return renderer.domElement.toDataURL('image/jpeg', q); } catch (_) { return null; } },
     get view() { const ll = v2ll(camera.position); return { lat: ll.lat, lon: ll.lon, dist: camera.position.length() }; },
     zoomTo(dist, ms = 600) { const d0 = camera.position.length(), t0 = performance.now(); controls.autoRotate = false; return new Promise((done) => { (function st() { const k = Math.min(1, (performance.now() - t0) / ms), e = 1 - Math.pow(1 - k, 3); camera.position.setLength(d0 + (dist - d0) * e); if (k < 1) requestAnimationFrame(st); else done(); })(); }); },
     onFrame(cb) { frameCb = cb; },

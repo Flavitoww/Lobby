@@ -2,7 +2,7 @@
 
 Lobby est un **atlas / dashboard esport** (référence gratuite, pro). Deux vues dans **un seul site** :
 - `/` → **Accueil** « Bento clair » : match vedette, matchs triés, carte globe (clic = plongée vers l'Atlas).
-- `/atlas` → **Globe 3D photoréaliste** : 1 pin/pays, logos en couronne au zoom, panneau pays/équipe/roster, recherche, filtres jeux.
+- `/atlas` → **Atlas immersif** (globe plein écran + cartes flottantes). `atlas/atlas.js` exporte `mountAtlas()` : utilisé par /atlas ET par l'accueil, qui ouvre l'Atlas SUR PLACE (même globe, pushState /atlas, retour = fermeture) — plus de changement de page.
 - Charte : fond #f3f3f1, cartes blanches, accent orange #ff5a1f unique, Geist. La Terre est toujours entièrement éclairée (lumière qui suit la caméra) ; seul le fond change selon l'heure du visiteur.
 
 Déployé sur **lobby-esport.vercel.app** (Vercel, team `spike2-3cd9`, projet `lobby-esport`).
@@ -11,7 +11,7 @@ Déployé sur **lobby-esport.vercel.app** (Vercel, team `spike2-3cd9`, projet `l
 ```
 lobby.css         # Design system « Bento clair » (charte v2) — toutes les pages le chargent.
 index.html        # Accueil : match vedette, listes triées (champ k), carte globe -> /atlas.
-atlas/index.html  # Atlas : page (UI). atlas/atlas.js : données, pins, panneau, recherche.
+atlas/index.html  # /atlas : monte mountAtlas() en plein écran. atlas/atlas.js (module) + atlas/atlas.css (scopé .atl).
 atlas/globe.js    # Moteur 3D (three.js pur) : Soleil réel, nuages, atmosphère, étoiles. Partagé accueil + atlas.
 assets/earth/     # Textures NASA en WebP (2K puis 4K).
 api/live.js       # PandaScore : matchs + tri d'importance (k, imp, big).
