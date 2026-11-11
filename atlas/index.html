@@ -31,19 +31,28 @@ h1 b{color:var(--or)}
 .loading{position:absolute;inset:0;display:grid;place-items:center;color:rgba(255,255,255,.65);font-size:13px;z-index:1;transition:opacity .6s;padding:20px}
 
 /* Pins pays */
-.pin{position:absolute;left:0;top:0;pointer-events:auto;border:0;background:none;padding:0;cursor:pointer;color:#fff;font:600 11px var(--ui);display:flex;align-items:center;gap:6px;margin:calc(var(--sz)/-2) 0 0 calc(var(--sz)/-2);transition:opacity .25s;will-change:transform}
-.pin .pd{width:var(--sz);height:var(--sz);border-radius:50%;background:var(--or);box-shadow:0 0 0 3px rgba(255,90,31,.28),0 2px 8px rgba(0,0,0,.4);flex:none;transition:transform .2s var(--ease)}
-.pin:hover .pd,.pin.sel .pd{transform:scale(1.25);box-shadow:0 0 0 5px rgba(255,90,31,.3),0 0 0 1px #fff,0 2px 10px rgba(0,0,0,.5)}
-.pin .pc{position:absolute;left:0;top:0;width:var(--sz);height:var(--sz);display:grid;place-items:center;font:700 9px var(--mono);color:#fff;pointer-events:none}
-.pin .pl{padding:3px 8px;border-radius:999px;background:rgba(10,14,22,.55);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.14);white-space:nowrap;opacity:0;transform:translateX(-4px);transition:opacity .2s,transform .2s;pointer-events:none}
+.pin{position:absolute;left:0;top:0;pointer-events:auto;border:0;background:none;padding:0;cursor:pointer;color:#fff;font:600 12px var(--ui);display:flex;align-items:center;gap:8px;margin:calc(var(--sz)/-2) 0 0 calc(var(--sz)/-2);transition:opacity .25s;will-change:transform}
+.pin .pd{position:relative;width:var(--sz);height:var(--sz);border-radius:50%;background:var(--or);border:2px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.35);display:grid;place-items:center;flex:none;transition:transform .2s var(--ease)}
+.pin .pc{font:700 10px var(--mono);color:#fff;line-height:1}
+.pin.live .pd::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--or);animation:ring 1.8s infinite}
+@keyframes ring{from{opacity:.9;transform:scale(.7)}to{opacity:0;transform:scale(1.5)}}
+.pin:hover,.pin.sel{z-index:5}.pin:hover .pd,.pin.sel .pd{transform:scale(1.18)}
+.pin.sel .pd{background:#111214}
+.pin .pl{display:flex;align-items:center;gap:5px;padding:4px 10px 4px 10px;border-radius:999px;background:rgba(255,255,255,.94);color:var(--ink);box-shadow:0 6px 20px rgba(0,0,0,.25);white-space:nowrap;opacity:0;transform:translateX(-4px);transition:opacity .2s,transform .2s;pointer-events:none}
+.pin .pl b{margin-right:3px}
+.pin .pl em{font-style:normal;font-size:11px;color:var(--or-ink);margin-left:3px}
 .pin:hover .pl,.pin.sel .pl,#mk.close .pin .pl{opacity:1;transform:none}
-#mk.far .pin .pc{opacity:0}
+#mk.close .pin:not(:hover):not(.sel) .pl .mini{display:none}
 .pin.hid{opacity:0;pointer-events:none}
-.tlogo{position:absolute;left:-17px;top:-17px;width:34px;height:34px;border-radius:11px;border:0;padding:0;background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.35);display:grid;place-items:center;cursor:pointer;pointer-events:none;opacity:0;scale:.6;transition:opacity .25s,scale .25s var(--ease);will-change:transform}
+.mini{width:20px;height:20px;border-radius:6px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;font:700 7px var(--ui);color:var(--mut);flex:none}
+.mini img{width:80%;height:80%;object-fit:contain}
+.tlogo{position:absolute;left:-19px;top:-19px;width:38px;height:38px;border-radius:12px;border:0;padding:0;background:#fff;box-shadow:0 6px 16px rgba(0,0,0,.3);display:grid;place-items:center;cursor:pointer;pointer-events:none;opacity:0;scale:.6;transition:opacity .25s,scale .25s var(--ease);will-change:transform}
 .tlogo.show{opacity:1;scale:1;pointer-events:auto}
 .tlogo:hover{scale:1.12;z-index:2}
-.tlg{width:100%;height:100%;display:grid;place-items:center;font:700 9px var(--ui);color:var(--mut);overflow:hidden;border-radius:11px}
+.tlg{width:100%;height:100%;display:grid;place-items:center;font:700 9px var(--ui);color:var(--mut);overflow:hidden;border-radius:12px}
 .tlg img{width:76%;height:76%;object-fit:contain}
+#stat b{font-family:var(--mono);font-weight:600}
+.lvd{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--or);animation:pulse 1.4s infinite;margin-right:2px}
 
 /* Panneau */
 .side{display:flex;flex-direction:column;max-height:min(76vh,780px);min-height:480px;overflow:hidden}
@@ -61,7 +70,8 @@ h1 b{color:var(--or)}
 .sec h3{margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
 .crow,.trow{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:12px;min-height:48px;padding:8px 14px;border-radius:14px;cursor:pointer;transition:background .15s}
 .crow:hover,.trow:hover{background:var(--soft)}
-.crow span{font-weight:600;flex:1}.crow i,.trow i{font-style:normal;color:var(--faint);font-size:12px}
+.crow>span:first-child{font-weight:600;flex:1}.stack{display:flex}.stack .mini{margin-left:-6px;box-shadow:0 0 0 2px #fff}.lvt{font-style:normal;font-size:11px;color:var(--or-ink);font-weight:600;margin-left:4px}
+.tgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.tcell{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border-radius:14px;background:var(--soft);transition:background .15s,transform .15s}.tcell:hover{background:var(--tile);transform:translateY(-2px)}.tcell .lg{--s:36px;background:#fff}.tcell span:last-child{font-size:11px;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.crow i,.trow i{font-style:normal;color:var(--faint);font-size:12px}
 .trow .lg{--s:34px}.trow>span:not(.lg){flex:1;min-width:0}.trow b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.trow small{color:var(--faint);font-size:12px}
 .mrow{display:grid;grid-template-columns:44px 1fr;gap:2px 8px;padding:10px 12px;border-radius:14px;background:var(--soft);margin-bottom:6px;font-size:13px}
 .mrow .mt{grid-row:span 2;font:600 12px var(--mono);color:var(--mut);align-self:center}.mrow .lv{color:var(--or-ink)}
@@ -117,8 +127,8 @@ h1 b{color:var(--or)}
       <div id="globe"></div>
       <div id="mk"></div>
       <div class="loading" id="loading">Chargement de la Terre…</div>
-      <div class="ov tl"><span class="glass"><span class="dot"></span>Atlas · <span id="skyName">—</span></span></div>
-      <div class="ov bl"><span class="glass" style="font-size:12px;color:rgba(255,255,255,.8)">Glisse pour tourner · zoome pour voir les logos</span></div>
+      <div class="ov tl"><span class="glass" id="stat">Chargement des équipes…</span></div>
+      <div class="ov bl"><span class="glass" style="font-size:12px;color:rgba(255,255,255,.85)">Glisse pour tourner · zoome pour voir les logos des équipes</span></div>
       <div class="ov br"><span class="glass" style="padding:0 4px"><button type="button" id="zin" aria-label="Zoomer">+</button><button type="button" id="zout" aria-label="Dézoomer">−</button><button type="button" id="home" aria-label="Vue monde">◎</button></span></div>
     </div>
     <aside class="card side" aria-label="Informations"><div id="panel" aria-live="polite"></div></aside>

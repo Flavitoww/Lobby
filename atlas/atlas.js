@@ -10,13 +10,13 @@ const country = (cc) => (REG && cc ? REG.of(cc) : cc) || cc;
 // Centre approximatif de chaque pays : la donnée source ne donne que le PAYS d'une org (pas la ville).
 const CC = { FR: [46.6, 2.4], DE: [51.2, 10.4], GB: [54, -2], ES: [40.4, -3.7], IT: [42.8, 12.5], PL: [52, 19.4], SE: [62, 15], DK: [56, 9.5], NO: [61, 9], FI: [64, 26], NL: [52.2, 5.5], BE: [50.6, 4.6], PT: [39.6, -8], RU: [56, 38], UA: [49, 32], TR: [39, 35], US: [39.5, -98.5], CA: [56, -106], BR: [-14, -51], AR: [-34, -64], CL: [-33, -71], MX: [23, -102], PE: [-9, -75], CO: [4.5, -74], VE: [7, -66], UY: [-33, -56], KR: [36.5, 127.8], CN: [35, 104], JP: [36.2, 138.2], TW: [23.7, 121], HK: [22.3, 114.2], MO: [22.2, 113.5], VN: [16, 107.8], TH: [15.8, 101], PH: [12.9, 121.8], ID: [-2.5, 118], MY: [4.2, 102], SG: [1.35, 103.8], KH: [12.6, 104.9], MM: [21, 96], AU: [-25.3, 133.8], NZ: [-41, 174], IN: [21, 78], PK: [30.4, 69.3], BD: [23.7, 90.4], SA: [24, 45], AE: [24, 54], QA: [25.3, 51.2], KW: [29.3, 47.5], JO: [31.2, 36.5], LB: [33.9, 35.9], IR: [32.4, 53.7], IQ: [33, 44], KZ: [48, 67], UZ: [41.4, 64.6], KG: [41.2, 74.8], MN: [46.9, 103.8], CZ: [49.8, 15.5], SK: [48.7, 19.7], RS: [44, 21], BG: [42.7, 25.5], RO: [45.9, 25], HU: [47.2, 19.5], AT: [47.5, 14.5], CH: [46.8, 8.2], IL: [31, 35], EE: [58.6, 25], LV: [56.9, 24.6], LT: [55.2, 23.9], BY: [53.7, 28], MD: [47.4, 28.4], GE: [42.3, 43.4], AM: [40.1, 45], AZ: [40.1, 47.6], ZA: [-30.6, 22.9], EG: [26.8, 30.8], MA: [31.8, -7.1], TN: [34, 9.5], DZ: [28, 2.6], NG: [9, 8.7], KE: [0, 38], IE: [53.4, -8.2], GR: [39, 22], HR: [45.1, 15.2], SI: [46.1, 14.9], BA: [44, 17.8], MK: [41.6, 21.7], AL: [41.1, 20.2], ME: [42.7, 19.4], XK: [42.6, 20.9], IS: [64.9, -18.6], LU: [49.8, 6.1], CY: [35.1, 33.4], MT: [35.9, 14.4], CR: [9.7, -84], GT: [15.8, -90.2], DO: [18.7, -70.2], PR: [18.2, -66.5], EC: [-1.8, -78.2], BO: [-16.3, -63.6], PY: [-23.4, -58.4] };
 
-const S = { orgs: [], byCC: {}, live: [], game: 'all', sel: null, team: null, q: '' };
+const S = { orgs: [], byCC: {}, live: [], liveCC: new Set(), game: 'all', sel: null, team: null, q: '' };
 
 /* ---------- Globe ---------- */
 const stage = $('stage');
 const sky = skyFor();
 stage.style.background = sky.bg;
-$('skyName').textContent = sky.name;
+
 let fly = null;
 try { fly = JSON.parse(sessionStorage.getItem('lobbyFly') || 'null'); sessionStorage.removeItem('lobbyFly'); if (fly && Date.now() - fly.t > 6000) fly = null; } catch { fly = null; }
 let g = null;
@@ -28,7 +28,7 @@ try {
 if (g) {
   g.ready.then(() => { $('loading').style.opacity = 0; setTimeout(() => $('loading').remove(), 700); });
   if (fly) g.zoomTo(3.1, 1400).then(() => { g.controls.autoRotate = true; });
-  $('zin').onclick = () => g.zoomTo(Math.max(1.25, g.camera.position.length() * 0.72), 450);
+  $('zin').onclick = () => g.zoomTo(Math.max(1.45, g.camera.position.length() * 0.75), 450);
   $('zout').onclick = () => g.zoomTo(Math.min(7, g.camera.position.length() / 0.72), 450);
   $('home').onclick = () => { select(null); g.flyTo(38, 8, 3.3); };
   g.onFrame(placeMarkers);
@@ -38,6 +38,7 @@ document.body.classList.add(fly ? 'enter-fly' : 'enter');
 /* ---------- Marqueurs (HTML, projetés à chaque image) ---------- */
 const layer = $('mk');
 const pins = {}; // cc -> { el, ring: [els] }
+let order = [];
 function logo(url, txt, cls = 'lg') {
   const t = esc(String(txt || '?').replace(/[^A-Za-z0-9]/g, '').slice(0, 3).toUpperCase());
   return `<span class="${cls}">${url ? `<img src="${esc(url)}" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('${t}'))">` : t}</span>`;
@@ -50,8 +51,11 @@ function buildPins() {
     const el = document.createElement('button');
     el.type = 'button'; el.className = 'pin'; el.dataset.cc = cc;
     el.setAttribute('aria-label', `${country(cc)} : ${list.length} équipe${list.length > 1 ? 's' : ''}`);
-    el.innerHTML = `<span class="pd"></span><span class="pc">${list.length}</span><span class="pl">${esc(country(cc))}</span>`;
-    el.style.setProperty('--sz', (10 + Math.min(10, Math.sqrt(list.length) * 2.6)).toFixed(1) + 'px');
+    const top3 = list.slice().sort((a, b) => act(b) - act(a)).slice(0, 3);
+    const isLive = S.liveCC.has(cc);
+    el.classList.toggle('live', isLive);
+    el.innerHTML = `<span class="pd"><span class="pc">${list.length}</span></span><span class="pl"><b>${esc(country(cc))}</b>${top3.map((o) => logo(o.lg || o.ld, o.s || o.n, 'mini')).join('')}${isLive ? '<em>● live</em>' : ''}</span>`;
+    el.style.setProperty('--sz', (18 + Math.min(12, Math.sqrt(list.length) * 2.4)).toFixed(1) + 'px');
     el.onclick = (e) => { e.stopPropagation(); select(cc, true); };
     layer.appendChild(el);
     const ring = list.slice().sort((a, b) => act(b) - act(a)).slice(0, 8).map((o, i, arr) => {
@@ -64,14 +68,24 @@ function buildPins() {
     });
     pins[cc] = { el, ring, n: list.length };
   });
+  order = Object.keys(pins).sort((a, b) => pins[b].n - pins[a].n);
+  updStats();
+}
+function updStats() {
+  const nT = Object.keys(pins).reduce((s, k) => s + pins[k].n, 0), nC = Object.keys(pins).length, nL = S.liveCC.size;
+  $('stat').innerHTML = nT ? `<b>${nT}</b> équipes · <b>${nC}</b> pays${nL ? ` · <span class="lvd"></span><b>${nL}</b> en direct` : ''}` : 'Chargement des équipes…';
 }
 const act = (o) => Object.values(o.g || {}).reduce((s, x) => s + (x.f || 0), 0);
 function placeMarkers(cam, dist) {
-  const far = dist > 3.6, close = dist < 2.15;
+  const far = dist > 3.6, close = dist < 2.2;
   layer.classList.toggle('far', far); layer.classList.toggle('close', close);
-  for (const cc in pins) {
+  const placed = [];
+  for (const cc of order) {
     const p = pins[cc], [la, lo] = CC[cc], s = g.project(la, lo);
-    const on = s.front;
+    let on = s.front;
+    // anti-chevauchement : un petit pays trop près d'un plus gros est masqué (sauf s'il est sélectionné)
+    if (on && S.sel !== cc && placed.some((q) => Math.hypot(q.x - s.x, q.y - s.y) < (close ? 26 : 22))) on = false;
+    if (on) placed.push(s);
     p.el.style.transform = `translate(${s.x}px,${s.y}px)`;
     p.el.classList.toggle('hid', !on);
     p.el.classList.toggle('sel', S.sel === cc);
@@ -104,9 +118,9 @@ function home() {
   const live = S.live.filter((m) => m.k && (S.game === 'all' || m.game === S.game)).slice(0, 4);
   setPanel(`
     <div class="ph"><div class="eyebrow">Exploration</div><h2>Découvre la scène mondiale.</h2><p class="lead">Clique un pays sur le globe, ou cherche une équipe.</p></div>
-    <div class="stats"><div><b>${nT || '—'}</b><span>équipes</span></div><div><b>${ccs.length || '—'}</b><span>pays</span></div><div><b>${S.live.filter((m) => m.status === 'running' && m.k).length}</b><span>matchs live</span></div></div>
     ${live.length ? `<div class="sec"><h3>À suivre</h3>${live.map(matchRow).join('')}</div>` : ''}
-    <div class="sec"><h3>Pays les plus représentés</h3>${ccs.slice(0, 8).map((cc) => `<button type="button" class="crow" data-cc="${cc}"><span>${esc(country(cc))}</span><i>${visibleOrgs(S.byCC[cc]).length} équipe${visibleOrgs(S.byCC[cc]).length > 1 ? 's' : ''}</i></button>`).join('') || '<p class="empty">Chargement des équipes…</p>'}</div>
+    ${S.orgs.length ? `<div class="sec"><h3>Équipes à la une</h3><div class="tgrid">${visibleOrgs(S.orgs).slice().sort((a, b) => act(b) - act(a)).slice(0, 12).map((o) => `<button type="button" class="tcell" data-id="${esc(o.id)}" title="${esc(o.n)}">${logo(o.lg || o.ld, o.s || o.n)}<span>${esc(o.s || o.n)}</span></button>`).join('')}</div></div>` : ''}
+    <div class="sec"><h3>Pays les plus représentés</h3>${ccs.slice(0, 8).map((cc) => { const l = visibleOrgs(S.byCC[cc]); return `<button type="button" class="crow" data-cc="${cc}"><span>${esc(country(cc))}${S.liveCC.has(cc) ? ' <em class="lvt">live</em>' : ''}</span><span class="stack">${l.slice().sort((a, b) => act(b) - act(a)).slice(0, 3).map((o) => logo(o.lg || o.ld, o.s || o.n, 'mini')).join('')}</span><i>${l.length}</i></button>`; }).join('') || '<p class="empty">Chargement des équipes…</p>'}</div>
     <p class="note">Les équipes sont placées au centre de leur pays : la source ne donne pas leur ville.</p>`);
 }
 function openCountry(cc) {
@@ -145,7 +159,7 @@ function select(cc, fromGlobe) {
 }
 panel.addEventListener('click', (e) => {
   const c = e.target.closest('[data-cc]'); if (c && c.classList.contains('crow')) return select(c.dataset.cc);
-  const t = e.target.closest('.trow'); if (t) { const o = S.orgs.find((x) => x.id === t.dataset.id); if (o) openTeam(o); return; }
+  const t = e.target.closest('.trow,.tcell'); if (t) { const o = S.orgs.find((x) => x.id === t.dataset.id); if (o) openTeam(o); return; }
   if (e.target.closest('[data-back]')) { select(null); if (g) g.zoomTo(3.3, 700); return; }
   const cb = e.target.closest('[data-cc-back]'); if (cb) return select(cb.dataset.ccBack);
 });
@@ -181,9 +195,18 @@ document.addEventListener('keydown', (e) => { if (e.key === '/' && document.acti
 
 /* ---------- Données ---------- */
 home();
-fetch('/api/live').then((r) => r.ok ? r.json() : null).then((d) => { if (d) { S.live = (d.matches || []).concat(d.recent || []); if (!S.sel) home(); } }).catch(() => {});
-fetch('/api/orgs').then((r) => { if (!r.ok) throw 0; return r.json(); }).then((d) => {
-  S.orgs = d.orgs || []; S.byCC = {};
+fetch('/api/live').then((r) => r.ok ? r.json() : null).then((d) => { if (d) { S.live = (d.matches || []).concat(d.recent || []); if (S.orgs.length) { computeLive(); buildPins(); } if (!S.sel) home(); } }).catch(() => {});
+function setOrgs(d) {
+  if (!d || !d.orgs || !d.orgs.length) return false;
+  S.orgs = d.orgs; S.byCC = {};
   S.orgs.forEach((o) => { const cc = (o.cc || '').toUpperCase(); o.cc = cc; (S.byCC[cc] = S.byCC[cc] || []).push(o); });
-  buildPins(); if (S.team) openTeam(S.team); else if (S.sel) openCountry(S.sel); else home();
-}).catch(() => { panel.querySelector('.sec:last-of-type')?.insertAdjacentHTML('beforeend', '<p class="empty">Impossible de charger les équipes pour le moment.</p>'); });
+  computeLive(); buildPins(); if (S.team) openTeam(S.orgs.find((x) => x.id === S.team.id) || S.team); else if (S.sel) openCountry(S.sel); else home();
+  if (g) g.redraw(); return true;
+}
+function computeLive() {
+  S.liveCC = new Set();
+  S.live.filter((m) => m.status === 'running').forEach((m) => S.orgs.forEach((o) => { if (matchesOf(o).includes(m)) S.liveCC.add(o.cc); }));
+}
+// 1) copie locale immédiate (vraies données, mise à jour régulièrement) 2) API live ensuite
+fetch('/assets/orgs.json').then((r) => r.ok ? r.json() : null).then((d) => { if (!S.orgs.length) setOrgs(d); }).catch(() => {});
+fetch('/api/orgs').then((r) => { if (!r.ok) throw 0; return r.json(); }).then(setOrgs).catch(() => { if (!S.orgs.length) $('stat').textContent = 'Équipes indisponibles pour le moment'; });

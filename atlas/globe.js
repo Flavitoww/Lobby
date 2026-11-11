@@ -48,18 +48,11 @@ void main(){
   vec3 Np = normalize(N - (T * hx + B * hy) * 2.2);
   float ndl = dot(Np, sunDir);
   float day = smoothstep(-0.06, 0.16, dot(N, sunDir));            // terminateur doux (crépuscule)
-  vec3 dayC = texture2D(dayMap, vUv).rgb * (0.06 + 1.12 * pow(max(ndl, 0.), 0.85));
+  vec3 dayC = texture2D(dayMap, vUv).rgb * (0.28 + 0.86 * max(ndl, 0.));
   float twi = smoothstep(-0.12, 0.0, dot(N, sunDir)) * (1. - smoothstep(0.0, 0.12, dot(N, sunDir)));
   dayC += vec3(0.35, 0.12, 0.03) * twi * 0.1;                      // lueur orangée au crépuscule
   vec3 nightC = texture2D(nightMap, vUv).rgb; nightC = pow(nightC, vec3(1.25)) * vec3(1.25, 1.05, 0.8);
   vec3 col = mix(nightC * 1.3, dayC, day);
-  // reflet du Soleil sur les océans uniquement
-  float water = texture2D(waterMap, vUv).r;
-  vec3 V = normalize(camPos - vW); vec3 H = normalize(sunDir + V);
-  col += vec3(1.0, 0.92, 0.78) * pow(max(dot(N, H), 0.), 220.) * water * 0.2 * day;
-  // bord atmosphérique bleuté côté jour
-  float rim = pow(1. - max(dot(N, V), 0.), 3.);
-  col += vec3(0.30, 0.55, 1.0) * rim * 0.45 * smoothstep(-0.25, 0.4, dot(N, sunDir));
   gl_FragColor = vec4(col, 1.);
   #include <colorspace_fragment>
 }`;
@@ -75,7 +68,7 @@ uniform vec3 sunDir; varying vec3 vNv; varying vec3 vN;
 void main(){ float i = pow(clamp(0.72 - dot(vNv, vec3(0.,0.,1.)), 0., 1.), 5.0);   // halo doux (technique three-globe)
 float lit = smoothstep(-0.45, 0.35, dot(normalize(vN), sunDir));
 vec3 c = mix(vec3(0.05,0.08,0.2), vec3(0.32,0.6,1.0), lit);
-gl_FragColor = vec4(c, i * (0.15 + 0.85 * lit));
+gl_FragColor = vec4(c, i * (0.1 + 0.5 * lit));
 }`;
 
 function isLowEnd() {
@@ -86,8 +79,10 @@ function isLowEnd() {
 
 export function createGlobe(el, opts = {}) {
   const low = isLowEnd();
-  const renderer = new THREE.WebGLRenderer({ antialias: !low, alpha: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, low ? 1.5 : 2));
+  let dirty = true;
+  const dpr = devicePixelRatio || 1;
+  const renderer = new THREE.WebGLRenderer({ antialias: !low && dpr < 2, alpha: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(dpr, low ? 1.25 : 1.6));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   el.appendChild(renderer.domElement);
   Object.assign(renderer.domElement.style, { display: 'block', width: '100%', height: '100%', touchAction: 'none' });
@@ -98,7 +93,7 @@ export function createGlobe(el, opts = {}) {
   camera.position.copy(ll2v(start.lat, start.lon, start.dist));
 
   const controls = new OrbitControls(camera, renderer.domElement);
-  Object.assign(controls, { enableDamping: true, dampingFactor: 0.07, enablePan: false, minDistance: 1.18, maxDistance: 7, rotateSpeed: 0.45, zoomSpeed: 0.8 });
+  Object.assign(controls, { enableDamping: true, dampingFactor: 0.07, enablePan: false, minDistance: 1.4, maxDistance: 7, rotateSpeed: 0.45, zoomSpeed: 0.8 });
   controls.autoRotate = opts.autoRotate !== false; controls.autoRotateSpeed = 0.35;
   if (opts.interactive === false) { controls.enableRotate = controls.enableZoom = false; }
   controls.addEventListener('start', () => { controls.autoRotate = false; });
@@ -108,7 +103,7 @@ export function createGlobe(el, opts = {}) {
 
   const sun = new THREE.Vector3(1, 0, 0);
   const uni = { dayMap: { value: null }, nightMap: { value: null }, waterMap: { value: null }, bumpMap: { value: null }, sunDir: { value: sun }, camPos: { value: camera.position }, texel: { value: new THREE.Vector2(1 / 2048, 1 / 1024) } };
-  const seg = low ? 96 : 160;
+  const seg = low ? 80 : 128;
   const earth = new THREE.Mesh(new THREE.SphereGeometry(1, seg, seg / 2), new THREE.ShaderMaterial({ uniforms: uni, vertexShader: EARTH_VS, fragmentShader: EARTH_FS }));
   earth.visible = false; scene.add(earth);
 
@@ -126,28 +121,30 @@ export function createGlobe(el, opts = {}) {
   }
 
   // Chargement progressif : 2K d'abord, 4K ensuite sur machine capable
-  const ready = Promise.all([tex('day-2k.webp', true), tex('night-2k.webp', true), tex('water-2k.webp'), tex('bump-2k.webp'), tex('clouds-2k.webp')]).then(([d, n, w, b, c]) => {
+  const ready = Promise.all([tex('day-2k.webp', true), realSun ? tex('night-2k.webp', true) : Promise.resolve(null), Promise.resolve(null), tex('bump-2k.webp'), tex('clouds-2k.webp')]).then(([d, n, w, b, c]) => {
+    n = n || d; w = w || d;
     uni.dayMap.value = d; uni.nightMap.value = n; uni.waterMap.value = w; uni.bumpMap.value = b; cUni.map.value = c;
     earth.visible = !!d; clouds.visible = !!c && opts.clouds !== false;
     if (!low && opts.hd !== false) {
-      Promise.all([tex('day-4k.webp', true), tex('night-4k.webp', true), tex('clouds-4k.webp')]).then(([d4, n4, c4]) => {
-        if (d4) uni.dayMap.value = d4; if (n4) uni.nightMap.value = n4; if (c4) cUni.map.value = c4;
-      });
+      tex('day-4k.webp', true).then((d4) => { if (d4) { uni.dayMap.value = d4; dirty = true; } });
     }
-    el.dispatchEvent(new CustomEvent('globe:ready'));
+    dirty = true; el.dispatchEvent(new CustomEvent('globe:ready'));
   });
 
   let timeOffset = 0; // ms, pour tester d'autres heures
   function updateSun() { const s = subsolar(new Date(Date.now() + timeOffset)); sun.copy(ll2v(s.lat, s.lon)); return s; }
   let sunInfo = updateSun();
 
-  function resize() { const w = el.clientWidth || 1, h = el.clientHeight || 1; renderer.setSize(w, h, false); camera.aspect = w / h;
+  function resize() { dirty = true; const w = el.clientWidth || 1, h = el.clientHeight || 1; renderer.setSize(w, h, false); camera.aspect = w / h;
     // écran étroit (téléphone) : on élargit le champ pour que la Terre tienne en entier
     camera.fov = camera.aspect < 1 ? Math.min(70, 2 * Math.atan(Math.tan(19 * DEG) / camera.aspect) / DEG) : 38; camera.updateProjectionMatrix(); }
   const ro = new ResizeObserver(resize); ro.observe(el); resize();
 
   // Rendu uniquement quand c'est utile (onglet visible, globe à l'écran)
   let visible = true, raf = 0, last = 0, frameCb = null;
+  const lastPos = new THREE.Vector3();
+  controls.addEventListener('change', () => { dirty = true; });
+  addEventListener('resize', () => { dirty = true; });
   const io = new IntersectionObserver((e) => { visible = e[0].isIntersecting; if (visible) loop(); }); io.observe(el);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) loop(); });
   function loop(t = performance.now()) {
@@ -160,10 +157,13 @@ export function createGlobe(el, opts = {}) {
       const c = camera.position.clone().normalize(), up = camera.up.clone().projectOnPlane(c).normalize(), right = new THREE.Vector3().crossVectors(c, up);
       sun.copy(c).addScaledVector(up, 0.35).addScaledVector(right, -0.3).normalize();
     }
-    clouds.rotation.y += dt * 0.004;
     const dist = camera.position.length();
     controls.rotateSpeed = 0.12 + 0.33 * Math.min(1, (dist - 1.1) / 2.5); // plus précis de près
-    controls.update();
+    if (controls.update()) dirty = true;
+    if (controls.autoRotate) { clouds.rotation.y += dt * 0.004; dirty = true; }
+    if (lastPos.distanceToSquared(camera.position) > 1e-12) { lastPos.copy(camera.position); dirty = true; }
+    if (!dirty) return; // rien n'a bougé : on ne redessine pas (économise le GPU)
+    dirty = false;
     if (frameCb) frameCb(camera, dist);
     renderer.render(scene, camera);
   }
@@ -190,7 +190,8 @@ export function createGlobe(el, opts = {}) {
     THREE, scene, camera, controls, renderer, earth, ready, flyTo,
     get sun() { return sunInfo; },
     setTimeOffset(ms) { timeOffset = ms; sunInfo = updateSun(); },
-    setStars(o) { starsOpacity = o; if (stars) stars.material.opacity = o; },
+    setStars(o) { starsOpacity = o; if (stars) stars.material.opacity = o; dirty = true; },
+    redraw() { dirty = true; },
     get view() { const ll = v2ll(camera.position); return { lat: ll.lat, lon: ll.lon, dist: camera.position.length() }; },
     zoomTo(dist, ms = 600) { const d0 = camera.position.length(), t0 = performance.now(); controls.autoRotate = false; return new Promise((done) => { (function st() { const k = Math.min(1, (performance.now() - t0) / ms), e = 1 - Math.pow(1 - k, 3); camera.position.setLength(d0 + (dist - d0) * e); if (k < 1) requestAnimationFrame(st); else done(); })(); }); },
     onFrame(cb) { frameCb = cb; },
@@ -198,7 +199,7 @@ export function createGlobe(el, opts = {}) {
       const p = ll2v(lat, lon, 1.01), camDir = camera.position.clone().normalize();
       const facing = p.clone().normalize().dot(camDir);
       const v = p.project(camera), w = el.clientWidth, h = el.clientHeight;
-      return { x: (v.x + 1) / 2 * w, y: (1 - v.y) / 2 * h, front: facing > 0.12, facing };
+      return { x: (v.x + 1) / 2 * w, y: (1 - v.y) / 2 * h, front: facing > 0.22, facing };
     },
     pick(clientX, clientY) {
       const r = renderer.domElement.getBoundingClientRect();
@@ -212,8 +213,8 @@ export function createGlobe(el, opts = {}) {
 // Fond selon l'heure locale du visiteur : la Terre reste entièrement visible, seul le décor change.
 export function skyFor(date = new Date()) {
   const h = date.getHours() + date.getMinutes() / 60;
-  if (h >= 6 && h < 8.5) return { name: 'aube', stars: 0.35, bg: 'radial-gradient(120% 95% at 50% 115%, #5b3a3a 0%, #2b2440 32%, #0c1426 62%, #070a12 100%)' };
-  if (h >= 8.5 && h < 17) return { name: 'jour', stars: 0.12, bg: 'radial-gradient(120% 95% at 50% 110%, #2c5d9c 0%, #173a6b 30%, #0b1e3c 60%, #070d1b 100%)' };
-  if (h >= 17 && h < 19.5) return { name: 'crépuscule', stars: 0.4, bg: 'radial-gradient(120% 95% at 50% 115%, #8a4a2a 0%, #3b2440 30%, #121733 60%, #06080f 100%)' };
-  return { name: 'nuit', stars: 1, bg: 'radial-gradient(120% 90% at 50% 40%, #0d1420 0%, #06080c 70%)' };
+  if (h >= 6 && h < 8.5) return { name: 'aube', stars: 0.15, bg: 'linear-gradient(180deg, #2c4b86 0%, #6a6f9e 55%, #e3a483 100%)' };
+  if (h >= 8.5 && h < 17.5) return { name: 'jour', stars: 0, bg: 'linear-gradient(180deg, #3d77c4 0%, #5f97d8 50%, #a9c9ec 100%)' };
+  if (h >= 17.5 && h < 19.5) return { name: 'crépuscule', stars: 0.25, bg: 'linear-gradient(180deg, #1d2d5c 0%, #5a4a7c 50%, #e08a5c 100%)' };
+  return { name: 'nuit', stars: 0.9, bg: 'radial-gradient(120% 90% at 50% 40%, #142036 0%, #0a0f1a 70%)' };
 }
