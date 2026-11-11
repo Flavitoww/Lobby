@@ -6,12 +6,14 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b0e14'/%3E%3Cpath d='M10 7h4v14h8v4H10z' fill='%23ff5a1f'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Spline+Sans+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Spline+Sans+Mono:wght@400;500;600&display=swap">
 <style>
+@view-transition{navigation:auto}
+::view-transition-old(root){animation:vto .22s cubic-bezier(.2,.7,.2,1) both}::view-transition-new(root){animation:vti .32s cubic-bezier(.2,.7,.2,1) both}@keyframes vto{to{opacity:0;transform:translateY(-6px)}}@keyframes vti{from{opacity:0;transform:translateY(8px)}}
 :root{
   --bg:#0a0d13;--panel:#0f131c;--panel2:#11161f;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.11);
   --fg:#e9edf4;--mut:#8b94a6;--faint:#5a6474;--or:#ff5a1f;--ice:#9fc2ef;--win:#49d08b;--grid:rgba(159,194,239,.28);
-  --ui:"Schibsted Grotesk",system-ui,sans-serif;--mono:"Spline Sans Mono",ui-monospace,monospace;
+  --ui:"Bricolage Grotesque",system-ui,sans-serif;--mono:"Spline Sans Mono",ui-monospace,monospace;
   color-scheme:dark;
 }
 *{box-sizing:border-box}html,body{margin:0;max-width:100%;overflow-x:clip}
@@ -213,12 +215,7 @@ body.ready .panel{opacity:1;transform:none;transition:opacity .45s ease,transfor
     <a class="brand" id="brandHome"><span class="mk"><svg viewBox="0 0 32 32"><path d="M10 7h4v14h8v4H10z" fill="#ff5a1f"/></svg></span>LO<b>B</b>BY</a>
     <div class="nlinks">
       <span class="nlink on">Accueil</span>
-      <span class="nlink" data-pal>Compétitions</span>
-      <span class="nlink" data-pal>Équipes</span>
-      <span class="nlink" data-pal>Joueurs</span>
-      <span class="nlink" data-pal>Transferts</span>
-      <span class="nlink" data-pal>Business</span>
-      <span class="nlink" data-atlas>Atlas</span>
+      <a class="nlink" href="/atlas">Atlas</a>
     </div>
     <button class="nsearch" id="openPal" type="button"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg><span>Rechercher…</span><kbd>⌘K</kbd></button>
     <span class="ava"></span>
