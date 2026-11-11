@@ -13,6 +13,14 @@ module.exports = {
   RETIRED: ['Ici Japon Corp'],
   // Une org n'est gardée que si elle a joué un tournoi depuis moins de X jours.
   RECENT_DAYS: 200,
+  // Événements suivis à la main quand PandaScore ne les couvre pas. Aucune heure ni score inventés : seulement ce que dit la source.
+  EVENTS: [
+    { id: 'cdf-slash-rl-2026', game: 'rl', name: 'Coupe de France Slash', stage: 'Demi-finales + finale',
+      day: '2026-11-12', from: '2026-11-02', until: '2026-11-13',
+      teams: ['Vitality', 'Geekay', 'Karmine Corp', 'Gentle Mates', 'Ikkaku', 'Dumornay Goat'],
+      watch: 'https://www.twitch.tv/slash_ftv',
+      source: 'https://www.francetvpro.fr/contenu-de-presse/79193261' }
+  ],
   // Sources de données (connectées ou prévues), affichées sur /gestion.
   SOURCES: [
     { id: 'pandascore', name: 'PandaScore', role: 'Matchs, équipes, joueurs, logos', status: 'connected' },

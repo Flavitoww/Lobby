@@ -104,7 +104,9 @@ module.exports = async (req, res) => {
     const matches = live.concat(imp(next, 90)).slice(0, 110);
     recent = imp(recent, 30).sort((a, b) => (b.k - a.k) || (b.ts - a.ts));
 
-    const body = { updated: now, matches, recent };
+    const today = new Date(now).toISOString().slice(0, 10);
+    const events = (CFG.EVENTS || []).filter((e) => e.from <= today && today < e.until);
+    const body = { updated: now, matches, recent, events };
     CACHE = { at: now, body };
     res.setHeader('Cache-Control', 'public, max-age=60');
     res.status(200).json(body);

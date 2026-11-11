@@ -34,6 +34,11 @@ h1 span{color:var(--faint)}
 .fa{display:flex;gap:10px;margin-top:auto}.fa .btn{flex:1;height:42px}
 
 
+/* Événement suivi à la main (pas de score inventé) */
+.evc{display:flex;flex-wrap:wrap;gap:6px}.evc span{font-size:12.5px;font-weight:600;padding:6px 10px;border-radius:999px;background:var(--soft);border:1px solid var(--line)}
+.evn{font-family:Archivo,var(--sans);font-weight:800;font-size:clamp(26px,3vw,36px);letter-spacing:-.02em;line-height:1.05}
+.evn small{display:block;font-family:var(--sans);font-weight:500;font-size:14px;color:var(--mut);letter-spacing:0;margin-top:6px}
+.row.ev .tm{font-weight:700}
 /* Bloc « impact » (repris de C3) : le match vedette */
 #feat.impact{overflow:hidden;position:relative}
 .imp{display:flex;flex-direction:column;gap:16px;padding:20px 22px 22px;height:100%}
@@ -199,7 +204,17 @@ import("/search.js").then(function(mod){window.__SRCH=mod;mod.attachSearch($("q"
 $("q").addEventListener("input",function(){if(S.q&&!this.value){S.q="";draw()}});
 document.addEventListener("keydown",function(e){if(e.key==="/"&&document.activeElement.tagName!=="INPUT"){e.preventDefault();$("q").focus()}});
 
+function pday(t){return new Date(t).toLocaleDateString("fr-CA",{timeZone:"Europe/Paris"})}
+function evs(){var d=S.data;return ((d&&d.events)||[]).filter(function(e){return (S.g==="all"||e.game===S.g)&&(!S.q||(e.name+" "+e.teams.join(" ")).toLowerCase().indexOf(S.q)>-1)})}
+function evDay(e){var t=pday(Date.now());return t===e.day?"Aujourd'hui":pday(Date.now()+864e5)===e.day?"Demain":new Date(e.day+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"})}
+function featEv(e){var el=$("feat");S.featId=null;el.classList.add("impact");
+  el.innerHTML='<div class="imp"><div class="fh"><span class="tag"><span>'+esc(GN[e.game]||"")+' · Scène FR</span></span><span class="pill live" style="background:var(--or-soft);color:var(--or-ink)">'+esc(evDay(e))+'</span></div>'+
+  '<div class="evn">'+esc(e.name)+'<small>'+esc(e.stage)+' · horaires et affiches : voir la diffusion</small></div>'+
+  '<div class="evc">'+e.teams.map(function(t){return '<span>'+esc(t)+'</span>'}).join("")+'</div>'+
+  '<div class="fa"><a class="btn pri" href="'+esc(e.watch)+'" target="_blank" rel="noopener">Regarder sur Slash</a><a class="btn sec" href="'+esc(e.source)+'" target="_blank" rel="noopener">Source</a></div></div>'}
 function feat(list){
+  var ev=evs().filter(function(e){return e.day===pday(Date.now())})[0];
+  if(ev&&!list.some(function(m){return m.status==="running"&&m.k&&m.big===2})){featEv(ev);return}
   var now=Date.now(),H=3600000;
   function sc(m){return (m.imp||0)+(m.big===2?60:0)+(m.k?50:0)}
   var live=list.filter(function(m){return m.status==="running"&&m.k}).sort(function(a,b){return sc(b)-sc(a)});
@@ -238,7 +253,8 @@ function draw(){
   var key=all.filter(function(m){return m.k&&m.id!==S.featId}),minor=all.length-all.filter(function(m){return m.k}).length;
   var pool=S.all?all.filter(function(m){return m.id!==S.featId}):(key.length?key:all.filter(function(m){return m.id!==S.featId}));
   var up=pool.slice().sort(function(a,b){var x=a.status==="running"?0:1,y=b.status==="running"?0:1;return (x-y)||(a.ts-b.ts)}).slice(0,S.all?20:7);
-  $("today").innerHTML=up.length?up.map(function(m){return row(m,false)}).join(""):'<div class="empty">Aucun match important pour ce filtre.</div>';
+  var evr=evs().filter(function(e){return !(S.featId===null&&e.day===pday(Date.now()))}).map(function(e){return '<a class="row ev" href="'+esc(e.watch)+'" target="_blank" rel="noopener"><span class="t" style="color:var(--or)">'+esc(evDay(e))+'</span><span class="tm r" style="grid-column:span 3;justify-content:flex-start">'+esc(e.name)+' · '+esc(e.stage)+'</span><span class="cp">Slash</span></a>'}).join("");
+  $("today").innerHTML=(evr||up.length)?evr+up.map(function(m){return row(m,false)}).join(""):'<div class="empty">Aucun match important pour ce filtre.</div>';
   $("nToday").innerHTML=minor>0?'<button type="button" class="tog" id="tog">'+(S.all?'Essentiel seulement':'+ '+minor+' match'+(minor>1?'s mineurs':' mineur'))+'</button>':'';
   var rk=rec.filter(function(m){return m.k});var rr=(rk.length>=3?rk:rec).slice().sort(function(a,b){return b.ts-a.ts}).slice(0,5);
   $("recent").innerHTML=rr.length?rr.map(function(m){return row(m,true)}).join(""):'<div class="empty">Pas de résultat récent pour ce filtre.</div>';
