@@ -261,7 +261,8 @@ function loadOrgs(){
   fetch("/api/orgs?v=3").then(function(r){if(!r.ok)throw 0;return r.json()}).then(useOrgs).catch(function(){if(!PTS){var g=document.querySelector(".gstat");if(g)g.style.display="none"}});
 }
 function useOrgs(d){
-  var by={},orgs=d.orgs||[];orgs.forEach(function(o){var k=(o.cc||"").toUpperCase();if(CC[k]){by[k]=(by[k]||0)+1}});
+  if(!d||!d.orgs)return;if(ORGS.length&&d.orgs.length<ORGS.length*0.8)return;
+  var by={},orgs=d.orgs.filter(function(o){return !/^(ici japon corp)/i.test(o.n)});orgs.forEach(function(o){var k=(o.cc||"").toUpperCase();if(CC[k]){by[k]=(by[k]||0)+1}});
   var pts=Object.keys(by).map(function(k){return {lat:CC[k][0],lng:CC[k][1],n:by[k],cc:k}});
   ORGS=orgs;PTS=pts;makeDots();$("nTeams").textContent=orgs.length;$("nCountries").textContent=Object.keys(by).length;
 }

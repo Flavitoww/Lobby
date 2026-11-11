@@ -206,8 +206,12 @@ attachSearch($('q'), { getItems: items, onPick: (it) => {
 /* ---------- Données ---------- */
 home();
 fetch('/api/live').then((r) => r.ok ? r.json() : null).then((d) => { if (d) { S.live = (d.matches || []).concat(d.recent || []); if (S.orgs.length) { computeLive(); buildPins(); } if (!S.sel) home(); } }).catch(() => {});
+const RETIRED = /^(ici japon corp)/i; // orgs inactives (liste manuelle)
 function setOrgs(d) {
   if (!d || !d.orgs || !d.orgs.length) return false;
+  // l'API peut renvoyer une liste incomplète (limites de requêtes) : on garde la plus complète
+  if (S.orgs.length && d.orgs.length < S.orgs.length * 0.8) return false;
+  d.orgs = d.orgs.filter((o) => !RETIRED.test(o.n));
   S.orgs = d.orgs; S.byCC = {};
   S.orgs.forEach((o) => { const cc = (o.cc || '').toUpperCase(); o.cc = cc; (S.byCC[cc] = S.byCC[cc] || []).push(o); });
   computeLive(); buildPins();

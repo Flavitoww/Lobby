@@ -6,6 +6,8 @@ const GAMES = {
 };
 const TIER = { s: 10, a: 4, b: 1.5, c: 0.5, d: 0.2 };
 const JUNIOR = /\b(academy|youth|junior|juniors|female|women|fe|rising|reserve|reserves|challengers?|next|prospects?)\b|\.a$| a$|\.bee$|^karmine corp blue/i;
+// Orgs signalées inactives par Flavien (liste manuelle, à compléter).
+const RETIRED = /^(ici japon corp)/i;
 // Une org n'est retenue que si elle a joué un tournoi récent (évite les équipes dissoutes ou plus actives).
 const RECENT = 200 * 86400000;
 const fresh = (tn) => { const d = Date.parse(tn.end_at || tn.begin_at || 0); return d && Date.now() - d < RECENT; };
@@ -88,7 +90,7 @@ module.exports = async (req, res) => {
       let kept = 0;
       pg.ids.forEach((c) => {
         const t = byId[c.id]; if (!t || kept >= GAMES[pg.g].n) return;
-        if (JUNIOR.test(t.name || '')) return;
+        if (JUNIOR.test(t.name || '') || RETIRED.test(t.name || '')) return;
         if (!t.image_url && !t.dark_mode_image_url) return;
         const players = (t.players || []).filter((p) => p.active !== false);
         const nm = pg.g === 'cod' ? (String(t.name || '').replace(CITY, '').trim() || t.name) : t.name; const key = norm(nm); if (!key) return;
