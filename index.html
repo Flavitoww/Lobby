@@ -184,7 +184,7 @@ function feat(list){
   if(!m){el.classList.remove("impact");el.innerHTML='<div class="empty">Aucun match pour ce filtre.</div>';return}
   el.classList.add("impact");
   var isLive=m.status==="running",aL=isLive&&m.sa<m.sb,bL=isLive&&m.sb<m.sa;
-  function team(u,ac,nm,lose){return '<div class="tl'+(lose?' lose':'')+'">'+logo(u,ac)+'<div class="nm"><b>'+esc(ac||nm)+'</b><small>'+esc(nm)+'</small></div></div>'}
+  function team(u,ac,nm,lose){return '<div class="tl'+(lose?' lose':'')+'">'+logo(u,ac)+'<div class="nm"><b>'+esc(ac||nm)+'</b>'+(ac&&ac.toLowerCase()!==String(nm).toLowerCase()?'<small>'+esc(nm)+'</small>':'')+'</div></div>'}
   el.innerHTML='<div class="imp">'+
    '<div class="fh"><span class="tag">'+logo(m.ll,m.comp)+'<span>'+esc(m.comp)+' · '+esc(GN[m.game]||"")+'</span></span>'+(isLive?'<span class="pill live"><i></i>En direct</span>':'<span class="when">'+esc(when(m.ts))+'</span>')+'</div>'+
    '<div class="mid"><div class="teams">'+team(m.al,m.as,m.an,aL)+team(m.bl,m.bs,m.bn,bL)+'</div>'+
@@ -231,7 +231,7 @@ function loadOrgs(){
       var pts=Object.keys(by).map(function(k){return {lat:CC[k][0],lng:CC[k][1],n:by[k],cc:k}});
       PTS=pts;if(G){G.pointsData(pts);G.ringsData(pts.slice().sort(function(a,b){return b.n-a.n}).slice(0,6))}
       $("nTeams").textContent=orgs.length;$("nCountries").textContent=Object.keys(by).length;
-    }).catch(function(){});
+    }).catch(function(){var g=document.querySelector(".gstat");if(g)g.style.display="none"});
 }
 loadOrgs();
 function startGlobe(){
