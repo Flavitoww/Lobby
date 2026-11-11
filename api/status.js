@@ -1,5 +1,7 @@
 // LOBBY — état du site en direct pour la page /gestion (aucun secret n'est renvoyé).
 const CFG = require('./_config');
+const { isAdmin } = require('./_auth');
+const BOOT = Date.now();
 
 const timed = async (fn, ms = 9000) => {
   const t0 = Date.now();
@@ -9,6 +11,7 @@ const timed = async (fn, ms = 9000) => {
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
+  if (!isAdmin(req)) { res.status(401).json({ error: 'auth' }); return; }
   const host = req.headers['x-forwarded-host'] || req.headers.host;
   const base = 'https://' + host;
   const token = process.env.PANDASCORE_TOKEN;
@@ -27,7 +30,7 @@ module.exports = async (req, res) => {
       return { updated: d.updated, live: m.filter((x) => x.status === 'running').length, liveImportant: m.filter((x) => x.status === 'running' && x.k).length, upcoming: m.filter((x) => x.status === 'not_started').length, upcomingImportant: m.filter((x) => x.status === 'not_started' && x.k).length, recent: rec.length, byGame };
     }),
     timed(async () => {
-      const r = await fetch(base + '/api/orgs?v=3'); if (!r.ok) throw new Error('HTTP ' + r.status);
+      const r = await fetch(base + '/api/orgs?v=4'); if (!r.ok) throw new Error('HTTP ' + r.status);
       const d = await r.json(), o = d.orgs || [];
       return { updated: d.updated, teams: o.length, countries: new Set(o.map((x) => x.cc)).size, players: o.reduce((s, x) => s + Object.values(x.g || {}).reduce((a, g) => a + (g.pl || []).length, 0), 0) };
     }, 20000),
@@ -43,7 +46,7 @@ module.exports = async (req, res) => {
     deployment: {
       env: process.env.VERCEL_ENV || 'local', region: process.env.VERCEL_REGION || null, url: process.env.VERCEL_URL || null,
       commit: (process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 7) || null, message: (process.env.VERCEL_GIT_COMMIT_MESSAGE || '').split('\n')[0] || null,
-      branch: process.env.VERCEL_GIT_COMMIT_REF || null, node: process.version
+      branch: process.env.VERCEL_GIT_COMMIT_REF || null, node: process.version, instanceSince: BOOT
     },
     checks: { pandascore, live, orgs, snapshot, lib },
     config: CFG

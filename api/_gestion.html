@@ -40,6 +40,9 @@ td.r{text-align:right;font-family:var(--mono);white-space:nowrap}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 12px}
 .chip{font-size:12px;font-weight:600;padding:5px 10px;border-radius:999px;background:var(--soft)}
 .chip.t1{background:var(--ink);color:#fff}.chip.t3{text-decoration:line-through;color:var(--faint)}
+.kpibig{font:600 44px var(--mono);letter-spacing:-.04em}
+.mini3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}.mini3 div{background:var(--soft);border-radius:14px;padding:12px}.mini3 b{display:block;font:600 24px var(--mono)}.mini3 span{font-size:12px;color:var(--mut)}
+.hours{display:flex;align-items:flex-end;gap:3px;height:60px}.hours i{flex:1;background:var(--or);border-radius:3px 3px 0 0;min-height:2px;opacity:.85}
 .kv{display:grid;grid-template-columns:150px 1fr;gap:8px 14px;font-size:13px}.kv dt{color:var(--mut)}.kv dd{margin:0;font-family:var(--mono);word-break:break-all}
 ul.todo{margin:0;padding:0 0 0 18px;font-size:13px;line-height:1.8}
 code{font-family:var(--mono);font-size:12px;background:var(--soft);padding:1px 6px;border-radius:6px}
@@ -54,6 +57,7 @@ code{font-family:var(--mono);font-size:12px;background:var(--soft);padding:1px 6
     <a class="nl keep" href="/">Accueil</a>
     <a class="nl keep" href="/atlas">Atlas</a>
     <a class="nl on keep" href="/gestion" aria-current="page">Gestion</a>
+    <button class="btn sec" id="logout" type="button" style="margin-left:auto;height:38px">Se déconnecter</button>
   </nav>
 
   <div class="head">
@@ -67,6 +71,15 @@ code{font-family:var(--mono);font-size:12px;background:var(--soft);padding:1px 6
     <section class="card kpi"><div class="l">Matchs suivis <span class="dot" id="k3d"></span></div><div class="v" id="k3">—</div><div class="d" id="k3s"></div></section>
     <section class="card kpi"><div class="l">Équipes <span class="dot" id="k4d"></span></div><div class="v" id="k4">—</div><div class="d" id="k4s"></div></section>
 
+    <section class="card s2" id="aud"><div class="ch"><h2>En ce moment sur le site</h2><span class="x" id="audx"></span></div><div class="body"><div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px"><span class="kpibig" id="nlive">—</span><span class="muted">visiteur(s) actif(s) (dernières 75 s)</span></div><table><thead><tr><th>Page</th><th>Lieu</th><th>Appareil</th><th>Depuis</th></tr></thead><tbody id="livetb"></tbody></table></div></section>
+    <section class="card s2"><div class="ch"><h2>Aujourd'hui</h2><span class="x" id="todx"></span></div><div class="body"><div class="mini3"><div><b id="tv">—</b><span>pages vues</span></div><div><b id="tu">—</b><span>visiteurs</span></div><div><b id="ts">—</b><span>recherches</span></div></div><div class="hours" id="hours"></div><p class="muted" style="margin:4px 0 0">Visites par heure (UTC)</p></div></section>
+    <section class="card"><div class="ch"><h2>Pages</h2></div><div class="body" id="tpages"></div></section>
+    <section class="card"><div class="ch"><h2>Pays</h2></div><div class="body" id="tcountries"></div></section>
+    <section class="card"><div class="ch"><h2>Appareils</h2></div><div class="body" id="tdevices"></div></section>
+    <section class="card"><div class="ch"><h2>Provenance</h2></div><div class="body" id="trefs"></div></section>
+    <section class="card s2"><div class="ch"><h2>Dernières visites</h2></div><div class="body"><table><tbody id="recent"></tbody></table></div></section>
+    <section class="card s2"><div class="ch"><h2>Recherches</h2><span class="x">ce que les visiteurs cherchent</span></div><div class="body" id="srch"></div></section>
+
     <section class="card s2"><div class="ch"><h2>Sources de données</h2><span class="x">connectées et prévues</span></div><div class="body"><table><thead><tr><th>Source</th><th>Rôle</th><th>État</th></tr></thead><tbody id="sources"></tbody></table></div></section>
 
     <section class="card s2"><div class="ch"><h2>Données récupérées</h2><span class="x" id="dupd"></span></div><div class="body" id="data"></div></section>
@@ -78,6 +91,7 @@ code{font-family:var(--mono);font-size:12px;background:var(--soft);padding:1px 6
     <section class="card s4"><div class="ch"><h2>Sur quoi tourne le site</h2><span class="x">architecture</span></div><div class="body"><table><thead><tr><th>Brique</th><th>Rôle</th><th>Techno</th><th>État</th></tr></thead><tbody id="archi"></tbody></table></div></section>
 
     <section class="card s4"><div class="ch"><h2>Problèmes connus &amp; prochaines étapes</h2></div><div class="body"><ul class="todo">
+      <li><b>Audience</b> : chiffres gardés en mémoire du serveur (remis à zéro à chaque redémarrage). Pour un historique durable : activer Vercel Web Analytics.</li>
       <li><b>Mise en ligne auto cassée</b> : un envoi sur GitHub ne met plus le site à jour. Je redéploie à la main via Vercel à chaque changement.</li>
       <li><b>Aucune source d'actus</b> : les équipes dissoutes ne disparaissent pas toutes seules → brancher Liquipedia (transferts) puis Dexerto (titres).</li>
       <li><b>Copie locale des équipes</b> (<code>/assets/orgs.json</code>) : à rafraîchir régulièrement (automatisation à prévoir).</li>
@@ -85,7 +99,7 @@ code{font-family:var(--mono);font-size:12px;background:var(--soft);padding:1px 6
       <li>À venir : Mes équipes suivies, pages match / équipe / compétition.</li>
     </ul></div></section>
   </main>
-  <footer class="foot" style="display:flex;justify-content:space-between;margin-top:32px;color:var(--faint);font-size:12px"><span>Lobby. — gestion</span><span>Actualisation automatique toutes les 60 s</span></footer>
+  <footer class="foot" style="display:flex;justify-content:space-between;margin-top:32px;color:var(--faint);font-size:12px"><span>Lobby. — gestion</span><span>Audience : toutes les 10 s · état : toutes les 60 s</span></footer>
 </div>
 <script>
 (function(){
@@ -108,9 +122,25 @@ var ARCHI=[
  ["Hébergement","Pages + fonctions serveur","Vercel (projet lobby-esport)","site"],
  ["Code","Historique et sauvegarde","GitHub Flavitoww/Lobby (branche main)","static"]
 ];
+var REG=(function(){try{return new Intl.DisplayNames(["fr"],{type:"region"})}catch(e){return null}})();
+function cn(c){return c&&c!=="?"&&REG?REG.of(c):"Inconnu"}
+function rows(list,fmt){if(!list||!list.length)return '<p class="muted" style="margin:0">Pas encore de données.</p>';var mx=list[0][1]||1;return list.map(function(x){return '<div class="gbar"><span>'+esc(fmt?fmt(x[0]):x[0])+'</span><span><i style="width:'+(x[1]/mx*100)+'%"></i></span><b>'+x[1]+'</b></div>'}).join("")}
+function dur(ms){var s=Math.round(ms/1000);return s<60?s+" s":Math.round(s/60)+" min"}
+function loadAud(){fetch("/api/track",{cache:"no-store"}).then(function(r){if(r.status===401){location.reload();throw 0}return r.json()}).then(function(a){
+  $("nlive").textContent=a.live.length;
+  $("livetb").innerHTML=a.live.length?a.live.map(function(v){return "<tr><td><b>"+esc(v.page)+"</b><br><span class=muted>"+v.views+" page(s)</span></td><td>"+esc(cn(v.country))+(v.city?"<br><span class=muted>"+esc(v.city)+"</span>":"")+"</td><td>"+esc(v.device)+"<br><span class=muted>"+esc(v.browser+" · "+v.os+" · "+v.screen)+"</span></td><td class=r>"+dur(a.now-v.since)+"</td></tr>"}).join(""):'<tr><td colspan=4 class=muted>Personne pour le moment.</td></tr>';
+  var t=a.today;$("tv").textContent=t.views;$("tu").textContent=t.visitors;$("ts").textContent=t.searches.reduce(function(s,x){return s+x[1]},0);
+  var mh=Math.max.apply(null,t.hours.concat([1]));$("hours").innerHTML=t.hours.map(function(h,i){return '<i title="'+i+'h : '+h+'" style="height:'+(h/mh*100)+'%"></i>'}).join("");
+  $("tpages").innerHTML=rows(t.pages);$("tcountries").innerHTML=rows(t.countries,cn);$("tdevices").innerHTML=rows(t.devices)+rows(t.browsers);$("trefs").innerHTML=rows(t.refs);
+  $("recent").innerHTML=a.recent.length?a.recent.map(function(v){return "<tr><td class=r style=text-align:left>"+new Date(v.at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})+"</td><td><b>"+esc(v.page)+"</b></td><td>"+esc(cn(v.country))+(v.city?" · "+esc(v.city):"")+"</td><td>"+esc(v.device+" · "+v.browser)+"</td><td class=muted>"+esc(v.ref||"direct")+"</td></tr>"}).join(""):'<tr><td class=muted>Pas encore de visite.</td></tr>';
+  $("srch").innerHTML='<p class="muted" style="margin:0 0 6px">Les plus cherchés</p>'+rows(t.searches)+(a.lastSearches.length?'<p class="muted" style="margin:12px 0 6px">Dernières</p><table>'+a.lastSearches.map(function(x){return "<tr><td><b>"+esc(x.q)+"</b></td><td class=muted>"+esc(x.pick||"")+"</td><td class=r>"+new Date(x.at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})+"</td></tr>"}).join("")+"</table>":"");
+  $("audx").textContent="mis à jour "+new Date(a.now).toLocaleTimeString("fr-FR");
+  $("todx").textContent="chiffres depuis "+new Date(a.since).toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+" (redémarrage serveur)";
+}).catch(function(){})}
+$("logout").onclick=function(){fetch("/api/auth",{method:"DELETE"}).then(function(){location.href="/"})};
 function load(){
   $("global").className="state";$("global").querySelector("span").textContent="Vérification…";
-  fetch("/api/status",{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(render).catch(function(){
+  fetch("/api/status",{cache:"no-store"}).then(function(r){if(r.status===401){location.reload();throw 0}if(!r.ok)throw 0;return r.json()}).then(render).catch(function(){
     $("global").className="state ko";$("global").querySelector("span").textContent="Impossible de joindre le serveur";dot("k1d","ko");$("k1").textContent="Hors ligne";
   });
 }
@@ -143,7 +173,7 @@ function render(d){
   $("data").innerHTML=h;$("dupd").textContent=c.live.ok?"live "+ago(c.live.updated):"";
   // Déploiement
   var dp=d.deployment;
-  $("deploy").innerHTML=[["Environnement",dp.env],["Région",dp.region],["Version (commit)",dp.commit],["Dernier changement",dp.message],["Branche",dp.branch],["Adresse du déploiement",dp.url],["Moteur serveur","Node "+dp.node],["Dépôt","GitHub · Flavitoww/Lobby"]].map(function(x){return "<dt>"+x[0]+"</dt><dd>"+esc(x[1]||"—")+"</dd>"}).join("");
+  $("deploy").innerHTML=[["Environnement",dp.env],["Région",dp.region],["Version (commit)",dp.commit],["Dernier changement",dp.message],["Branche",dp.branch],["Adresse du déploiement",dp.url],["Moteur serveur","Node "+dp.node],["Serveur démarré",new Date(dp.instanceSince).toLocaleString("fr-FR")],["Dépôt","GitHub · Flavitoww/Lobby"]].map(function(x){return "<dt>"+x[0]+"</dt><dd>"+esc(x[1]||"—")+"</dd>"}).join("");
   // Config
   var t=cfg.TIERS,gn=cfg.GAME_NAMES;
   $("config").innerHTML='<p class="muted" style="margin:0">Jeux T1</p><div class="chips">'+t.T1.map(function(k){return '<span class="chip t1">'+esc(gn[k])+'</span>'}).join("")+'</div>'+
@@ -157,7 +187,7 @@ function render(d){
   var g=$("global");g.className="state "+(bad?"ko":warn?"warn":"ok");g.querySelector("span").textContent=bad?bad+" problème"+(bad>1?"s":"")+" détecté"+(bad>1?"s":""):warn?"En ligne · "+warn+" point"+(warn>1?"s":"")+" à surveiller":"Tout fonctionne";
   $("checked").textContent="Vérifié à "+new Date(d.now).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
 }
-$("refresh").onclick=load;load();setInterval(load,60000);
+$("refresh").onclick=function(){load();loadAud()};load();loadAud();setInterval(load,60000);setInterval(loadAud,10000);
 })();
 </script>
 </body>

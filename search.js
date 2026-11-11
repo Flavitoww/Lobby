@@ -124,7 +124,7 @@ export function attachSearch(input, { getItems, onPick }) {
     box.hidden = false;
   };
   const move = (d) => { const o = box.querySelectorAll('.sopt'); if (!o.length) return; o[cur].classList.remove('on'); cur = (cur + d + o.length) % o.length; o[cur].classList.add('on'); o[cur].scrollIntoView({ block: 'nearest' }); };
-  const pick = (i) => { const it = res[i]; if (!it) return; box.hidden = true; input.blur(); onPick(it); };
+  const pick = (i) => { const it = res[i]; if (!it) return; box.hidden = true; input.blur(); try { window.lobbyTrack && window.lobbyTrack('search', { q: input.value.trim(), pick: TAG[it.t] + ' · ' + it.label }); } catch (_) {} onPick(it); };
   input.addEventListener('input', render);
   input.addEventListener('focus', () => { if (input.value.trim()) render(); });
   input.addEventListener('keydown', (e) => {

@@ -1,7 +1,19 @@
 {
   "cleanUrls": true,
-  "functions": { "api/*.js": { "maxDuration": 60 } },
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 60,
+      "includeFiles": "api/_gestion.html"
+    }
+  },
   "rewrites": [
-    { "source": "/lib/:file", "destination": "/api/lib?file=:file" }
+    {
+      "source": "/lib/:file",
+      "destination": "/api/lib?file=:file"
+    },
+    {
+      "source": "/gestion",
+      "destination": "/api/gestion"
+    }
   ]
 }

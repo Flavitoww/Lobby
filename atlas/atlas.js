@@ -230,4 +230,4 @@ function computeLive() {
 }
 // 1) copie locale immédiate (vraies données, mise à jour régulièrement) 2) API live ensuite
 fetch('/assets/orgs.json').then((r) => r.ok ? r.json() : null).then((d) => { if (!S.orgs.length) setOrgs(d); }).catch(() => {});
-fetch('/api/orgs?v=3').then((r) => { if (!r.ok) throw 0; return r.json(); }).then(setOrgs).catch(() => { if (!S.orgs.length) $('stat').textContent = 'Équipes indisponibles pour le moment'; });
+fetch('/api/orgs?v=4').then((r) => { if (!r.ok) throw 0; return r.json(); }).then(setOrgs).catch(() => { if (!S.orgs.length) $('stat').textContent = 'Équipes indisponibles pour le moment'; });

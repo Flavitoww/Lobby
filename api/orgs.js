@@ -29,7 +29,7 @@ module.exports = async (req, res) => {
       let r;
       try { r = await fetch(BASE + path, { headers: { Authorization: 'Bearer ' + token }, signal: AbortSignal.timeout(9000) }); } catch (e) { last429 = 'timeout ' + path.slice(0, 50); continue; }
       hdr = r.status + ' rem=' + r.headers.get('x-rate-limit-remaining') + ' retry=' + r.headers.get('retry-after');
-      if (r.ok) { await new Promise((z) => setTimeout(z, 900)); return r.json(); }
+      if (r.ok) return r.json();
       if (r.status === 429 || r.status >= 500) { last429 = path.slice(0, 60) + ' ' + r.status; await new Promise((z) => setTimeout(z, 1500 * (k + 1))); continue; }
       throw new Error(path + ' ' + r.status);
     }
@@ -54,7 +54,7 @@ module.exports = async (req, res) => {
       // passe dediee aux competitions FR tier B/C (LFL, Valorant France, etc.) -> orgs FR jamais ratees
       if (fscene.indexOf(g) >= 0) paths.push([g, '/' + s + '/tournaments?filter[tier]=b,c&sort=-begin_at&page[size]=40', 'TF']);
     });
-    const res1 = await pool(paths.map((x) => () => ok(() => get(x[1], 42000))), 1);
+    const res1 = await pool(paths.map((x) => () => ok(() => get(x[1], 42000))), 4);
     const perGame = keys.map((g) => {
       const cnt = {};
       paths.forEach((x, i) => {
@@ -83,7 +83,7 @@ module.exports = async (req, res) => {
     const all = Object.keys(need);
     const chunks = [];
     for (let i = 0; i < all.length; i += 40) chunks.push(all.slice(i, i + 40));
-    const lists = await pool(chunks.map((c) => () => ok(() => get('/teams?filter[id]=' + c.join(',') + '&page[size]=100', 57000))), 1);
+    const lists = await pool(chunks.map((c) => () => ok(() => get('/teams?filter[id]=' + c.join(',') + '&page[size]=100', 57000))), 3);
     const byId = {};
     [].concat(...lists).forEach((t) => { byId[t.id] = t; });
     const orgs = {};
@@ -116,7 +116,7 @@ module.exports = async (req, res) => {
     });
     const list = Object.keys(orgs).map((k) => orgs[k]).filter((o) => o.cc);
     if (list.length < 20) { res.status(502).json({ error: 'incomplete', errs, last: last429, hdr, ms: Date.now() - t0, n: list.length }); return; }
-    res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+    res.setHeader('Cache-Control', 'public, s-maxage=21600, stale-while-revalidate=604800');
     res.status(200).json({ updated: Date.now(), orgs: list });
   } catch (e) {
     res.status(502).json({ error: 'upstream', detail: String(e.message || e) });
