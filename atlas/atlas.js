@@ -189,7 +189,15 @@ export function mountAtlas(o) {
   } });
 
   /* ---------- Données ---------- */
-  function computeLive() { S.liveCC = new Set(); S.live.filter((m) => m.status === 'running').forEach((m) => S.orgs.forEach((t) => { if (matchesOf(t).includes(m)) S.liveCC.add(t.cc); })); }
+  // Logos manquants : on complète avec ceux qu'on a déjà (fiche org), quelle que soit la source du match.
+  const kn = (x) => String(x || '').toLowerCase().replace(/^team\s+|\s+(esports?|gaming)$/g, '').trim();
+  function fillLogos() {
+    if (!S.orgs.length || !S.live.length) return; const L = {};
+    S.orgs.forEach((t) => { const u = t.lg || t.ld; if (u) { L[kn(t.n)] = u; if (t.s) L['#' + kn(t.s)] = L['#' + kn(t.s)] || u; } });
+    const f = (n, s) => L[kn(n)] || L['#' + kn(s)] || null;
+    S.live.forEach((m) => { if (!m.al) m.al = f(m.an, m.as); if (!m.bl) m.bl = f(m.bn, m.bs); });
+  }
+  function computeLive() { fillLogos(); S.liveCC = new Set(); S.live.filter((m) => m.status === 'running').forEach((m) => S.orgs.forEach((t) => { if (matchesOf(t).includes(m)) S.liveCC.add(t.cc); })); }
   function refreshView() {
     const u = o.params;
     if (u && !S.urlDone && (u.get('team') || u.get('cc')) && S.orgs.length) {
@@ -210,9 +218,9 @@ export function mountAtlas(o) {
   const pre = o.preload || {};
   if (pre.live) S.live = (pre.live.matches || []).concat(pre.live.recent || []);
   if (pre.orgs) setOrgs(pre.orgs);
-  fetch('/api/live').then((r) => (r.ok ? r.json() : null)).then((d) => { if (d) { S.live = (d.matches || []).concat(d.recent || []); if (S.orgs.length) { computeLive(); buildPins(); } refreshView(); } }).catch(() => {});
+  if (!pre.live) fetch('/api/live').then((r) => (r.ok ? r.json() : null)).then((d) => { if (d) { S.live = (d.matches || []).concat(d.recent || []); if (S.orgs.length) { computeLive(); buildPins(); } refreshView(); } }).catch(() => {});
   if (!pre.orgs) fetch('/assets/orgs.json').then((r) => (r.ok ? r.json() : null)).then((d) => { if (!S.orgs.length) setOrgs(d); }).catch(() => {});
-  fetch('/api/orgs?v=4').then((r) => { if (!r.ok) throw 0; return r.json(); }).then(setOrgs).catch(() => {});
+  if (!pre.orgsApi) fetch('/api/orgs?v=4').then((r) => { if (!r.ok) throw 0; return r.json(); }).then(setOrgs).catch(() => {});
 
   requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add('in')));
 

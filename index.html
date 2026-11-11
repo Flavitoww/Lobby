@@ -35,7 +35,7 @@ h1 span{color:var(--faint)}
 
 
 /* Événement suivi à la main (pas de score inventé) */
-.evc{display:flex;flex-wrap:wrap;gap:6px}.evc span{font-size:12.5px;font-weight:600;padding:6px 10px;border-radius:999px;background:var(--soft);border:1px solid var(--line)}
+.evc{display:flex;flex-wrap:wrap;gap:6px}.evc span{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;padding:6px 10px;border-radius:999px;background:var(--soft);border:1px solid var(--line)}
 .evn{font-family:Archivo,var(--sans);font-weight:800;font-size:clamp(26px,3vw,36px);letter-spacing:-.02em;line-height:1.05}
 .evn small{display:block;font-family:var(--sans);font-weight:500;font-size:14px;color:var(--mut);letter-spacing:0;margin-top:6px}
 .row.ev .tm{font-weight:700}
@@ -210,7 +210,7 @@ function evDay(e){var t=pday(Date.now());return t===e.day?"Aujourd'hui":pday(Dat
 function featEv(e){var el=$("feat");S.featId=null;el.classList.add("impact");
   el.innerHTML='<div class="imp"><div class="fh"><span class="tag"><span>'+esc(GN[e.game]||"")+' · Scène FR</span></span><span class="pill live" style="background:var(--or-soft);color:var(--or-ink)">'+esc(evDay(e))+'</span></div>'+
   '<div class="evn">'+esc(e.name)+'<small>'+esc(e.stage)+' · horaires et affiches : voir la diffusion</small></div>'+
-  '<div class="evc">'+e.teams.map(function(t){return '<span>'+esc(t)+'</span>'}).join("")+'</div>'+
+  '<div class="evc">'+e.teams.map(function(t){return '<span>'+logo(tlogo(t),t,22)+esc(t)+'</span>'}).join("")+'</div>'+
   '<div class="fa"><a class="btn pri" href="'+esc(e.watch)+'" target="_blank" rel="noopener">Regarder sur Slash</a><a class="btn sec" href="'+esc(e.source)+'" target="_blank" rel="noopener">Source</a></div></div>'}
 function feat(list){
   var ev=evs().filter(function(e){return e.day===pday(Date.now())})[0];
@@ -245,6 +245,7 @@ function row(m,fin){
 }
 function draw(){
   var d=S.data;if(!d)return;
+  (d.matches||[]).concat(d.recent||[]).forEach(function(m){if(!m.al)m.al=tlogo(m.an,m.as);if(!m.bl)m.bl=tlogo(m.bn,m.bs)});
   var all=(d.matches||[]).filter(ok),rec=(d.recent||[]).filter(ok);
   var nLive=(d.matches||[]).filter(function(m){return m.status==="running"&&m.k}).length;
   var gl=$("glive");if(gl){var nl=(d.matches||[]).filter(function(m){return m.status==="running"&&m.k}).length;gl.hidden=!nl;gl.querySelector("span").textContent=nl+" match"+(nl>1?"s":"")+" important"+(nl>1?"s":"")+" en direct"}
@@ -277,13 +278,15 @@ function homeFrame(){if(!DOTS.length)return;DOTS.forEach(function(d){var p=G.pro
 function makeDots(){var L=$("gdots");L.innerHTML="";DOTS=(PTS||[]).map(function(p){var el=document.createElement("span");el.className="gd";var sz=8+Math.min(10,Math.sqrt(p.n)*2.2);el.style.width=el.style.height=sz+"px";el.style.left=el.style.top=(-sz/2)+"px";L.appendChild(el);return {lat:p.lat,lng:p.lng,el:el}});if(G)G.redraw()}
 function loadOrgs(){
   fetch("/assets/orgs.json").then(function(r){return r.ok?r.json():null}).then(function(d){if(d&&!PTS)useOrgs(d)}).catch(function(){});
-  fetch("/api/orgs?v=4").then(function(r){if(!r.ok)throw 0;return r.json()}).then(useOrgs).catch(function(){if(!PTS){var g=document.querySelector(".gstat");if(g)g.style.display="none"}});
+  fetch("/api/orgs?v=4").then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(d){useOrgs(d,true)}).catch(function(){if(!PTS){var g=document.querySelector(".gstat");if(g)g.style.display="none"}});
 }
-function useOrgs(d){
+var LOGO={};function kn(x){return String(x||"").toLowerCase().replace(/^team\s+|\s+(esports?|gaming)$/g,"").trim()}
+function tlogo(n,sh){return LOGO[kn(n)]||LOGO["#"+kn(sh)]||null}
+function useOrgs(d,api){
   if(!d||!d.orgs)return;if(ORGS.length&&d.orgs.length<ORGS.length*0.8)return;
   var by={},orgs=d.orgs.filter(function(o){return !/^(ici japon corp)/i.test(o.n)});orgs.forEach(function(o){var k=(o.cc||"").toUpperCase();if(CC[k]){by[k]=(by[k]||0)+1}});
   var pts=Object.keys(by).map(function(k){return {lat:CC[k][0],lng:CC[k][1],n:by[k],cc:k}});
-  ORGS=orgs;ORGSD=d;PTS=pts;makeDots();$("nTeams").textContent=orgs.length;$("nCountries").textContent=Object.keys(by).length;
+  ORGS=orgs;ORGSD=d;PTS=pts;if(api)ORGAPI=true;LOGO={};orgs.forEach(function(o){var u=o.lg||o.ld;if(u){LOGO[kn(o.n)]=u;if(o.s&&!LOGO['#'+kn(o.s)])LOGO['#'+kn(o.s)]=u}});if(S.data)draw();makeDots();$("nTeams").textContent=orgs.length;$("nCountries").textContent=Object.keys(by).length;
 }
 loadOrgs();
 function startGlobe(){
@@ -301,9 +304,11 @@ function loadGlobe(){startGlobe()}
 /* Plongée vers l'Atlas : la carte s'agrandit plein écran pendant que la caméra se rapproche, puis on passe sur /atlas
    (fondu de page « atlas-globe » entre les deux, même angle de vue transmis à l'Atlas) */
 /* ---- Atlas DANS l'accueil : même globe, pas de changement de page ---- */
-var ATL=null,ATLMOD=null,ATLOPEN=false,PH=null,ORGSD=null,BUSY=false;
+var ORGAPI=false,ATL=null,ATLMOD=null,ATLOPEN=false,PH=null,ORGSD=null,BUSY=false;
 function prefetchAtlas(){if(ATLMOD)return ATLMOD;if(!document.getElementById("atlcss")){var l=document.createElement("link");l.id="atlcss";l.rel="stylesheet";l.href="/atlas/atlas.css";document.head.appendChild(l)}ATLMOD=import("/atlas/atlas.js");return ATLMOD}
 $("globeCard").addEventListener("pointerenter",prefetchAtlas,{once:true});
+/* Tout est prêt avant le clic : module, styles, et logos de l'Atlas chargés en tâche de fond. */
+(window.requestIdleCallback||function(f){setTimeout(f,1200)})(function(){prefetchAtlas();var n=0,go=function(){(ORGS||[]).forEach(function(o){var u=o.lg||o.ld;if(u){var i=new Image();i.decoding="async";i.src=u}})};if(ORGS.length)go();else{var t=setInterval(function(){if(ORGS.length||++n>20){clearInterval(t);go()}},500)}},{timeout:2500});
 function openAtlas(e,push){
   if(e){if(e.metaKey||e.ctrlKey||e.shiftKey||e.button===1)return;e.preventDefault()}
   if(ATLOPEN||BUSY)return;
@@ -315,9 +320,9 @@ function openAtlas(e,push){
   requestAnimationFrame(function(){requestAnimationFrame(function(){card.style.left="0px";card.style.top="0px";card.style.width=innerWidth+"px";card.style.height=innerHeight+"px";card.style.borderRadius="0px"})});
   G.controls.autoRotate=false;G.zoomTo(3.05,reduce?0:1000);$("gdots").style.opacity=0;
   if(push!==false)history.pushState({atlas:1},"","/atlas");document.title="L'Atlas — Lobby";
-  Promise.all([prefetchAtlas(),new Promise(function(r){setTimeout(r,reduce?0:650)})]).then(function(res){
+  Promise.all([prefetchAtlas(),new Promise(function(r){setTimeout(r,reduce?0:280)})]).then(function(res){
     var lay=document.createElement("div");lay.id="atlLayer";lay.style.cssText="position:fixed;inset:0;z-index:210";document.body.appendChild(lay);
-    ATL=res[0].mountAtlas({stage:lay,globe:G,onClose:function(){history.back()},preload:{orgs:ORGSD,live:S.data}});
+    ATL=res[0].mountAtlas({stage:lay,globe:G,onClose:function(){history.back()},preload:{orgs:ORGSD,orgsApi:ORGAPI,live:S.data}});
     BUSY=false;
   }).catch(function(){location.href="/atlas"});
 }
