@@ -130,12 +130,22 @@ export function createGlobe(el, opts = {}) {
     n = n || d; w = w || d;
     uni.dayMap.value = d; uni.nightMap.value = n; uni.waterMap.value = w; uni.bumpMap.value = b; cUni.map.value = c;
     earth.visible = !!d; clouds.visible = !!c && opts.clouds !== false;
-    if (!low && opts.hd !== false) {
-      tex('day-4k.webp', true).then((d4) => { if (d4) { uni.dayMap.value = d4; dirty = true; } });
-    }
+    if (!low && opts.hd !== false) loadHD();
     dirty = true; el.dispatchEvent(new CustomEvent('globe:ready'));
   });
 
+  // Textures 4K (Terre + nuages) : chargées une seule fois, appliquées dès qu'elles sont prêtes.
+  let hdP = null;
+  function loadHD() {
+    if (hdP) return hdP;
+    hdP = ready.then(() => Promise.all([tex('day-4k.webp', true), tex('clouds-4k.webp')])).then(([d4, c4]) => {
+      if (d4) uni.dayMap.value = d4; if (c4) cUni.map.value = c4; dirty = true;
+    });
+    return hdP;
+  }
+  // Plein écran : on rend plus net (jusqu'à 2x) ; carte de l'accueil : réglage léger.
+  const basePR = renderer.getPixelRatio();
+  function setQuality(full) { const pr = full && !low ? Math.min(dpr, 2) : basePR; if (renderer.getPixelRatio() !== pr) { renderer.setPixelRatio(pr); resize(); } }
   let timeOffset = 0; // ms, pour tester d'autres heures
   function updateSun() { const s = subsolar(new Date(Date.now() + timeOffset)); sun.copy(ll2v(s.lat, s.lon)); return s; }
   let sunInfo = updateSun();
@@ -194,7 +204,7 @@ export function createGlobe(el, opts = {}) {
   }
 
   return {
-    THREE, scene, camera, controls, renderer, earth, ready, flyTo,
+    THREE, scene, camera, controls, renderer, earth, ready, flyTo, loadHD, setQuality,
     get sun() { return sunInfo; },
     setTimeOffset(ms) { timeOffset = ms; sunInfo = updateSun(); },
     setStars(o) { starsOpacity = o; if (stars) stars.material.opacity = o; dirty = true; },

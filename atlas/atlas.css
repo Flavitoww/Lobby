@@ -79,6 +79,9 @@
 .atl .pin .pl b{margin-right:3px}.atl .pin .pl em{font-style:normal;font-size:11px;color:var(--or-ink);margin-left:3px}
 .atl .pin:hover .pl,.atl .pin.sel .pl,.atl .pin.lab .pl{opacity:1;transform:none}
 .atl .pin.hid{opacity:0;pointer-events:none}
+/* Pays sélectionné : l'étiquette passe sous l'anneau de logos (sinon elle en cache un) */
+.atl .pin.sel .pl{position:absolute;left:50%;top:calc(50% + var(--rr,44px) + 26px);transform:translate(-50%,0)}
+.atl .pin.sel .pl .mini{display:none}
 .atl .mini{width:20px;height:20px;border-radius:6px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;font:700 7px var(--ui);color:var(--mut);flex:none}
 .atl .mini img{width:80%;height:80%;object-fit:contain}
 .atl .tlogo{position:absolute;left:-19px;top:-19px;width:38px;height:38px;border-radius:12px;border:1px solid rgba(255,255,255,.18);padding:0;background:#151a24;box-shadow:0 6px 16px rgba(0,0,0,.3);display:grid;place-items:center;cursor:pointer;pointer-events:none;opacity:0;scale:.6;transition:opacity .25s,scale .25s var(--ease);will-change:transform}

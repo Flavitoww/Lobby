@@ -52,7 +52,7 @@ export function mountAtlas(o) {
   let g = o.globe || null;
   if (!g) {
     stage.style.background = sky.bg;
-    try { g = createGlobe(o.glEl || stage, { view: o.view || { lat: 38, lon: 8, dist: 3.1 }, starsOpacity: sky.stars }); }
+    try { g = createGlobe(o.glEl || stage, { view: o.view || { lat: 38, lon: 8, dist: 3.1 }, starsOpacity: sky.stars }); g.setQuality(true); }
     catch (e) { root.insertAdjacentHTML('afterbegin', '<div class="msg"><div><b style="color:#fff;font-size:15px">La 3D (WebGL) est désactivée dans ce navigateur.</b><br>Chrome : Réglages → Système → « Utiliser l\'accélération graphique », puis relance. Les données restent dans le panneau.</div></div>'); }
   }
   const applyOffset = (ms) => { if (!g) return; if (mobile()) g.setOffset(0, side.classList.contains('min') ? 0 : Math.round(innerHeight * 0.2), ms); else g.setOffset(196, 0, ms); };
@@ -111,7 +111,7 @@ export function mountAtlas(o) {
       p.el.style.transform = `translate(${s.x}px,${s.y}px)`;
       p.el.classList.toggle('hid', !on); p.el.classList.toggle('sel', S.sel === cc);
       p.el.classList.toggle('lab', on && (S.sel === cc || (close && cc === focusCC)));
-      const showRing = on && S.sel === cc, R = 30 + Math.min(14, p.ring.length * 2);
+      const showRing = on && S.sel === cc, R = 30 + Math.min(14, p.ring.length * 2); if (showRing) p.el.style.setProperty('--rr', R + 'px');
       if (showRing || p.shown) p.ring.forEach((r) => { const a = +r.dataset.a; if (showRing) r.style.transform = `translate(${s.x + Math.cos(a) * R}px,${s.y + Math.sin(a) * R}px)`; r.classList.toggle('show', showRing); });
       p.shown = showRing;
     }

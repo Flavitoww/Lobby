@@ -294,7 +294,7 @@ function startGlobe(){
   import("/atlas/globe.js").then(function(mod){
     try{
       var sk=mod.skyFor();window.__SKY=sk.bg;$("globeCard").style.background=sk.bg;G=mod.createGlobe($("g3d"),{interactive:false,stars:true,starsOpacity:sk.stars,hd:false,view:{lat:28,lon:8,dist:3.6}});
-      G.ready.then(function(){$("gfb").style.display="none"});
+      G.ready.then(function(){$("gfb").style.display="none";setTimeout(function(){G.loadHD()},600)});
       G.onFrame(homeFrame);
       if(PTS)makeDots();
     }catch(e){G=null}
@@ -308,7 +308,7 @@ var ORGAPI=false,ATL=null,ATLMOD=null,ATLOPEN=false,PH=null,ORGSD=null,BUSY=fals
 function prefetchAtlas(){if(ATLMOD)return ATLMOD;if(!document.getElementById("atlcss")){var l=document.createElement("link");l.id="atlcss";l.rel="stylesheet";l.href="/atlas/atlas.css";document.head.appendChild(l)}ATLMOD=import("/atlas/atlas.js");return ATLMOD}
 $("globeCard").addEventListener("pointerenter",prefetchAtlas,{once:true});
 /* Tout est prêt avant le clic : module, styles, et logos de l'Atlas chargés en tâche de fond. */
-(window.requestIdleCallback||function(f){setTimeout(f,1200)})(function(){prefetchAtlas();var n=0,go=function(){(ORGS||[]).forEach(function(o){var u=o.lg||o.ld;if(u){var i=new Image();i.decoding="async";i.src=u}})};if(ORGS.length)go();else{var t=setInterval(function(){if(ORGS.length||++n>20){clearInterval(t);go()}},500)}},{timeout:2500});
+(window.requestIdleCallback||function(f){setTimeout(f,1200)})(function(){prefetchAtlas();if(G&&G.loadHD)G.loadHD();var n=0,go=function(){(ORGS||[]).forEach(function(o){var u=o.lg||o.ld;if(u){var i=new Image();i.decoding="async";i.src=u}})};if(ORGS.length)go();else{var t=setInterval(function(){if(ORGS.length||++n>20){clearInterval(t);go()}},500)}},{timeout:2500});
 function openAtlas(e,push){
   if(e){if(e.metaKey||e.ctrlKey||e.shiftKey||e.button===1)return;e.preventDefault()}
   if(ATLOPEN||BUSY)return;
@@ -318,7 +318,7 @@ function openAtlas(e,push){
   card.style.left=r.left+"px";card.style.top=r.top+"px";card.style.width=r.width+"px";card.style.height=r.height+"px";
   card.classList.add("diving");document.body.classList.add("diving");
   requestAnimationFrame(function(){requestAnimationFrame(function(){card.style.left="0px";card.style.top="0px";card.style.width=innerWidth+"px";card.style.height=innerHeight+"px";card.style.borderRadius="0px"})});
-  G.controls.autoRotate=false;G.zoomTo(3.05,reduce?0:1000);$("gdots").style.opacity=0;
+  G.controls.autoRotate=false;if(G.loadHD)G.loadHD();G.setQuality(true);G.zoomTo(3.05,reduce?0:1000);$("gdots").style.opacity=0;
   if(push!==false)history.pushState({atlas:1},"","/atlas");document.title="L'Atlas — Lobby";
   Promise.all([prefetchAtlas(),new Promise(function(r){setTimeout(r,reduce?0:280)})]).then(function(res){
     var lay=document.createElement("div");lay.id="atlLayer";lay.style.cssText="position:fixed;inset:0;z-index:210";document.body.appendChild(lay);
@@ -329,7 +329,7 @@ function openAtlas(e,push){
 function closeAtlas(){
   if(!ATLOPEN||BUSY)return;BUSY=true;var card=$("globeCard"),lay=document.getElementById("atlLayer");
   (ATL?ATL.unmount(350):Promise.resolve()).then(function(){
-    if(lay)lay.remove();ATL=null;G.setInteractive(false);G.onFrame(homeFrame);
+    if(lay)lay.remove();ATL=null;G.setInteractive(false);G.onFrame(homeFrame);G.setQuality(false);
     var r=PH.getBoundingClientRect();card.style.left=r.left+"px";card.style.top=r.top+"px";card.style.width=r.width+"px";card.style.height=r.height+"px";card.style.borderRadius="";
     G.zoomTo(3.6,800).then(function(){G.controls.autoRotate=true});$("gdots").style.opacity=1;
     setTimeout(function(){card.classList.remove("diving");card.removeAttribute("style");var sk=window.__SKY;if(sk)card.style.background=sk;PH.remove();PH=null;document.body.classList.remove("diving");document.title="Lobby — l'esport en un coup d'œil";ATLOPEN=false;BUSY=false;G.redraw()},780);
